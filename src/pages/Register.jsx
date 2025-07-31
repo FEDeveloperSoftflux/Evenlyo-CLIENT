@@ -7,7 +7,7 @@ import ForgotPasswordModal from '../auth/ForgotPasswordModal';
 import VerificationModal from '../auth/VerificationModal';
 import VerificationSuccess from '../auth/VerificationSuccess';
 import { useDispatch } from 'react-redux';
-import api from '../../../redux/api';
+import api from '../store/api';
 
 import { useTranslation } from 'react-i18next'
 

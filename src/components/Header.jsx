@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from 'react-redux';
-import { logout as logoutAction } from '../../../redux/slices/authSlice';
-import { fetchCurrentUser } from '../../../redux/actions/authActions';
+import { logout as logoutAction } from '../store/slices/authSlice';
+import { fetchCurrentUser } from '../store/actions/authActions';
 import { useTranslation } from 'react-i18next';
 import CustomerSupportModal from "./CustomerSupportModal";
 
@@ -28,12 +28,10 @@ function ResponsiveHeader() {
   const isLoggedIn = useSelector(state => state.auth.isAuthenticated);
   const user = useSelector(state => state.auth.user);
 
-  // Fetch user info on mount if not present (for cookie-based session)
+  // Always fetch user info on mount (for cookie-based session restore)
   useEffect(() => {
-    if (!user) {
-      dispatch(fetchCurrentUser());
-    }
-  }, [user, dispatch]);
+    dispatch(fetchCurrentUser());
+  }, [dispatch]);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const profileRef = useRef(null);
   // Notification dropdown state
@@ -48,7 +46,6 @@ function ResponsiveHeader() {
   ];
   const [isSupportOpen, setIsSupportOpen] = useState(false);
 
-  // No need for localStorage logic, Redux handles state
 
   // Click-away listener for profile dropdown
   useEffect(() => {
@@ -67,23 +64,7 @@ function ResponsiveHeader() {
     };
   }, [profileDropdownOpen]);
 
-  // Click-away listener for notification dropdown
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
-        setNotificationDropdownOpen(false);
-      }
-    }
-    if (notificationDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [notificationDropdownOpen]);
-
+  // Define languages array before any usage
   const languages = [
     { code: "en", name: "English" },
     { code: "nl", name: "Dutch" },
@@ -386,7 +367,8 @@ function ResponsiveHeader() {
               </div>
             )}
 
-            {isLoggedIn ? (
+            {/* Profile dropdown if logged in, else register/signin button */}
+            {isLoggedIn && (
               <div className="relative flex items-center" ref={profileRef}>
                 <button
                   onClick={() => setProfileDropdownOpen((open) => !open)}
@@ -401,58 +383,56 @@ function ResponsiveHeader() {
                   />
                 </button>
                 {/* Profile Dropdown */}
-{profileDropdownOpen && (
-  <div className="absolute right-0 top-full mt-2 w-70 lg:w-80 bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100 z-50 p-3 sm:p-6 flex flex-col items-center animate-fade-in max-w-[calc(100vw-1rem)] mx-1 sm:mx-0" style={{minWidth: '240px'}}>
-    {/* Profile Card */}
-    <img
-      src={profileIcon}
-      alt="Profile"
-      className="h-12 w-12 sm:h-20 sm:w-20 rounded-full border-2 border-red-600 object-cover shadow mb-2 sm:mb-3"
-    />
-    <div className="text-center mb-1">
-      <div className="text-lg sm:text-2xl font-bold text-gray-900">{user && user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user && user.fullName ? user.fullName : 'User'}</div>
-      {/* <div className="text-gray-500 text-xs sm:text-base font-medium">Social Media Manager</div> */}
-    </div>
-    {/* Menu */}
-    <div className="w-full mt-3 sm:mt-6 flex flex-col gap-1.5 sm:gap-2">
-      <a href="/bookings" className="flex items-center gap-2 sm:gap-3 px-2.5 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-gray-500 hover:bg-gray-50 transition-all text-sm sm:text-lg">
-        {/* Calendar Icon */}
-        <img src={bookingIcon} alt="Booking Icon" className="w-4 h-4 sm:w-6 sm:h-6 text-red-400 flex-shrink-0" />
-        <span className="truncate">{t('all_bookings')}</span>
-      </a>
-
-      <a href="/settings" className="flex items-center gap-2 sm:gap-3 px-2.5 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-gray-500 hover:bg-gray-50 transition-all text-sm sm:text-lg">
-        {/* Settings Icon */}
-        <img src={settingIcon} alt="Settings Icon" className="w-4 h-4 sm:w-6 sm:h-6 text-red-400 flex-shrink-0" />
-        <span className="truncate">{t('setting')}</span>
-      </a>
-      <button
-        onClick={async () => {
-          try {
-            await import('../../../redux/api').then(({ default: api }) => api.post('/auth/logout'));
-          } catch (e) {}
-          dispatch(logoutAction());
-          window.location.href = '/';
-        }}
-        className="flex items-center gap-2 sm:gap-3 px-2.5 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-gray-500 hover:bg-gray-50 transition-all text-sm sm:text-lg w-full text-left"
-      >
-        {/* Logout Icon */}
-        <img src={logoutIcon} alt="Logout Icon" className="w-4 h-4 sm:w-6 sm:h-6 text-red-400 flex-shrink-0" />
-        <span className="truncate">{t('log_out')}</span>
-      </button>
-    </div>
-  </div>
-)}
-
-{/* Optional: Add backdrop for mobile to close dropdown when clicking outside */}
-{profileDropdownOpen && (
-  <div 
-    className="fixed inset-0 z-40 sm:hidden" 
-    onClick={() => setProfileDropdownOpen(false)}
-  />
-)}
+                {profileDropdownOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-70 lg:w-80 bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100 z-50 p-3 sm:p-6 flex flex-col items-center animate-fade-in max-w-[calc(100vw-1rem)] mx-1 sm:mx-0" style={{minWidth: '240px'}}>
+                    {/* Profile Card */}
+                    <img
+                      src={profileIcon}
+                      alt="Profile"
+                      className="h-12 w-12 sm:h-20 sm:w-20 rounded-full border-2 border-red-600 object-cover shadow mb-2 sm:mb-3"
+                    />
+                    <div className="text-center mb-1">
+                      <div className="text-lg sm:text-2xl font-bold text-gray-900">{user && user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user && user.fullName ? user.fullName : 'User'}</div>
+                    </div>
+                    {/* Menu */}
+                    <div className="w-full mt-3 sm:mt-6 flex flex-col gap-1.5 sm:gap-2">
+                      <a href="/bookings" className="flex items-center gap-2 sm:gap-3 px-2.5 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-gray-500 hover:bg-gray-50 transition-all text-sm sm:text-lg">
+                        {/* Calendar Icon */}
+                        <img src={bookingIcon} alt="Booking Icon" className="w-4 h-4 sm:w-6 sm:h-6 text-red-400 flex-shrink-0" />
+                        <span className="truncate">{t('all_bookings')}</span>
+                      </a>
+                      <a href="/settings" className="flex items-center gap-2 sm:gap-3 px-2.5 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-gray-500 hover:bg-gray-50 transition-all text-sm sm:text-lg">
+                        {/* Settings Icon */}
+                        <img src={settingIcon} alt="Settings Icon" className="w-4 h-4 sm:w-6 sm:h-6 text-red-400 flex-shrink-0" />
+                        <span className="truncate">{t('setting')}</span>
+                      </a>
+                      <button
+                        onClick={async () => {
+                          try {
+                            await import('../store/api').then(({ default: api }) => api.post('/auth/logout'));
+                          } catch (e) {}
+                          dispatch(logoutAction());
+                          window.location.href = '/';
+                        }}
+                        className="flex items-center gap-2 sm:gap-3 px-2.5 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-gray-500 hover:bg-gray-50 transition-all text-sm sm:text-lg w-full text-left"
+                      >
+                        {/* Logout Icon */}
+                        <img src={logoutIcon} alt="Logout Icon" className="w-4 h-4 sm:w-6 sm:h-6 text-red-400 flex-shrink-0" />
+                        <span className="truncate">{t('log_out')}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {/* Optional: Add backdrop for mobile to close dropdown when clicking outside */}
+                {profileDropdownOpen && (
+                  <div 
+                    className="fixed inset-0 z-40 sm:hidden" 
+                    onClick={() => setProfileDropdownOpen(false)}
+                  />
+                )}
               </div>
-            ) : (
+            )}
+            {!isLoggedIn && (
               <button
                 className="hidden lg:flex btn-primary-mobile text-sm lg:text-base py-2 px-3 lg:py-3 lg:px-4 items-center space-x-2"
                 onClick={() => (window.location.href = '/login')}

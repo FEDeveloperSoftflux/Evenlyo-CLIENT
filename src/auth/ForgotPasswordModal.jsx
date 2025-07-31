@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import VerificationStep from './VerificationStep';
 import OtpStep from './OtpStep';
 import VerificationSuccess from './VerificationSuccess';
-import api from '../../../redux/api';
+import api from '../store/api';
 
 const ForgotPasswordModal = ({ isOpen, onClose }) => {
   const [step, setStep] = useState(1); // 1: verify, 2: otp, 3: reset, 4: success

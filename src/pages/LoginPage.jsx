@@ -6,11 +6,9 @@ import Footer from "../components/Footer";
 import ClientRegistrationForm from "../components/ClientRegistrationForm";
 import ForgotPasswordModal from "../auth/ForgotPasswordModal";
 import { useDispatch } from 'react-redux';
-import { loginSuccess } from '../../../redux/slices/authSlice';
-import api from '../../../redux/api'
+import { loginSuccess } from '../store/slices/authSlice';
+import api from '../store/api'
 
-// Import assets
-import heroImage from '../assets/images/hero-img.png';;
 
 const LoginPage = () => {
   const { t } = useTranslation();
