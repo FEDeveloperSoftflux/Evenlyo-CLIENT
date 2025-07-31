@@ -1,0 +1,277 @@
+/* Evenlyo Mobile-First Responsive Design System */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+/* Mobile-First Container System */
+.container-xs { max-width: 350px; margin: 0 auto; padding: 0 1rem; }
+.container-sm { max-width: 384px; margin: 0 auto; padding: 0 1rem; }
+.container-md { max-width: 448px; margin: 0 auto; padding: 0 1rem; }
+.container-lg { max-width: 512px; margin: 0 auto; padding: 0 1rem; }
+.container-xl { max-width: 576px; margin: 0 auto; padding: 0 1rem; }
+.container-2xl { max-width: 672px; margin: 0 auto; padding: 0 1rem; }
+.container-3xl { max-width: 768px; margin: 0 auto; padding: 0 1rem; }
+.container-4xl { max-width: 896px; margin: 0 auto; padding: 0 1rem; }
+.container-5xl { max-width: 1024px; margin: 0 auto; padding: 0 1rem; }
+.container-6xl { max-width: 1152px; margin: 0 auto; padding: 0 1rem; }
+.container-7xl { max-width: 1280px; margin: 0 auto; padding: 0 1rem; }
+
+/* Typography Scale - Mobile First */
+.text-h1-mobile { font-size: 2rem; line-height: 1.2; font-weight: 700; }
+.text-h2-mobile { font-size: 1.75rem; line-height: 1.2; font-weight: 700; }
+.text-h3-mobile { font-size: 1.5rem; line-height: 1.2; font-weight: 700; }
+
+/* Desktop Typography */
+@media (min-width: 768px) {
+  .text-h1-mobile { font-size: 3.75rem; }
+  .text-h2-mobile { font-size: 3.125rem; }
+  .text-h3-mobile { font-size: 2.5rem; }
+}
+
+/* Spacing System - Mobile First */
+.space-mobile-xs { padding: 0.5rem; }
+.space-mobile-sm { padding: 1rem; }
+.space-mobile-md { padding: 1.5rem; }
+.space-mobile-lg { padding: 2rem; }
+.space-mobile-xl { padding: 3rem; }
+
+/* Responsive Grid System */
+.grid-mobile-1 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+.grid-mobile-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+.grid-mobile-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.grid-mobile-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+
+/* Responsive adjustments */
+@media (min-width: 384px) {
+  .grid-mobile-2 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 768px) {
+  .grid-mobile-3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 1024px) {
+  .grid-mobile-4 { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* Component Styles */
+.btn-primary-mobile {
+  @apply bg-gradient-to-b from-secondary via-primary-500 to-primary-600 text-white font-bold py-3 px-6 rounded-lg hover:from-primary-500 hover:via-primary-600 hover:to-primary-700 transition-all duration-300 shadow-lg hover:shadow-xl text-center;
+}
+
+.btn-secondary-mobile {
+  @apply border-2 border-primary-500 text-primary-500 font-bold py-3 px-6 rounded-lg hover:bg-primary-50 transition-all duration-300 text-center;
+}
+
+.card-mobile {
+  @apply bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border-0;
+}
+
+.card-hover-mobile {
+  @apply transform hover:scale-105 transition-transform duration-300;
+}
+
+/* Form Elements */
+.input-mobile {
+  @apply w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-700 placeholder-gray-500 bg-white text-sm;
+}
+
+.select-mobile {
+  @apply w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-700 bg-white text-sm appearance-none;
+}
+
+/* Navigation */
+.nav-mobile {
+  @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50;
+}
+
+.nav-desktop {
+  @apply hidden lg:flex items-center lg:space-x-8 ;
+}
+
+/* Mobile Menu */
+.mobile-menu {
+  @apply fixed inset-0 z-50 bg-white transform transition-transform duration-300 ease-in-out;
+}
+
+.mobile-menu-open {
+  @apply translate-x-0;
+}
+
+.mobile-menu-closed {
+  @apply translate-x-full;
+}
+
+/* Hero Section Responsive */
+.hero-mobile {
+  @apply min-h-screen flex flex-col items-center justify-center px-4 py-8;
+}
+
+.hero-desktop {
+  @apply min-h-[80vh] px-16;
+}
+
+/* Category Cards */
+.category-card-mobile {
+  @apply w-16 h-16 rounded-full flex items-center justify-center mb-2;
+}
+
+.category-card-desktop {
+  @apply w-24 h-24 rounded-full flex items-center justify-center mb-4;
+}
+
+/* Vendor Cards */
+.vendor-card-mobile {
+  @apply bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden;
+}
+
+.vendor-card-desktop {
+  @apply hover:shadow-md transition-all duration-300;
+}
+
+/* Responsive Text */
+.text-responsive-h1 {
+  @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight;
+}
+
+.text-responsive-h2 {
+  @apply text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold leading-tight;
+}
+
+.text-responsive-h3 {
+  @apply text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold leading-tight;
+}
+
+.text-responsive-body {
+  @apply text-sm sm:text-base md:text-lg leading-relaxed;
+}
+
+/* Responsive Spacing */
+.py-responsive {
+  @apply py-4 sm:py-6 md:py-8 lg:py-12 xl:py-16;
+}
+
+.px-responsive {
+  @apply px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16;
+}
+
+.mb-responsive {
+  @apply mb-4 sm:mb-6 md:mb-8 lg:mb-12 xl:mb-16;
+}
+
+/* Animation Classes */
+.fade-in-mobile {
+  animation: fadeInMobile 0.6s ease-out;
+}
+
+@keyframes fadeInMobile {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in-mobile {
+  animation: slideInMobile 0.5s ease-out;
+}
+
+@keyframes slideInMobile {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Touch-friendly Interactive Elements */
+.touch-target {
+  @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+}
+
+.touch-button {
+  @apply py-2 px-6 text-base font-medium rounded-2xl transition-all duration-200 active:scale-95;
+}
+
+/* Responsive Image Containers */
+.image-container-mobile {
+  @apply w-full h-32 sm:h-40 md:h-48 rounded-lg overflow-hidden;
+}
+
+.image-container-desktop {
+  @apply w-full h-48 lg:h-56 xl:h-64 rounded-lg overflow-hidden;
+}
+
+/* Loading States */
+.skeleton-mobile {
+  @apply animate-pulse bg-gray-200 rounded;
+}
+
+.skeleton-text {
+  @apply h-4 bg-gray-200 rounded animate-pulse;
+}
+
+.skeleton-avatar {
+  @apply w-8 h-8 bg-gray-200 rounded-full animate-pulse;
+}
+
+/* Accessibility */
+.sr-only {
+  @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+}
+
+.focus-visible {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .dark-mode-card {
+    @apply bg-gray-800 text-white;
+  }
+  
+  .dark-mode-text {
+    @apply text-gray-100;
+  }
+  
+  .dark-mode-border {
+    @apply border-gray-700;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .print-hidden {
+    @apply hidden;
+  }
+  
+  .print-visible {
+    @apply block;
+  }
+}
+
+/* High Contrast Support */
+@media (prefers-contrast: high) {
+  .high-contrast-border {
+    @apply border-2 border-black;
+  }
+  
+  .high-contrast-text {
+    @apply text-black;
+  }
+}
+
+/* Motion Preferences */
+@media (prefers-reduced-motion: reduce) {
+  .respect-motion-preference {
+    @apply transition-none;
+  }
+  
+  .respect-motion-preference * {
+    @apply transition-none animate-none;
+  }
+}
