@@ -1,3 +1,11 @@
+import rentalIcon from '../assets/icons/rentalslogo.svg';
+import rentalTabImg from '../assets/images/rentalstab.png';
+import servicesIcon from '../assets/icons/serviceslogo.svg';
+import servicesTabImg from '../assets/images/servicestab.png';
+import eventsIcon from '../assets/icons/eventslogo.svg';
+import eventsTabImg from '../assets/images/eventstab.png';
+import classifiedsIcon from '../assets/icons/classifiedlogo.svg';
+import classifiedsTabImg from '../assets/images/classifiedtab.png';
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -9,26 +17,26 @@ const RentalTabs = () => {
     {
       id: 'rental',
       name: t('rental'),
-      icon: '/assets/rentalslogo.svg',
-      image: '/assets/rentalstab.png'
+      icon: rentalIcon,
+      image: rentalTabImg
     },
     {
       id: 'services',
       name: t('services'),
-      icon: '/assets/serviceslogo.svg',
-      image: '/assets/servicestab.png'
+      icon: servicesIcon,
+      image: servicesTabImg
     },
     {
       id: 'events',
       name: t('events'),
-      icon: '/assets/eventslogo.svg',
-      image: '/assets/eventstab.png'
+      icon: eventsIcon,
+      image: eventsTabImg
     },
     {
       id: 'classifieds',
       name: t('classifieds'),
-      icon: '/assets/classifiedlogo.svg',
-      image: '/assets/classifiedtab.png'
+      icon: classifiedsIcon,
+      image: classifiedsTabImg
     }
   ]
 

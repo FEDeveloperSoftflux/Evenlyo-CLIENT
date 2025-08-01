@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
-import VendorLogin from "../auth/VendorLogin";
+import VendorRegister from "../auth/VendorRegister";
 
 // Import assets
 import heroImage from '../assets/images/hero-img.png';
@@ -208,7 +208,7 @@ function Hero({ onSearchNow, onReset }) {
       
       {/* Vendor Modal */}
       {vendorModalOpen && (
-      <VendorLogin
+      <VendorRegister
           onClose={closeVendorModal}
           onSwitchToClient={closeVendorModal}
         />

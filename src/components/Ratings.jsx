@@ -1,4 +1,8 @@
 import React from "react";
+import multicriteriaImg from '../assets/images/multicriteria.png';
+import googlereviewImg from '../assets/images/googlereview.png';
+import multicriteriLogo from '../assets/icons/multicriterialogo.svg';
+import googlereviewLogo from '../assets/icons/google-reviews.svg';
 
 const Ratings = () => {
   return (
@@ -33,7 +37,7 @@ const Ratings = () => {
             <div className="flex items-center mb-6">
               <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mr-4">
                 <img
-                  src="/assets/multicriterialogo.svg"
+                  src={multicriteriLogo}
                   alt="multicriteria logo"
                 />
               </div>
@@ -57,7 +61,7 @@ const Ratings = () => {
             {/* Rating Display */}
             <div className=" rounded-lg">
               <img
-                src="/assets/multicriteria.png"
+                src={multicriteriaImg}
                 alt="multicriteria reviews"
                 className="w-100"
               />
@@ -68,7 +72,7 @@ const Ratings = () => {
           <div className="bg-gray-200 rounded-2xl p-6 shadow-lg">
             <div className="flex items-center mb-6">
               <div className="w-12 h-12  rounded-lg flex items-center justify-center mr-4">
-                <img src="/assets/google-reviews.svg" alt="googler logo" />
+                <img src={googlereviewLogo} alt="googler logo" />
               </div>
               <h3 className="text-2xl sm:text-xl font-bold text-gray-900">
                 Google Reviews
@@ -88,7 +92,7 @@ const Ratings = () => {
 
             {/* Google Review Display */}
             <div className=" rounded-lg ">
-              <img src="/assets/googlereview.png" alt="google review" className="w-100" />
+              <img src={googlereviewImg} alt="google review" className="w-100" />
             </div>
           </div>
         </div>

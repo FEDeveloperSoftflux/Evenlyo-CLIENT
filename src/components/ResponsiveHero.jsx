@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import VendorLogin from "../auth/VendorLogin"
+import VendorRegister from "../auth/VendorRegister";
 
 // Import assets
 import locationIcon from '../assets/icons/location.svg';
@@ -187,7 +187,7 @@ function ResponsiveHero() {
       
       {/* Vendor Modal */}
       {vendorModalOpen && (
-        <VendorLogin
+        <VendorRegister
           onClose={closeVendorModal}
           onSwitchToClient={closeVendorModal}
         />

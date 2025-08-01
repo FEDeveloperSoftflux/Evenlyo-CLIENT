@@ -432,14 +432,6 @@ const Register = () => {
       {/* Footer */}
       <Footer />
       
-      {/* Registration Modal 
-      {showRegistrationModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <ClientRegistrationForm onClose={() => setShowRegistrationModal(false)} />
-          </div>
-        </div>
-      )}*/}
 
       {/* Forgot Password Modal */}
       <ForgotPasswordModal 

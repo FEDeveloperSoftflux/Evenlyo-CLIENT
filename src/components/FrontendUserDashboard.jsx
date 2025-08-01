@@ -1,5 +1,8 @@
 import React from 'react'
-
+import DashboardIcon from '../assets/icons/dashbaordicon.svg';
+import NiftyIcon from '../assets/icons/niftyicon.svg';
+import DashboardImg from '../assets/images/dashboardoverview.png';
+import NiftyImg from '../assets/images/niftsgraphsoverview.png';
 const FrontendUserDashboard = () => {
   return (
     <section className="py-16 px-6 lg:px-16 bg-gray-50">
@@ -40,11 +43,11 @@ const FrontendUserDashboard = () => {
           <div className="relative">
             {/* Dashboard Screenshot + Overview Section (Combined) */}
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
-              <img src="../assets/dashboardoverview.png" alt="Dashboard Overview" className=" object-cover" />
+              <img src={DashboardImg} alt="Dashboard Overview" className=" object-cover" />
               {/* Dashboard Overview Section */}
               <div className="p-6">
                 <div className="flex items-center mb-4">
-                  <img src="../assets/dashbaordicon.svg" alt="Dashboard Icon" className="w-6 h-6 mr-2" />
+                  <img src={DashboardIcon} alt="Dashboard Icon" className="w-6 h-6 mr-2" />
                   <h4 className="text-sm font-semibold text-gray-900">Dashboard Overview</h4>
                 </div>
                 <p className="text-xs text-gray-600 mb-4">
@@ -70,11 +73,11 @@ const FrontendUserDashboard = () => {
 
             {/* Nifty Graphs Section + Overview (Combined) */}
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
-              <img src="../assets/niftsgraphsoverview.png" alt="Nifty Graphs Overview" className="object-cover" />
+              <img src={NiftyImg} alt="Nifty Graphs Overview" className="object-cover" />
               {/* Nifty Graphs Overview Section */}
               <div className="p-6">
                 <div className="flex items-center mb-4">
-                  <img src="../assets/niftyicon.svg" alt="Nifty Icon" className="w-6 h-6 mr-2" />
+                  <img src={NiftyIcon} alt="Nifty Icon" className="w-6 h-6 mr-2" />
                   <h4 className="text-sm font-semibold text-gray-900">Nifty Graphs and Data</h4>
                 </div>
                 <p className="text-xs text-gray-600 mb-2">

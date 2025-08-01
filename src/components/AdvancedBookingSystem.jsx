@@ -1,5 +1,6 @@
 import React from "react";
 import { useTranslation } from 'react-i18next';
+import QR from '../assets/images/QR.png';
 
 const AdvancedBookingSystem = () => {
   const { t } = useTranslation();
@@ -12,7 +13,7 @@ const AdvancedBookingSystem = () => {
           <div className="flex justify-center items-center h-full md:order-2 order-1 w-full md:pr-8">
             <div className="flex flex-col justify-center items-center w-full h-full bg-white">
               <img
-                src="/assets/QR CODE.png"
+                src={QR}
                 alt="QR Code"
                 className="w-80 h-40 xs:w-48 xs:h-48 sm:w-80 sm:h-56 md:w-80 md:h-80 lg:w-96 lg:h-96 object-contain"
                 onError={(e) => {

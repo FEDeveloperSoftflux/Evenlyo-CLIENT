@@ -12,9 +12,9 @@ const CustomerShowcase = () => {
   
   // Multiple copies of images for smooth infinite scroll
   const showcaseImages = [
-    '/assets/customershowcase1.png',
-    '/assets/customershowcase2.png',
-    '/assets/customershowcase3.png'
+    customerShowcase1,
+    customerShowcase2,
+    customerShowcase3
   ];
   
   // Create multiple copies for smooth infinite scroll

@@ -1,3 +1,4 @@
+import categoryCardIcon from '../assets/icons/categorycard.svg';
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -368,7 +369,7 @@ const Categories = ({ selectedCategory, setSelectedCategory, hideText = false })
                         {/* Vendor Image */}
                         <div className="relative image-container-mobile sm:image-container-desktop bg-gradient-to-br from-gray-200 to-gray-300">
                           <img
-                            src={`/assets/categorycard.svg`}
+                            src={categoryCardIcon}
                             alt={vendor.name}
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -376,9 +377,6 @@ const Categories = ({ selectedCategory, setSelectedCategory, hideText = false })
                               e.target.nextSibling.style.display = 'flex'
                             }}
                           />
-                          <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 hidden items-center justify-center">
-                            <span className="text-gray-500 text-sm">DJ Image</span>
-                          </div>
                         </div>
 
                         {/* Vendor Details */}

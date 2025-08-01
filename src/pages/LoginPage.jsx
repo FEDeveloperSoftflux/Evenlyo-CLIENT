@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import heroImage from '../assets/images/hero-img.png'; 
 import { Link } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import Header from "../components/Header";
@@ -91,7 +92,7 @@ const LoginPage = () => {
       <section
         className="relative min-h-screen bg-cover bg-center bg-no-repeat flex items-center bg-gray-900"
         style={{
-          backgroundImage: `url('heroImage'), linear-gradient(135deg, #1f2937 0%, #374151 100%)`,
+          backgroundImage: `url(${heroImage})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",

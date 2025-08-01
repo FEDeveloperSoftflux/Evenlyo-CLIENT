@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import TestApiConnection from './components/TestApiConnection';
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";

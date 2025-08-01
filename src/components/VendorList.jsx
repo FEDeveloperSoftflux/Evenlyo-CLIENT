@@ -15,7 +15,7 @@ const VendorList = ({ selectedCategory }) => {
     {
       id: 1,
       name: "Pulse Events & Entertainment",
-      logo: "/assets/Vendor1.png",
+      logo: vendor1Png,
       services: "DJs, Sound & Lighting, Live Bands, MCs",
       location: "Los Angeles, CA",
       coverage: "Greater Los Angeles, Orange County",
@@ -28,7 +28,7 @@ const VendorList = ({ selectedCategory }) => {
     {
       id: 2,
       name: "PartyStar Performers",
-      logo: "/assets/Vendor2.png",
+      logo: vendor2Png,
       services: "Magicians, Dancers, Clowns, Kids Entertainment",
       location: "Austin, TX",
       coverage: "Austin, San Antonio, Houston",
@@ -41,7 +41,7 @@ const VendorList = ({ selectedCategory }) => {
     {
       id: 3,
       name: "Midnight Beats",
-      logo: "/assets/Vendor3.png",
+      logo: vendor3Png,
       services: "EDM DJs, Light Shows, Laser Displays",
       location: "Las Vegas, NV",
       coverage: "Nevada, California",
@@ -56,7 +56,7 @@ const VendorList = ({ selectedCategory }) => {
     {
       id: 4,
       name: "Gourmet Bites Catering",
-      logo: "/assets/Vendor3.png",
+      logo: vendor3Png,
       services: "Buffets, Plated Dinners, Bartending, Desserts",
       location: "New York, NY",
       coverage: "NYC, Long Island, New Jersey",
@@ -69,7 +69,7 @@ const VendorList = ({ selectedCategory }) => {
     {
       id: 5,
       name: "Sip & Serve Bar Co.",
-      logo: "/assets/Vendor2.png",
+      logo: vendor2Png,
       services: "Mocktails, Mixology, Bartenders, Beverage Stations",
       location: "Chicago, IL",
       coverage: "Chicagoland & Suburbs",
@@ -82,7 +82,7 @@ const VendorList = ({ selectedCategory }) => {
     {
       id: 6,
       name: "Flavors of Joy",
-      logo: "/assets/Vendor1.png",
+      logo: vendor1Png,
       services: "Cultural Cuisines, Food Trucks, Buffet Setup",
       location: "San Francisco, CA",
       coverage: "Bay Area & Napa Valley",
@@ -97,7 +97,7 @@ const VendorList = ({ selectedCategory }) => {
     {
       id: 7,
       name: "Blissful Moments Decor",
-      logo: "/assets/Vendor2.png",
+      logo: vendor2Png,
       services: "Floral Arrangements, Backdrops, Drapery, Centerpieces",
       location: "Miami, FL",
       coverage: "Miami-Dade, Broward, Palm Beach",
@@ -110,7 +110,7 @@ const VendorList = ({ selectedCategory }) => {
     {
       id: 8,
       name: "Elegant Themes & Touches",
-      logo: "/assets/Vendor1.png",
+      logo: vendor1Png,
       services: "Themed Decor, Custom Props, Lighting",
       location: "Seattle, WA",
       coverage: "Washington State",
@@ -123,7 +123,7 @@ const VendorList = ({ selectedCategory }) => {
     {
       id: 9,
       name: "EventArtistry",
-      logo: "/assets/Vendor3.png",
+      logo: vendor3Png,
       services: "Stage Styling, Wedding Mandaps, Cultural Decor",
       location: "Atlanta, GA",
       coverage: "Georgia & Carolinas",
@@ -138,7 +138,7 @@ const VendorList = ({ selectedCategory }) => {
     {
       id: 10,
       name: "Elite Event Venues",
-      logo: "/assets/Vendor3.png",
+      logo: vendor3Png,
       services: "Indoor & Outdoor Venues, Banquet Halls, Gardens",
       location: "Chicago, IL",
       coverage: "Chicagoland Area",
@@ -151,7 +151,7 @@ const VendorList = ({ selectedCategory }) => {
     {
       id: 11,
       name: "Tentify Rentals",
-      logo: "/assets/Vendor2.png",
+      logo: vendor2Png,
       services: "Luxury Tents, Furniture Rentals, Heaters, Lighting",
       location: "Houston, TX",
       coverage: "Texas Statewide",
@@ -164,7 +164,7 @@ const VendorList = ({ selectedCategory }) => {
     {
       id: 12,
       name: "Skyline Rooftop Spaces",
-      logo: "/assets/Vendor1.png",
+      logo: vendor1Png,
       services: "Rooftop Venues, Bar Spaces, City Views",
       location: "New York, NY",
       coverage: "Manhattan, Brooklyn, Queens",
@@ -179,7 +179,7 @@ const VendorList = ({ selectedCategory }) => {
     {
       id: 13,
       name: "Pro Event Staffing",
-      logo: "/assets/Vendor1.png",
+      logo: vendor1Png,
       services: "Wait Staff, Security, Clean-Up Crew, Ushers",
       location: "Dallas, TX",
       coverage: "Dallas-Fort Worth Metroplex",
@@ -192,7 +192,7 @@ const VendorList = ({ selectedCategory }) => {
     {
       id: 14,
       name: "Golden Hands Hospitality",
-      logo: "/assets/Vendor2.png",
+      logo: vendor2Png,
       services: "Valet, Greeters, Kitchen Helpers, On-Demand Staff",
       location: "Phoenix, AZ",
       coverage: "Arizona & Las Vegas",
@@ -205,7 +205,7 @@ const VendorList = ({ selectedCategory }) => {
     {
       id: 15,
       name: "Event Angels",
-      logo: "/assets/Vendor3.png",
+      logo: vendor3Png,
       services: "Bridal Assistants, Event Managers, Tech Crew",
       location: "San Diego, CA",
       coverage: "California South Coast",

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import Story1 from '../assets/images/success1.png';
+import Story2 from '../assets/images/success2.png';
 
 const SuccessStories = () => {
   const [currentStory, setCurrentStory] = useState(0);
@@ -11,7 +13,7 @@ const SuccessStories = () => {
       author: "Sina Pérez",
       country: "Mexico",
       flag: "🇲🇽",
-      avatar: "/assets/success1.png",
+      avatar: Story1,
       bgColor: "bg-red-400"
     },
     {
@@ -21,7 +23,7 @@ const SuccessStories = () => {
       author: "Matúš Záhorec",
       country: "Slovakia",
       flag: "🇸🇰",
-      avatar: "/assets/success2.png",
+      avatar: Story2,
       bgColor: "bg-green-400"
     }
   ];
