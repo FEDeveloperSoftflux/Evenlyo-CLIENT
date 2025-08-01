@@ -1,0 +1,12 @@
+# Sample Configuration File
+# This is a demonstration file created by DEVabbasi
+
+app_name=Evenlyo-Client
+version=1.0.0
+author=DEVabbasi
+email=hammad.abbasi211@gmail.com
+
+# Sample settings
+debug_mode=false
+api_timeout=30
+max_retries=3
