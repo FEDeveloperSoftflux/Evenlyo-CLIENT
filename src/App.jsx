@@ -13,6 +13,8 @@ import AddToCartPage from "./pages/AddToCartPage";
 import VendorProfile from "./pages/VendorProfile";
 import ChatPage from "./pages/ChatPage";
 import Notification from "./pages/Notification";
+import VendorLogin from "./pages/vendor/VendorLogin";
+import VendorDashboardPlaceholder from "./pages/vendor/VendorDashboardPlaceholder";
 
 // ScrollToTop component
 function ScrollToTop() {
@@ -45,6 +47,8 @@ function App() {
           <Route path="/vendor/:id" element={<VendorProfile />} />
           <Route path="/chat/:vendorId" element={<ChatPage />} />
           <Route path="/notifications" element={<Notification />} />
+          <Route path="/vendor/login" element={<VendorLogin />} />
+          <Route path="/vendor/dashboard" element={<VendorDashboardPlaceholder />} />
         </Routes>
       </div>
     </Router>

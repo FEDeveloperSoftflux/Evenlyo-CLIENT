@@ -1,12 +1,12 @@
 import React from 'react';
 
-const VerificationStep = ({ activeTab, setActiveTab, phone, setPhone, email, setEmail, onBack, onContinue }) => (
+const VendorVerificationStep = ({ activeTab, setActiveTab, phone, setPhone, email, setEmail, onBack, onContinue }) => (
   <>
-    <h2 className="text-2xl font-bold text-center mb-4">Verification</h2>
-    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-6 text-center">
-      <p className="text-sm text-green-700">For testing: Enter any valid email address</p>
+    <h2 className="text-2xl font-bold text-center mb-4">Vendor Account Verification</h2>
+    <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-6 text-center">
+      <p className="text-sm text-purple-700">Vendor Portal: Enter your business email address for verification</p>
     </div>
-    <div className="relative flex mb-6 bg-gray-100 rounded-full p-1 h-12 ">
+    <div className="relative flex mb-6 bg-gray-100 rounded-full p-1 h-12">
       {/* Sliding pill background */}
       <span
         className="absolute top-1 left-1 h-10 w-1/2 rounded-full btn-primary-mobile shadow transition-all duration-300"
@@ -20,7 +20,7 @@ const VerificationStep = ({ activeTab, setActiveTab, phone, setPhone, email, set
         }`}
         onClick={() => setActiveTab('phone')}
       >
-        Phone Number
+        Business Phone
       </button>
       <button
         className={`flex-1 z-10 py-2 rounded-full font-semibold transition-all duration-200 focus:outline-none ${
@@ -28,27 +28,27 @@ const VerificationStep = ({ activeTab, setActiveTab, phone, setPhone, email, set
         }`}
         onClick={() => setActiveTab('email')}
       >
-        Email Address
+        Business Email
       </button>
     </div>
     {activeTab === 'phone' ? (
       <div className="mb-6">
-        <label className="block text-base font-medium text-gray-800 mb-2">Phone Number</label>
+        <label className="block text-base font-medium text-gray-800 mb-2">Business Phone Number</label>
         <input
           type="tel"
-          className="w-full px-4 py-2 border border-gray-200 rounded-2xl bg-gray-100 focus:ring-2 focus:ring-pink-400 focus:border-pink-400 outline-none transition-all duration-300 "
-          placeholder="Enter Your Phone Number"
+          className="w-full px-4 py-2 border border-gray-200 rounded-2xl bg-gray-100 focus:ring-2 focus:ring-pink-400 focus:border-pink-400 outline-none transition-all duration-300"
+          placeholder="Enter Your Business Phone Number"
           value={phone}
           onChange={e => setPhone(e.target.value)}
         />
       </div>
     ) : (
       <div className="mb-6">
-        <label className="block text-base font-medium text-gray-800 mb-2">Email Address</label>
+        <label className="block text-base font-medium text-gray-800 mb-2">Business Email Address</label>
         <input
           type="email"
           className="w-full px-4 py-2 border border-gray-200 rounded-2xl bg-gray-100 focus:ring-2 focus:ring-pink-400 focus:border-pink-400 outline-none transition-all duration-300"
-          placeholder="Enter Your Email Address"
+          placeholder="Enter Your Business Email Address"
           value={email}
           onChange={e => setEmail(e.target.value)}
         />
@@ -71,4 +71,4 @@ const VerificationStep = ({ activeTab, setActiveTab, phone, setPhone, email, set
   </>
 );
 
-export default VerificationStep; 
+export default VendorVerificationStep;

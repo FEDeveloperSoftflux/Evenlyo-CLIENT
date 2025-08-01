@@ -1,23 +1,19 @@
-
 import React, { useState, useRef } from 'react';
-import VerificationStep from './VerificationStep';
-import OtpStep from './OtpStep';
-import VerificationSuccess from './VerificationSuccess';
+import VendorVerificationStep from './VendorVerificationStep';
+import VendorOtpStep from './VendorOtpStep';
+import VendorVerificationSuccess from './VendorVerificationSuccess';
 import api from '../store/api';
 
-const ForgotPasswordModal = ({ isOpen, onClose }) => {
+const VendorForgotPasswordModal = ({ isOpen, onClose }) => {
   const [step, setStep] = useState(1); // 1: verify, 2: otp, 3: reset, 4: success
   const [activeTab, setActiveTab] = useState('phone');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  // OTP state
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(30);
   const inputs = useRef([]);
-  // Reset password state
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  // Error state
   const [error, setError] = useState(null);
 
   React.useEffect(() => {
@@ -70,20 +66,15 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  // --- Handlers for dummy functionality (no API calls) ---
-  // Step 1: Send OTP (Dummy)
   const handleVerificationContinue = () => {
     setError(null);
     if (!email) {
       setError('Please enter your email address.');
       return;
     }
-    // Dummy success - just proceed to next step
-    console.log('Dummy: OTP would be sent to', email);
     setStep(2);
   };
 
-  // Step 2: Verify OTP (Dummy)
   const handleOtpVerify = () => {
     setError(null);
     const enteredOtp = otp.join('');
@@ -91,21 +82,15 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
       setError('Please enter the 6-digit OTP');
       return;
     }
-    // Dummy success - accept any 6-digit OTP
-    console.log('Dummy: OTP verified:', enteredOtp);
     setStep(3);
   };
 
-  // Step 2: Resend OTP (Dummy)
   const handleResendOtp = () => {
     setError(null);
-    // Dummy success - reset OTP and timer
-    console.log('Dummy: OTP resent to', email);
     setOtp(['', '', '', '', '', '']);
     setTimer(30);
   };
 
-  // Step 3: Reset Password (Dummy)
   const handleResetPassword = () => {
     setError(null);
     if (!password || !confirmPassword) {
@@ -120,8 +105,6 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
       setError('Password must be at least 6 characters long.');
       return;
     }
-    // Dummy success - password would be reset
-    console.log('Dummy: Password reset for', email);
     setStep(4);
   };
 
@@ -129,9 +112,8 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-md">
       <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-xl relative max-h-[90vh] overflow-y-auto mx-2">
         {error && <div className="text-red-500 text-center mb-4">{error}</div>}
-        {/* Step 1: Verification */}
         {step === 1 && (
-          <VerificationStep
+          <VendorVerificationStep
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             phone={phone}
@@ -142,9 +124,8 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
             onContinue={handleVerificationContinue}
           />
         )}
-        {/* Step 2: OTP */}
         {step === 2 && (
-          <OtpStep
+          <VendorOtpStep
             otp={otp}
             setOtp={setOtp}
             timer={timer}
@@ -155,10 +136,9 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
             onResend={handleResendOtp}
           />
         )}
-        {/* Step 3: Reset Password */}
         {step === 3 && (
           <div>
-            <h2 className="text-2xl font-bold text-center mb-8">Re- Set Password</h2>
+            <h2 className="text-2xl font-bold text-center mb-8">Re-Set Password</h2>
             <div className="mb-6">
               <label className="block text-base font-medium text-gray-800 mb-2">Enter New Password</label>
               <input
@@ -170,11 +150,11 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
               />
             </div>
             <div className="mb-8">
-              <label className="block text-base font-medium text-gray-800 mb-2">Re - Enter Password</label>
+              <label className="block text-base font-medium text-gray-800 mb-2">Re-Enter Password</label>
               <input
                 type="password"
                 className="w-full px-4 py-2 border border-gray-200 rounded-2xl bg-gray-100 focus:ring-1 focus:ring-pink-400 focus:border-pink-400 outline-none transition-all duration-300"
-                placeholder="Enter Your Password"
+                placeholder="Confirm Your Password"
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
               />
@@ -189,13 +169,13 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
             </div>
           </div>
         )}
-        {/* Step 4: Success Animation */}
         {step === 4 && (
-          <VerificationSuccess title="Password Changed!" message="Your password has been updated successfully." />
+          <VendorVerificationSuccess title="Password Changed!" message="Your password has been updated successfully." />
         )}
       </div>
     </div>
   );
 };
 
-export default ForgotPasswordModal; 
+export default VendorForgotPasswordModal;
+

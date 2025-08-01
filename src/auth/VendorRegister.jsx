@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import UploadIcon from '../assets/icons/Upload.svg';
-import OtpStep from './OtpStep';
-import VerificationSuccess from './VerificationSuccess'
+import VendorOtpStep from '../vendor-auth/VendorOtpStep';
+import VendorVerificationSuccess from '../vendor-auth/VendorVerificationSuccess'
 
 // Import assets
 import entertainIcon from '../assets/icons/entertain.svg';
@@ -889,9 +890,9 @@ const VendorRegister = ({ onClose, onSwitchToClient }) => {
           {/* If success modal, show only success, else show normal content */}
           {showSuccessModal ? (
             <>
-              <VerificationSuccess
+              <VendorVerificationSuccess
                 title="Successfully Verified!"
-                message=""
+                message="Welcome to the Vendor Portal!"
               />
             </>
           ) : (
@@ -938,6 +939,24 @@ const VendorRegister = ({ onClose, onSwitchToClient }) => {
                     </button>
                   </div>
                 </form>
+                
+                {/* Login Link */}
+                <div className="flex items-center justify-center mt-6">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">
+                      Already have an account?
+                    </p>
+                    <Link 
+                      to="/vendor/login" 
+                      className="inline-flex items-center px-4 py-2 mt-2 text-sm font-medium text-pink-600 bg-pink-50 border border-pink-200 rounded-lg hover:bg-pink-100 hover:text-pink-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                      </svg>
+                      Login Here
+                    </Link>
+                  </div>
+                </div>
               </div>
             </>
           )}
@@ -956,7 +975,7 @@ const VendorRegister = ({ onClose, onSwitchToClient }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <OtpStep
+            <VendorOtpStep
               otp={otp}
               setOtp={setOtp}
               timer={30}

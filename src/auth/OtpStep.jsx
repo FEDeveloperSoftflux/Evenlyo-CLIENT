@@ -1,8 +1,11 @@
 import React from 'react';
 
 const OtpStep = ({ otp, setOtp, timer, inputs, handleOtpChange, handleOtpKeyDown, onVerify, onResend }) => (
-  <div className="flex flex-col items-center  ">
-    <h2 className="text-2xl font-bold text-center mb-8">Enter OTP Code</h2>
+  <div className="flex flex-col items-center">
+    <h2 className="text-2xl font-bold text-center mb-4">Enter OTP Code</h2>
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6 text-center">
+      <p className="text-sm text-blue-700">For testing: Enter any 6-digit number (e.g., 123456)</p>
+    </div>
     <div className="flex space-x-4 mb-6">
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <input
