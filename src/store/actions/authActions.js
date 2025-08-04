@@ -1,4 +1,5 @@
 import api from '../../services/api';
+import googleAuthService from '../../services/googleAuth';
 import { loginStart, loginSuccess, loginFailure, logout, setUser } from '../slices/authSlice';
 
 // Login user
@@ -86,5 +87,67 @@ export const updateUserProfile = (profileData) => async (dispatch) => {
   } catch (error) {
     const message = error.response?.data?.message || 'Failed to update profile';
     return { success: false, error: message };
+  }
+};
+
+// Google Sign In
+export const signInWithGoogle = () => async (dispatch) => {
+  dispatch(loginStart());
+  try {
+    const result = await googleAuthService.signInWithGoogle();
+    if (result.success) {
+      dispatch(loginSuccess({ user: result.user }));
+      return { success: true, user: result.user };
+    } else {
+      dispatch(loginFailure(result.error));
+      return { success: false, error: result.error };
+    }
+  } catch (error) {
+    const message = error.message || 'Google sign-in failed';
+    dispatch(loginFailure(message));
+    return { success: false, error: message };
+  }
+};
+
+// Google Sign In with Redirect (for mobile)
+export const signInWithGoogleRedirect = () => async (dispatch) => {
+  dispatch(loginStart());
+  try {
+    await googleAuthService.signInWithGoogleRedirect();
+    // The redirect will happen, result will be handled after page reload
+  } catch (error) {
+    const message = error.message || 'Google redirect sign-in failed';
+    dispatch(loginFailure(message));
+    return { success: false, error: message };
+  }
+};
+
+// Handle Google Redirect Result
+export const handleGoogleRedirectResult = () => async (dispatch) => {
+  dispatch(loginStart());
+  try {
+    const result = await googleAuthService.getRedirectResult();
+    if (result.success) {
+      dispatch(loginSuccess({ user: result.user }));
+      return { success: true, user: result.user };
+    } else {
+      dispatch(loginFailure(result.error));
+      return { success: false, error: result.error };
+    }
+  } catch (error) {
+    const message = error.message || 'Google redirect result failed';
+    dispatch(loginFailure(message));
+    return { success: false, error: message };
+  }
+};
+
+// Enhanced Logout (includes Google sign out)
+export const logoutUserComplete = () => async (dispatch) => {
+  try {
+    await googleAuthService.signOut();
+  } catch (error) {
+    console.error('Complete logout error:', error);
+  } finally {
+    dispatch(logout());
   }
 };
