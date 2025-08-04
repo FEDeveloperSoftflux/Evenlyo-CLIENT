@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Use Vite environment variable for API base URL
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1',
 });
 
 // Always send cookies (for HTTP-only cookie auth)
