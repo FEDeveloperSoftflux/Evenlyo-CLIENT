@@ -3,7 +3,8 @@ import authReducer from './slices/authSlice';
 import uiReducer from './slices/uiSlice';
 import clientReducer from './slices/clientSlice';
 import vendorReducer from './slices/vendorSlice';
-import adminReducer from './slices/adminSlice';
+import categoriesReducer from './slices/categoriesSlice';
+
 
 const store = configureStore({
   reducer: {
@@ -11,7 +12,7 @@ const store = configureStore({
     ui: uiReducer,
     client: clientReducer,
     vendor: vendorReducer,
-    admin: adminReducer,
+    categories: categoriesReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

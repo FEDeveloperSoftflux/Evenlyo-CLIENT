@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import VerificationStep from './VerificationStep';
 import OtpStep from './OtpStep';
 import VerificationSuccess from './VerificationSuccess';
-import api from '../store/api';
+import authService from '../services/authService';
 
 const ForgotPasswordModal = ({ isOpen, onClose }) => {
   const [step, setStep] = useState(1); // 1: verify, 2: otp, 3: reset, 4: success
@@ -70,43 +70,67 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  // --- Handlers for dummy functionality (no API calls) ---
-  // Step 1: Send OTP (Dummy)
-  const handleVerificationContinue = () => {
+  // Step 1: Send OTP
+  const handleVerificationContinue = async () => {
     setError(null);
+    setStep(1);
     if (!email) {
       setError('Please enter your email address.');
       return;
     }
-    // Dummy success - just proceed to next step
-    console.log('Dummy: OTP would be sent to', email);
-    setStep(2);
+    try {
+      const otpResponse = await authService.sendOtp({ email, type: 'reset' });
+      if (otpResponse.success) {
+        console.log('OTP sent to:', email);
+        setStep(2);
+      } else {
+        setError(otpResponse.error);
+      }
+    } catch (err) {
+      setError('An unexpected error occurred.');
+    }
   };
 
-  // Step 2: Verify OTP (Dummy)
-  const handleOtpVerify = () => {
+  // Step 2: Verify OTP
+  const handleOtpVerify = async () => {
     setError(null);
     const enteredOtp = otp.join('');
     if (enteredOtp.length !== 6) {
       setError('Please enter the 6-digit OTP');
       return;
     }
-    // Dummy success - accept any 6-digit OTP
-    console.log('Dummy: OTP verified:', enteredOtp);
-    setStep(3);
+    try {
+      const verifyResponse = await authService.verifyOtp({ email, otp: enteredOtp, type: 'reset' });
+      if (verifyResponse.success) {
+        console.log('OTP verified:', enteredOtp);
+        setStep(3);
+      } else {
+        setError(verifyResponse.error);
+      }
+    } catch (err) {
+      setError('An unexpected error occurred.');
+    }
   };
 
-  // Step 2: Resend OTP (Dummy)
-  const handleResendOtp = () => {
+  // Step 2: Resend OTP
+  const handleResendOtp = async () => {
     setError(null);
-    // Dummy success - reset OTP and timer
-    console.log('Dummy: OTP resent to', email);
-    setOtp(['', '', '', '', '', '']);
-    setTimer(30);
+    try {
+      const resendResponse = await authService.sendOtp({ email, type: 'reset' });
+      if (resendResponse.success) {
+        console.log('OTP resent to:', email);
+        setOtp(['', '', '', '', '', '']);
+        setTimer(30);
+      } else {
+        setError(resendResponse.error);
+      }
+    } catch (err) {
+      setError('An unexpected error occurred.');
+    }
   };
 
-  // Step 3: Reset Password (Dummy)
-  const handleResetPassword = () => {
+  // Step 3: Reset Password
+  const handleResetPassword = async () => {
     setError(null);
     if (!password || !confirmPassword) {
       setError('Please enter and confirm your new password.');
@@ -120,9 +144,17 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
       setError('Password must be at least 6 characters long.');
       return;
     }
-    // Dummy success - password would be reset
-    console.log('Dummy: Password reset for', email);
-    setStep(4);
+    try {
+      const resetResponse = await authService.resetPassword({ email, password });
+      if (resetResponse.success) {
+        console.log('Password reset for:', email);
+        setStep(4);
+      } else {
+        setError(resetResponse.error);
+      }
+    } catch (err) {
+      setError('An unexpected error occurred.');
+    }
   };
 
   return (

@@ -1,34 +1,55 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginUser } from '../store/actions/authActions';
+import ForgotPasswordModal from './ForgotPasswordModal';
+import authService from '../services/authService';
 
-const ClientLogin = ({ onClose, onSwitchToVendor }) => {
+const ClientLogin = ({ onClose, onSwitchToVendor, onSwitchToRegister }) => {
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.auth);
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    otp: "",
+    rememberMe: false,
   });
-  const [isOtpSent, setIsOtpSent] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
+  const [error, setError] = useState(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle login logic here
-    if (!isOtpSent) {
-      setIsOtpSent(true);
-      console.log("OTP sent to:", formData.email);
-    } else if (!isVerified) {
-      if (formData.otp === "123456") {
-        // Demo OTP
-        setIsVerified(true);
-        console.log("OTP verified successfully.");
+    setError(null);
+    
+    try {
+      const result = await dispatch(loginUser({
+        email: formData.email,
+        password: formData.password,
+      }));
+      
+      if (result.success) {
+        console.log('Login successful:', result.user);
+        // Force page reload to trigger fresh auth state check
+        window.location.reload();
+        // Alternative: You could close modal and let header update naturally
+        // onClose();
       } else {
-        console.log("Invalid OTP");
+        setError(result.error);
       }
+    } catch (err) {
+      setError('An unexpected error occurred.');
     }
+  };
+
+  const handleForgotPassword = () => {
+    setShowForgotPassword(true);
   };
 
   return (
@@ -54,23 +75,7 @@ const ClientLogin = ({ onClose, onSwitchToVendor }) => {
           </svg>
         </button>
 
-        {/* OTP Verification */}
-        {isOtpSent && !isVerified && (
-          <div className="pt-8">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Enter OTP
-            </label>
-            <input
-              type="text"
-              name="otp"
-              value={formData.otp}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder="Enter the OTP"
-              required
-            />
-          </div>
-        )}
+        {error && <div className="text-red-500 text-center mb-4">{error}</div>}
 
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Login</h2>
@@ -112,22 +117,30 @@ const ClientLogin = ({ onClose, onSwitchToVendor }) => {
 
           <div className="flex items-center justify-between">
             <label className="flex items-center">
-              <input type="checkbox" className="mr-2" />
+              <input 
+                type="checkbox" 
+                name="rememberMe"
+                checked={formData.rememberMe}
+                onChange={handleInputChange}
+                className="mr-2" 
+              />
               <span className="text-sm text-gray-600">Remember me</span>
             </label>
-            <a
-              href="#"
+            <button
+              type="button"
+              onClick={handleForgotPassword}
               className="text-sm text-primary-600 hover:text-primary-700"
             >
               Forgot Password?
-            </a>
+            </button>
           </div>
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white font-bold py-3 px-4 rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all duration-300 shadow-lg"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white font-bold py-3 px-4 rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Login
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
@@ -179,8 +192,17 @@ const ClientLogin = ({ onClose, onSwitchToVendor }) => {
           </div>
         </div>
 
-        {/* Switch to Vendor Login */}
-        <div className="mt-6 text-center">
+        {/* Switch to Client Register */}
+        <div className="mt-6 text-center space-y-2">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{" "}
+            <button
+              onClick={onSwitchToRegister}
+              className="text-primary-600 hover:text-primary-700 font-medium"
+            >
+              Sign up here
+            </button>
+          </p>
           <p className="text-sm text-gray-600">
             Are you a vendor?{" "}
             <button
@@ -192,6 +214,14 @@ const ClientLogin = ({ onClose, onSwitchToVendor }) => {
           </p>
         </div>
       </div>
+      
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <ForgotPasswordModal
+          isOpen={showForgotPassword}
+          onClose={() => setShowForgotPassword(false)}
+        />
+      )}
     </div>
   );
 };

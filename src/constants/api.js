@@ -27,14 +27,14 @@ export const endPoints = {
   auth: {
     login: 'client/login',
     register: 'client/register',
-    logout: 'client/logout',
+    logout: 'auth/logout',
     refreshToken: 'client/refresh-token',
-    sendOtp: 'client/send-otp',
-    verifyOtp: 'client/verify-otp',
-    forgotPassword: 'client/forgot-password',
-    resetPassword: 'client/reset-password',
-    changePassword: 'client/change-password',
-    validateSession: 'client/validate-session',
+    sendOtp: 'auth/send-otp',
+    verifyOtp: 'auth/verify-forgot-otp',
+    forgotPassword: 'auth/forgot-password',
+    resetPassword: 'auth/reset-password',
+    changePassword: 'auth/change-password',
+    me: 'auth/me',
   },
 
   // Client profile endpoints
@@ -77,10 +77,10 @@ export const endPoints = {
 
   // Category endpoints
   categories: {
-    all: 'client/categories',
-    byId: (id) => `client/categories/${id}`,
-    subcategories: (id) => `client/categories/${id}/subcategories`,
-    vendors: (id) => `client/categories/${id}/vendors`,
+    all: '/categories',
+    byId: (id) => `/categories/${id}`,
+    subcategories: (id) => `/categories/${id}/subcategories`,
+    // vendors: (id) => `client/categories/${id}/vendors`,
   },
 
   // Events endpoints

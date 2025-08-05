@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { useDispatch } from 'react-redux';
+import { fetchCurrentUser } from './store/actions/authActions';
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import BookingPage from "./pages/BookingPage";
@@ -16,6 +18,7 @@ import Notification from "./pages/Notification";
 import VendorLogin from "./pages/vendor/VendorLogin";
 import VendorDashboardPlaceholder from "./pages/vendor/VendorDashboardPlaceholder";
 
+
 // ScrollToTop component
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -27,11 +30,18 @@ function ScrollToTop() {
 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const dispatch = useDispatch();
+
+  // Initialize authentication state on app startup
+  // useEffect(() => {
+  //   dispatch(fetchCurrentUser());
+  // }, [dispatch]);
 
   return (
     <Router>
       <ScrollToTop />
       <div className="App">
+
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />

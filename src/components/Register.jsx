@@ -15,7 +15,7 @@ const Register = () => {
     setMessage('');
     setError('');
     try {
-      const res = await axios.post('/api/clients/register', form);
+      const res = await axios.post('/client/register', form);
       setMessage(res.data.message);
       setForm({ name: '', email: '', password: '' });
     } catch (err) {

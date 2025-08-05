@@ -2,7 +2,7 @@ import axios from 'axios';
 import store from '../store';
 
 // API base URL - can be configured via environment variables (Vite uses import.meta.env)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/';
 
 // Create axios instance
 const api = axios.create({
@@ -18,13 +18,13 @@ api.interceptors.request.use(
   (config) => {
     // Always send cookies for HTTP-only cookie auth
     config.withCredentials = true;
-    
+
     // Add any additional headers if needed
     const state = store.getState();
     if (state.auth.user) {
       // Could add additional auth headers if needed
     }
-    
+
     return config;
   },
   (error) => {
@@ -47,7 +47,7 @@ api.interceptors.response.use(
         window.location.href = '/login';
       }
     }
-    
+
     return Promise.reject(error);
   }
 );

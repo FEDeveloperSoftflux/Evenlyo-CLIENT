@@ -1,16 +1,24 @@
-import api from '../../services/api';
+import authService from '../../services/authService';
 import googleAuthService from '../../services/googleAuth';
 import { loginStart, loginSuccess, loginFailure, logout, setUser } from '../slices/authSlice';
+
+import { endPoints } from '../../constants/api';
 
 // Login user
 export const loginUser = (credentials) => async (dispatch) => {
   dispatch(loginStart());
   try {
-    const response = await api.post('/auth/login', credentials);
-    dispatch(loginSuccess({ user: response.data.user }));
-    return { success: true, user: response.data.user };
+    const result = await authService.login(credentials);
+    if (result.success) {
+      authService.saveUserData(result.user);
+      dispatch(loginSuccess({ user: result.user }));
+      return { success: true, user: result.user };
+    } else {
+      dispatch(loginFailure(result.error));
+      return { success: false, error: result.error };
+    }
   } catch (error) {
-    const message = error.response?.data?.message || 'Login failed';
+    const message = error.message || 'Login failed';
     dispatch(loginFailure(message));
     return { success: false, error: message };
   }
@@ -20,7 +28,7 @@ export const loginUser = (credentials) => async (dispatch) => {
 export const registerUser = (userData) => async (dispatch) => {
   dispatch(loginStart());
   try {
-    const response = await api.post('/auth/register', userData);
+    const response = await api.post(endPoints.auth.register, userData);
     dispatch(loginSuccess({ user: response.data.user }));
     return { success: true, user: response.data.user };
   } catch (error) {
@@ -33,25 +41,54 @@ export const registerUser = (userData) => async (dispatch) => {
 // Fetch current user from backend (using cookie)
 export const fetchCurrentUser = () => async (dispatch) => {
   try {
-    const response = await api.get('/auth/me');
-    if (response.data && response.data.user) {
-      dispatch(loginSuccess({ user: response.data.user }));
-      return { success: true, user: response.data.user };
+    // First, try to validate the session with the backend
+    const result = await authService.validateSession();
+    if (result.success && result.user) {
+      // Session is valid, save user data and update state
+      authService.saveUserData(result.user);
+      dispatch(loginSuccess({ user: result.user }));
+      return { success: true, user: result.user };
+    } else {
+      // Session validation failed, check localStorage for previous session
+      const storedUser = authService.getStoredUser();
+      if (storedUser && authService.isAuthenticated()) {
+        // We have stored user data, but need to verify it's still valid
+        // For now, we'll trust the stored data, but you might want to
+        // implement additional validation
+        dispatch(loginSuccess({ user: storedUser }));
+        return { success: true, user: storedUser };
+      } else {
+        // No valid session or stored data
+        authService.clearUserData();
+        return { success: false };
+      }
     }
   } catch (error) {
-    // Not logged in or error - silent fail
-    return { success: false };
+    // Network error or server error
+    console.log('Session validation failed:', error.message);
+    
+    // Check if we have stored user data to fall back on
+    const storedUser = authService.getStoredUser();
+    if (storedUser && authService.isAuthenticated()) {
+      dispatch(loginSuccess({ user: storedUser }));
+      return { success: true, user: storedUser };
+    }
+    
+    // Clear any invalid data
+    authService.clearUserData();
+    return { success: false, error: error.message };
   }
 };
 
 // Logout user
 export const logoutUser = () => async (dispatch) => {
   try {
-    await api.post('/auth/logout');
+    await authService.logout();
   } catch (error) {
     // Even if logout API fails, clear local state
     console.error('Logout API error:', error);
   } finally {
+    authService.clearUserData();
     dispatch(logout());
   }
 };
@@ -59,7 +96,7 @@ export const logoutUser = () => async (dispatch) => {
 // Forgot password
 export const forgotPassword = (email) => async (dispatch) => {
   try {
-    const response = await api.post('/auth/forgot-password', { email });
+    const response = await api.post(endPoints.auth.forgotPassword, { email });
     return { success: true, message: response.data.message };
   } catch (error) {
     const message = error.response?.data?.message || 'Failed to send reset email';
@@ -70,7 +107,7 @@ export const forgotPassword = (email) => async (dispatch) => {
 // Reset password
 export const resetPassword = (token, password) => async (dispatch) => {
   try {
-    const response = await api.post('/auth/reset-password', { token, password });
+    const response = await api.post(endPoints.auth.resetPassword, { token, password });
     return { success: true, message: response.data.message };
   } catch (error) {
     const message = error.response?.data?.message || 'Failed to reset password';
@@ -137,6 +174,89 @@ export const handleGoogleRedirectResult = () => async (dispatch) => {
   } catch (error) {
     const message = error.message || 'Google redirect result failed';
     dispatch(loginFailure(message));
+    return { success: false, error: message };
+  }
+};
+
+// Send OTP for registration
+export const sendOtp = (userData) => async (dispatch) => {
+  try {
+    const response = await api.post(endPoints.auth.sendOtp, userData);
+    return { success: true, message: response.data.message };
+  } catch (error) {
+    const message = error.response?.data?.message || 'Failed to send OTP';
+    return { success: false, error: message };
+  }
+};
+
+// Verify OTP for registration
+export const verifyOtp = (otpData) => async (dispatch) => {
+  dispatch(loginStart());
+  try {
+    const response = await api.post(endPoints.auth.verifyOtp, otpData);
+    dispatch(loginSuccess({ user: response.data.user }));
+    return { success: true, user: response.data.user, message: response.data.message };
+  } catch (error) {
+    const message = error.response?.data?.message || 'OTP verification failed';
+    dispatch(loginFailure(message));
+    return { success: false, error: message };
+  }
+};
+
+// Send OTP for login (if enabled)
+export const sendLoginOtp = (email) => async (dispatch) => {
+  try {
+    const response = await api.post(endPoints.auth.sendOtp, { email, type: 'login' });
+    return { success: true, message: response.data.message };
+  } catch (error) {
+    const message = error.response?.data?.message || 'Failed to send login OTP';
+    return { success: false, error: message };
+  }
+};
+
+// Verify login OTP
+export const verifyLoginOtp = (otpData) => async (dispatch) => {
+  dispatch(loginStart());
+  try {
+    const response = await api.post(endPoints.auth.verifyOtp, { ...otpData, type: 'login' });
+    dispatch(loginSuccess({ user: response.data.user }));
+    return { success: true, user: response.data.user };
+  } catch (error) {
+    const message = error.response?.data?.message || 'Login OTP verification failed';
+    dispatch(loginFailure(message));
+    return { success: false, error: message };
+  }
+};
+
+// Send OTP for password reset
+export const sendPasswordResetOtp = (email) => async (dispatch) => {
+  try {
+    const response = await api.post(endPoints.auth.sendOtp, { email, type: 'reset' });
+    return { success: true, message: response.data.message, resetToken: response.data.resetToken };
+  } catch (error) {
+    const message = error.response?.data?.message || 'Failed to send reset OTP';
+    return { success: false, error: message };
+  }
+};
+
+// Verify password reset OTP
+export const verifyPasswordResetOtp = (otpData) => async (dispatch) => {
+  try {
+    const response = await api.post(endPoints.auth.verifyOtp, { ...otpData, type: 'reset' });
+    return { success: true, message: response.data.message, resetToken: response.data.resetToken };
+  } catch (error) {
+    const message = error.response?.data?.message || 'Reset OTP verification failed';
+    return { success: false, error: message };
+  }
+};
+
+// Change password (for logged in users)
+export const changePassword = (passwordData) => async (dispatch) => {
+  try {
+    const response = await api.post(endPoints.auth.changePassword, passwordData);
+    return { success: true, message: response.data.message };
+  } catch (error) {
+    const message = error.response?.data?.message || 'Failed to change password';
     return { success: false, error: message };
   }
 };

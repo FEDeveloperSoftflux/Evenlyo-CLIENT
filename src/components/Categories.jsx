@@ -1,5 +1,8 @@
 import categoryCardIcon from '../assets/icons/categorycard.svg';
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchCategories, fetchSubCategoriesByCategory, fetchListingsByCategory } from '../store/actions/categoriesActions';
+import { setSelectedCategory, setSelectedSubcategory } from '../store/slices/categoriesSlice';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -22,44 +25,31 @@ import vendor3Image from '../assets/icons/vendor3.svg'
 // Import assets
 import profileIcon from '../assets/icons/Profile.svg';;
 
-const Categories = ({ selectedCategory, setSelectedCategory, hideText = false }) => {
+const Categories = ({ hideText = false }) => {
   const { t } = useTranslation();
-  const [selectedSubcategory, setSelectedSubcategory] = useState('DJ')
   const [showAllVendors, setShowAllVendors] = useState(false)
   const navigate = useNavigate();
 
-  const categories = [
-    {
-      id: 'entertainment',
-      name: 'Entertainment & Attractions',
-      icon: entertainIcon,
-      subcategories: ['DJ', 'Live Band', 'Photo Booth']
-    },
-    {
-      id: 'food',
-      name: 'Food & Drinks',
-      icon: foodIcon,
-      subcategories: ['Catering', 'Food Trucks', 'Bartenders']
-    },
-    {
-      id: 'decoration',
-      name: 'Decoration & Styling',
-      icon: decorationIcon,
-      subcategories: ['Floral Design', 'Event Styling', 'Decorations']
-    },
-    {
-      id: 'locations',
-      name: 'Locations & Party Tents',
-      icon: partyTentIcon,
-      subcategories: ['Venues', 'Party Tents', 'Outdoor Spaces']
-    },
-    {
-      id: 'staff',
-      name: 'Staff & Services',
-      icon: staffIcon,
-      subcategories: ['Event Staff', 'Security', 'Coordination']
+  const dispatch = useDispatch();
+  const { categories, selectedCategory, subcategories, selectedSubcategory, listings, loading, error } = useSelector((state) => state.categories);
+
+  useEffect(() => {
+    dispatch(fetchCategories());
+  }, [dispatch]);
+
+  // When a category is selected, fetch its subcategories
+  useEffect(() => {
+    if (selectedCategory?._id) {
+      dispatch(fetchSubCategoriesByCategory(selectedCategory._id));
     }
-  ]
+  }, [selectedCategory, dispatch]);
+
+  // When a subcategory is selected, fetch listings
+  useEffect(() => {
+    if (selectedCategory?._id) {
+      dispatch(fetchListingsByCategory(selectedCategory._id));
+    }
+  }, [selectedCategory, selectedSubcategory, dispatch]);
 
   const subcategoryIcons = {
     'DJ': subcategory1Icon,
@@ -83,10 +73,29 @@ const Categories = ({ selectedCategory, setSelectedCategory, hideText = false })
     return subcategoryIcons[subcategory] || subcategory1Icon; // fallback to a default icon
   };
 
-  const getCurrentSubcategories = () => {
-    const category = categories.find(cat => cat.name === selectedCategory)
-    return category ? category.subcategories : []
-  }
+  const handleCategoryClick = (category) => {
+    dispatch(setSelectedCategory(category));
+    // Set first subcategory as selected when category changes
+    if (subcategories.length > 0) {
+      dispatch(setSelectedSubcategory(subcategories[0]));
+    }
+  };
+
+  const handleSubcategoryClick = (subcategory) => {
+    dispatch(setSelectedSubcategory(subcategory));
+  };
+
+  // Default category icon mapping
+  const getCategoryIcon = (category) => {
+    const iconMap = {
+      'Entertainment': entertainIcon,
+      'Food': foodIcon,
+      'Decoration': decorationIcon,
+      'Venues': partyTentIcon,
+      'Staff': staffIcon,
+    };
+    return category.icon || iconMap[category.name] || entertainIcon;
+  };
 
   // Sample vendor data based on the image
   const vendors = [
@@ -205,7 +214,7 @@ const Categories = ({ selectedCategory, setSelectedCategory, hideText = false })
     }
   ]
 
-  const filteredVendors = vendors.filter(vendor => 
+  const filteredVendors = vendors.filter(vendor =>
     vendor.category === selectedCategory && vendor.subcategory === selectedSubcategory
   )
 
@@ -230,98 +239,94 @@ const Categories = ({ selectedCategory, setSelectedCategory, hideText = false })
 
         {/* Category Icons */}
         {!hideText && (
-        <div
-          className="grid grid-cols-3 gap-y-6 gap-x-2 justify-items-center mb-responsive md:flex md:justify-center md:items-start md:gap-y-0 md:gap-x-0 md:space-x-8 md:overflow-visible md:pb-0"
-        >
-          {/* First row: first 3 categories */}
-          {categories.slice(0, 3).map((category) => (
-            <div
-              key={category.id}
-              onClick={() => {
-                setSelectedCategory(category.name)
-                setSelectedSubcategory(category.subcategories[0])
-              }}
-              className={`flex flex-col items-center cursor-pointer transition-all duration-300 min-w-max ${
-                selectedCategory === category.name ? 'transform scale-105' : 'hover:scale-102'
-              }`}
-            >
-              <div
-                className={`category-card-mobile sm:category-card-desktop border-4 transition-all duration-300 ${
-                  selectedCategory === category.name
-                    ? 'bg-gradient-to-b from-secondary via-primary-500 to-primary-600 border-white shadow-category'
-                    : 'bg-white border-gray-200 hover:border-primary-300 shadow-card'
-                }`}
-              >
-                <img 
-              src={category.icon}
-                  alt={category.name}
-                  className={`w-6 h-6 sm:w-8 sm:h-8 transition-all duration-300 ${
-                    selectedCategory === category.name ? 'filter brightness-0 invert' : ''
-                  }`}
-                />
-              </div>
-              <span
-                className={`text-xs sm:text-sm font-medium text-center max-w-20 sm:max-w-28 leading-tight transition-all duration-300 ${
-                  selectedCategory === category.name ? 'text-primary-500 font-semibold' : 'text-gray-700'
-                }`}
-              >
-                {category.name}
-              </span>
-            </div>
-          ))}
-          {/* Second row: last 2 categories, centered on mobile */}
-          <div className="col-span-3 flex justify-center gap-x-4 md:col-span-1 md:flex-none md:justify-start md:gap-x-8">
-            {categories.slice(3).map((category) => (
+          <div
+            className="grid grid-cols-3 gap-y-6 gap-x-2 justify-items-center mb-responsive md:flex md:justify-center md:items-start md:gap-y-0 md:gap-x-0 md:space-x-8 md:overflow-visible md:pb-0"
+          >
+            {/* First row: first 3 categories */}
+
+            {categories && categories.slice(0, 3).map((category) => (
               <div
                 key={category.id}
                 onClick={() => {
-                  setSelectedCategory(category.name)
-                  setSelectedSubcategory(category.subcategories[0])
+                  dispatch(setSelectedCategory(category))
+                  if (category.subcategories && category.subcategories.length > 0) {
+                    dispatch(setSelectedSubcategory(category.subcategories[0]))
+                  }
                 }}
-                className={`flex flex-col items-center cursor-pointer transition-all duration-300 min-w-max ${
-                  selectedCategory === category.name ? 'transform scale-105' : 'hover:scale-102'
-                }`}
+                className={`flex flex-col items-center cursor-pointer transition-all duration-300 min-w-max ${selectedCategory === category.name ? 'transform scale-105' : 'hover:scale-102'
+                  }`}
               >
                 <div
-                  className={`category-card-mobile sm:category-card-desktop border-4 transition-all duration-300 ${
-                    selectedCategory === category.name
-                      ? 'bg-gradient-to-b from-secondary via-primary-500 to-primary-600 border-white shadow-category'
-                      : 'bg-white border-gray-200 hover:border-primary-300 shadow-card'
-                  }`}
-                >
-                  <img 
-                src={category.icon}
-                    alt={category.name}
-                    className={`w-6 h-6 sm:w-8 sm:h-8 transition-all duration-300 ${
-                      selectedCategory === category.name ? 'filter brightness-0 invert' : ''
+                  className={`category-card-mobile sm:category-card-desktop border-4 transition-all duration-300 ${selectedCategory === category.name
+                    ? 'bg-gradient-to-b from-secondary via-primary-500 to-primary-600 border-white shadow-category'
+                    : 'bg-white border-gray-200 hover:border-primary-300 shadow-card'
                     }`}
+                >
+                  <img
+                    src={category.icon}
+                    alt={category.name}
+                    className={`w-6 h-6 sm:w-8 sm:h-8 transition-all duration-300 ${selectedCategory === category.name ? 'filter brightness-0 invert' : ''
+                      }`}
                   />
                 </div>
                 <span
-                  className={`text-xs sm:text-sm font-medium text-center max-w-20 sm:max-w-28 leading-tight transition-all duration-300 ${
-                    selectedCategory === category.name ? 'text-primary-500 font-semibold' : 'text-gray-700'
-                  }`}
+                  className={`text-xs sm:text-sm font-medium text-center max-w-20 sm:max-w-28 leading-tight transition-all duration-300 ${selectedCategory === category.name ? 'text-primary-500 font-semibold' : 'text-gray-700'
+                    }`}
                 >
                   {category.name}
                 </span>
               </div>
             ))}
+            {/* Second row: last 2 categories, centered on mobile */}
+            <div className="col-span-3 flex justify-center gap-x-4 md:col-span-1 md:flex-none md:justify-start md:gap-x-8">
+              {categories && categories.slice(3).map((category) => (
+                <div
+                  key={category.id}
+                  onClick={() => {
+                    dispatch(setSelectedCategory(category))
+                    if (category.subcategories && category.subcategories.length > 0) {
+                      dispatch(setSelectedSubcategory(category.subcategories[0]))
+                    }
+                  }}
+                  className={`flex flex-col items-center cursor-pointer transition-all duration-300 min-w-max ${selectedCategory === category.name ? 'transform scale-105' : 'hover:scale-102'
+                    }`}
+                >
+                  <div
+                    className={`category-card-mobile sm:category-card-desktop border-4 transition-all duration-300 ${selectedCategory === category.name
+                      ? 'bg-gradient-to-b from-secondary via-primary-500 to-primary-600 border-white shadow-category'
+                      : 'bg-white border-gray-200 hover:border-primary-300 shadow-card'
+                      }`}
+                  >
+                    <img
+                      src={category.icon}
+                      alt={category.name}
+                      className={`w-6 h-6 sm:w-8 sm:h-8 transition-all duration-300 ${selectedCategory === category.name ? 'filter brightness-0 invert' : ''
+                        }`}
+                    />
+                  </div>
+                  <span
+                    className={`text-xs sm:text-sm font-medium text-center max-w-20 sm:max-w-28 leading-tight transition-all duration-300 ${selectedCategory === category.name ? 'text-primary-500 font-semibold' : 'text-gray-700'
+                      }`}
+                  >
+                    {category.name}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
         )}
 
         {/* Subcategory Pills */}
         {!hideText && (
           <div className="flex justify-center items-center space-x-2 sm:space-x-3 mb-responsive flex-wrap gap-2">
-            {getCurrentSubcategories().map((subcategory) => (
+            {subcategories && subcategories.map((subcategory) => (
               <button
                 key={subcategory}
-                onClick={() => setSelectedSubcategory(subcategory)}
-                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 flex items-center space-x-2 ${
-                  selectedSubcategory === subcategory
-                    ? 'bg-gradient-to-b from-secondary via-primary-500 to-primary-600 text-white shadow-md'
-                    : 'bg-white text-gray-600 border border-gray-200 hover:border-primary-300 hover:text-primary-500'
-                }`}
+                onClick={() => dispatch(setSelectedSubcategory(subcategory))}
+                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 flex items-center space-x-2 ${selectedSubcategory === subcategory
+                  ? 'bg-gradient-to-b from-secondary via-primary-500 to-primary-600 text-white shadow-md'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:border-primary-300 hover:text-primary-500'
+                  }`}
               >
                 <img
                   src={getSubcategoryIcon(subcategory)}
@@ -350,7 +355,7 @@ const Categories = ({ selectedCategory, setSelectedCategory, hideText = false })
         )}
 
         {/* Vendor Cards for Selected Category and Selected Subcategory Only */}
-        {categories.filter(category => category.name === selectedCategory).map(category => {
+        {categories && categories.filter(category => category.name === selectedCategory).map(category => {
           const subVendors = vendors.filter(
             v => v.category === category.name && v.subcategory === selectedSubcategory
           );
@@ -384,19 +389,19 @@ const Categories = ({ selectedCategory, setSelectedCategory, hideText = false })
                           {/* Vendor Avatar and Name */}
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center">
-                              <img 
-                                src={profileIcon} 
-                                alt="Jaydeep" 
+                              <img
+                                src={profileIcon}
+                                alt="Jaydeep"
                                 className="w-8 h-8 rounded-full mr-3"
                               />
                               <span className="text-black-600 text-sm font-medium">Jaydeep</span>
                             </div>
                             <span className="text-green-600 text-sm font-medium bg-green-100 rounded-lg px-2">• Available</span>
                           </div>
-                          
+
                           <h4 className="font-bold text-base sm:text-lg text-gray-900 mb-2">{vendor.name}</h4>
                           <p className="text-gray-600 text-xs sm:text-sm mb-4">{vendor.description}</p>
-                          
+
                           {/* Vendor Info */}
                           <div className="space-y-2 mb-4">
                             <div className="flex items-center text-sm text-gray-600">
@@ -438,7 +443,7 @@ const Categories = ({ selectedCategory, setSelectedCategory, hideText = false })
           );
         })}
 
-        
+
         {/* View All Button */}
         <div className="text-center hidden md:block">
           <button className="px-8 py-3 border-2 border-primary-500 text-primary-500 rounded-full font-medium hover:bg-primary-50 transition-colors duration-300">

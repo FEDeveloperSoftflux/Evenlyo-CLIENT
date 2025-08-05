@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import authService from '../services/authService';
 
 const ClientRegistrationForm = ({ onClose }) => {
   const [step, setStep] = useState(1);
-  const [verificationType, setVerificationType] = useState('phone');
+  const [verificationType, setVerificationType] = useState('email');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -19,25 +22,86 @@ const ClientRegistrationForm = ({ onClose }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const sendOTP = () => {
-    setOtpSent(true);
-    console.log(`OTP sent to ${verificationType === 'phone' ? formData.phone : formData.email}`);
+  const sendOTP = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const userData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        type: 'registration'
+      };
+      
+      const otpResponse = await authService.sendOtp(userData);
+      if (otpResponse.success) {
+        setOtpSent(true);
+        console.log(`OTP sent to ${formData.email}`);
+      } else {
+        setError(otpResponse.error);
+      }
+    } catch (err) {
+      setError('Failed to send OTP. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const verifyOTP = () => {
-    if (otp === '1234') {
-      setStep(step + 1);
-    } else {
-      alert('Invalid OTP. Please try again.');
+  const verifyOTP = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const verifyResponse = await authService.verifyOtp({
+        email: formData.email,
+        otp: otp,
+        type: 'registration'
+      });
+      
+      if (verifyResponse.success) {
+        console.log('Registration successful:', verifyResponse.user);
+        setStep(3);
+      } else {
+        setError(verifyResponse.error);
+      }
+    } catch (err) {
+      setError('OTP verification failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (step < 3) {
-      setStep(step + 1);
+    setError(null);
+    
+    if (step === 1) {
+      // Validate form data
+      if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.password) {
+        setError('Please fill in all required fields.');
+        return;
+      }
+      
+      if (formData.password !== formData.confirmPassword) {
+        setError('Passwords do not match.');
+        return;
+      }
+      
+      if (formData.password.length < 6) {
+        setError('Password must be at least 6 characters long.');
+        return;
+      }
+      
+      setStep(2);
+    } else if (step === 2) {
+      if (!otpSent) {
+        sendOTP();
+      } else {
+        verifyOTP();
+      }
     } else {
-      console.log('Client registration:', formData);
+      console.log('Client registration completed');
       onClose();
     }
   };
@@ -243,9 +307,10 @@ const ClientRegistrationForm = ({ onClose }) => {
           <button
             type="button"
             onClick={sendOTP}
-            className="w-full bg-pink-500 text-white py-3 rounded-lg hover:bg-pink-600 transition-colors"
+            disabled={isLoading}
+            className="w-full bg-pink-500 text-white py-3 rounded-lg hover:bg-pink-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Send OTP
+            {isLoading ? 'Sending OTP...' : 'Send OTP'}
           </button>
         ) : (
           <div className="space-y-4">
@@ -263,9 +328,10 @@ const ClientRegistrationForm = ({ onClose }) => {
             <button
               type="button"
               onClick={verifyOTP}
-              className="w-full bg-pink-500 text-white py-3 rounded-lg hover:bg-pink-600 transition-colors"
+              disabled={isLoading || !otp}
+              className="w-full bg-pink-500 text-white py-3 rounded-lg hover:bg-pink-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Verify OTP
+              {isLoading ? 'Verifying...' : 'Verify OTP'}
             </button>
           </div>
         )}
@@ -308,6 +374,9 @@ const ClientRegistrationForm = ({ onClose }) => {
 
       {/* Step Indicator */}
       {renderStepIndicator()}
+
+      {/* Error Display */}
+      {error && <div className="text-red-500 text-center mb-4 p-3 border border-red-200 rounded-lg bg-red-50">{error}</div>}
 
       {/* Form Content */}
       <form onSubmit={handleSubmit}>

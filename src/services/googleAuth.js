@@ -14,13 +14,13 @@ class GoogleAuthService {
     try {
       const result = await signInWithPopup(this.auth, this.provider);
       const user = result.user;
-      
+
       // Get the Firebase ID token
       const idToken = await user.getIdToken();
-      
+
       // Send the token to your backend for verification and user creation/login
       const response = await this.sendTokenToBackend(idToken, user);
-      
+
       return {
         success: true,
         user: response.user,
@@ -54,7 +54,7 @@ class GoogleAuthService {
         const user = result.user;
         const idToken = await user.getIdToken();
         const response = await this.sendTokenToBackend(idToken, user);
-        
+
         return {
           success: true,
           user: response.user,
@@ -74,14 +74,14 @@ class GoogleAuthService {
   // Send Firebase ID token to your backend
   async sendTokenToBackend(idToken, firebaseUser) {
     try {
-      const response = await api.post('/auth/google-login', {
+      const response = await api.post('/auth/google', {
         idToken,
         user: {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
           name: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL,
-          emailVerified: firebaseUser.emailVerified
+          // photoURL: firebaseUser.photoURL,
+          // emailVerified: firebaseUser.emailVerified
         }
       }, { withCredentials: true });
 
