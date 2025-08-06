@@ -11,25 +11,13 @@ class AuthService {
     // Ensure cookies are sent with every request
     api.defaults.withCredentials = true;
 
-    // Set up response interceptor for handling token expiration
+    // Set up response interceptor - NO REDIRECTS
     api.interceptors.response.use(
       (response) => response,
       async (error) => {
         if (error.response?.status === 401) {
-          // Token expired or invalid, try to refresh
-          try {
-            const refreshResult = await this.refreshToken();
-            if (refreshResult.success) {
-              // Retry the original request
-              return api(error.config);
-            }
-          } catch (refreshError) {
-            // Refresh failed, redirect to login
-            this.clearUserData();
-            if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
-              window.location.href = '/login';
-            }
-          }
+          // Just clear user data, no redirects
+          this.clearUserData();
         }
         return Promise.reject(error);
       }

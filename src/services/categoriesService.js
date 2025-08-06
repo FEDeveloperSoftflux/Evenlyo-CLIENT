@@ -1,11 +1,11 @@
 import api from './api';
-
+import { endPoints } from '../constants/api';
 // Categories Service
 class CategoriesService {
   // Get all categories
   async getCategories() {
     try {
-      const response = await api.get('/categories');
+      const response = await api.get(endPoints.categories.all);
       return {
         success: true,
         categories: response.data.categories,
@@ -17,11 +17,43 @@ class CategoriesService {
       };
     }
   }
-
-  // Get subcategories by category ID
-  async getSubCategoriesByCategory(categoryId) {
+  // Get category by ID
+  async getCategoryById(id) {
     try {
-      const response = await api.get(`/subcategories/category/${categoryId}`);
+      const response = await api.get(endPoints.categories.byId(id));
+      return {
+        success: true,
+        category: response.data.category,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to load category',
+      };
+    }
+  }
+
+  async getCategoriesBySearch(searchTerm) {
+    try {
+      const response = await api.get(endPoints.categories.bySearch(searchTerm));
+      return {
+        success: true,
+        categories: response.data.categories,
+      };
+    }
+    catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to search categories',
+      };
+    }
+  }
+
+
+  // Get all subcategories
+  async getAllSubCategories() {
+    try {
+      const response = await api.get(endPoints.subcategories.all);
       return {
         success: true,
         subCategories: response.data.subCategories,
@@ -33,22 +65,39 @@ class CategoriesService {
       };
     }
   }
-
-  // Get listings by category ID
-  async getListingsByCategory(categoryId) {
+  // Get subcategory by ID
+  async getSubCategoryById(id) {
     try {
-      const response = await api.post('/listings/category', { categoryId });
+      const response = await api.get(endPoints.subcategories.byId(id));
       return {
         success: true,
-        listings: response.data.listings,
+        subCategory: response.data.subCategory,
       };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || 'Failed to load listings',
+        error: error.response?.data?.message || 'Failed to load subcategory',
+      };
+    }
+  }
+
+
+  // Get subcategories by category ID
+  async getSubCategoriesByCategory(categoryId) {
+    try {
+      const response = await api.get(endPoints.categories.subcategories(categoryId));
+      return {
+        success: true,
+        subCategories: response.data.subCategories,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to load subcategories',
       };
     }
   }
 }
 
 export default new CategoriesService();
+

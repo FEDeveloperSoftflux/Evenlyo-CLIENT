@@ -3,14 +3,9 @@ import {
   getCategoriesStart,
   getCategoriesSuccess,
   getCategoriesFailure,
-  setSelectedCategory,
   getSubcategoriesStart,
   getSubcategoriesSuccess,
   getSubcategoriesFailure,
-  setSelectedSubcategory,
-  getListingsStart,
-  getListingsSuccess,
-  getListingsFailure,
 } from '../slices/categoriesSlice';
 
 // Fetch categories
@@ -27,6 +22,24 @@ export const fetchCategories = () => async (dispatch) => {
     dispatch(getCategoriesFailure(error.message));
   }
 };
+// Search categories
+export const searchCategories = (searchTerm) => async (dispatch) => {
+  dispatch(getCategoriesStart());
+  try {
+    const result = await categoriesService.searchCategories(searchTerm);
+    if (result.success) {
+      dispatch(getCategoriesSuccess(result.categories));
+    } else {
+      dispatch(getCategoriesFailure(result.error));
+    }
+  } catch (error) {
+    dispatch(getCategoriesFailure(error.message));
+  }
+};
+
+
+
+
 
 // Fetch subcategories by category
 export const fetchSubCategoriesByCategory = (categoryId) => async (dispatch) => {
@@ -43,17 +56,3 @@ export const fetchSubCategoriesByCategory = (categoryId) => async (dispatch) => 
   }
 };
 
-// Fetch listings by category
-export const fetchListingsByCategory = (categoryId) => async (dispatch) => {
-  dispatch(getListingsStart());
-  try {
-    const result = await categoriesService.getListingsByCategory(categoryId);
-    if (result.success) {
-      dispatch(getListingsSuccess(result.listings));
-    } else {
-      dispatch(getListingsFailure(result.error));
-    }
-  } catch (error) {
-    dispatch(getListingsFailure(error.message));
-  }
-};

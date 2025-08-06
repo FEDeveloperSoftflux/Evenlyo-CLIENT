@@ -96,7 +96,7 @@ function HelpBot() {
       {open ? (
         <div className="w-72 max-w-xs h-[80vh] mx-auto sm:w-96 sm:max-w-full sm:max-h-[80vh] bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col">
           {/* Gradient header bar */}
-          
+
           {/* Header with title and close button */}
           <div className="relative flex items-center justify-between px-6 py-4 pb-2">
             <h3 className="text-xl font-bold bg-gradient-to-b from-pink-500 via-pink-600 to-purple-600 bg-clip-text text-transparent">
@@ -179,11 +179,11 @@ function HelpBot() {
           aria-label="Open Help Bot"
         >
           <div className="w-9 h-10  rounded-lg flex items-center justify-center">
-          <img src="/assets/Bot.svg" alt="Open Help Bot" style={{width: 38, height: 42, display: 'block'}} />
+            <img src="../assets/icons/Bot.svg" alt="Open Help Bot" style={{ width: 30, height: 30, display: 'flex' }} />
           </div>
         </button>
       )}
-      
+
       <style jsx>{`
         .scrollbar-hide {
           -ms-overflow-style: none;

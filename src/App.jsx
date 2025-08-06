@@ -32,11 +32,6 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const dispatch = useDispatch();
 
-  // Initialize authentication state on app startup
-  // useEffect(() => {
-  //   dispatch(fetchCurrentUser());
-  // }, [dispatch]);
-
   return (
     <Router>
       <ScrollToTop />

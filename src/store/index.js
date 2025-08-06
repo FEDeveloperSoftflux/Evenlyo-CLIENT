@@ -4,6 +4,7 @@ import uiReducer from './slices/uiSlice';
 import clientReducer from './slices/clientSlice';
 import vendorReducer from './slices/vendorSlice';
 import categoriesReducer from './slices/categoriesSlice';
+import listingsReducer from './slices/listingsSlice'; // Import listings slice
 
 
 const store = configureStore({
@@ -13,6 +14,7 @@ const store = configureStore({
     client: clientReducer,
     vendor: vendorReducer,
     categories: categoriesReducer,
+    listings: listingsReducer, // Add listings slice to the store
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

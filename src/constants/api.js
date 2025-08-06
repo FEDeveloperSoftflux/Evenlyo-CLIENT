@@ -1,3 +1,4 @@
+
 /**
  * API Headers
  */
@@ -78,10 +79,42 @@ export const endPoints = {
   // Category endpoints
   categories: {
     all: '/categories',
+    bySearch: (searchTerm) => `/categories/search/${searchTerm}`,
     byId: (id) => `/categories/${id}`,
-    subcategories: (id) => `/categories/${id}/subcategories`,
-    // vendors: (id) => `client/categories/${id}/vendors`,
+
   },
+
+
+
+
+  // Subcategory endpoints
+  subcategories: {
+    all: '/subcategories',
+    byId: (id) => `/subcategories/${id}`,
+    byCategory: (categoryId) => `/subcategories/category/${categoryId}`,
+    // bySearch: (searchTerm) => `/subcategories/search/${searchTerm}`,
+
+
+  },
+
+
+  // Listing endpoints
+  listings: {
+    all: 'client/listings',
+    byId: (id) => `client/listings/${id}`,
+    // create: 'client/listings',
+    // update: (id) => `client/listings/${id}`,
+    // delete: (id) => `client/listings/${id}`,
+    search: 'client/listings/search',
+    featured: 'client/listings/featured',
+    popular: 'client/listings/popular',
+    byCategory: (categoryId) => `client/listings/category/${categoryId}`,
+    bySubCategory: (subCategoryId) => `client/listings/subcategory/${subCategoryId}`,
+    byVendor: (vendorId) => `listings/vendor/${vendorId}`,
+    // byServiceType: (type) => `listings/service-type/${type}`,
+    availability: (id) => `client/listings/${id}/availability`,
+  },
+
 
   // Events endpoints
   events: {

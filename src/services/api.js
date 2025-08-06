@@ -42,10 +42,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Unauthorized - could dispatch logout action
       store.dispatch({ type: 'auth/logout' });
-      // Prevent infinite redirect loop if already on /login
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
-      }
+
     }
 
     return Promise.reject(error);

@@ -1,11 +1,12 @@
 import React, { useState } from "react";
+import { useDispatch } from 'react-redux';
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
+import { searchListings } from '../store/slices/listingsSlice';
 import VendorRegister from "../auth/VendorRegister";
 
 // Import assets
 import heroImage from '../assets/images/hero-img.png';
-import searchIcon from '../assets/icons/Search2.svg';
 import locationIcon from '../assets/icons/location.svg';
 import calendarIcon from '../assets/icons/calender.svg';
 import timeIcon from '../assets/icons/time.svg';
@@ -14,6 +15,8 @@ import searchButtonIcon from '../assets/icons/search.svg';
 function Hero({ onSearchNow, onReset }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const [selectedEvent, setSelectedEvent] = useState("");
   const [location, setLocation] = useState("");
   const [date, setDate] = useState("");
@@ -32,7 +35,15 @@ function Hero({ onSearchNow, onReset }) {
     setVendorModalOpen(false);
   };
 
-  const handleBookNow = () => {
+  const handleSearchNow = () => {
+    const searchParams = {
+      category: selectedEvent,
+      location,
+      date,
+      time
+    };
+    dispatch(searchListings(searchParams));
+
     if (onSearchNow) {
       onSearchNow();
     } else {
@@ -50,6 +61,7 @@ function Hero({ onSearchNow, onReset }) {
     setTime("");
     if (onReset) onReset();
   };
+
   return (
     <section
       className="relative min-h-screen bg-cover bg-center bg-no-repeat bg-gray-900"
@@ -73,23 +85,23 @@ function Hero({ onSearchNow, onReset }) {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-row justify-center gap-4 mb-8 lg:mb-16 w-full max-w-md sm:max-w-none sm:w-auto ">
-          <button 
+        <div className="flex flex-row justify-center gap-4 mb-8 lg:mb-16 w-full max-w-md sm:max-w-none sm:w-auto">
+          <button
             onClick={handleJoinFree}
             className="btn-primary-mobile touch-button align-middle sm:w-auto text-responsive-body font-bold"
           >
             {t('join_free')}
           </button>
-          <button 
+          <button
             onClick={handleBecomeVendor}
-            className="btn-secondary-mobile touch-button  sm:w-auto text-responsive-body font-bold border-white text-white hover:bg-white hover:text-gray-900"
+            className="btn-secondary-mobile touch-button sm:w-auto text-responsive-body font-bold border-white text-white hover:bg-white hover:text-gray-900"
           >
             {t('become_vendor')}
           </button>
         </div>
 
-        {/* Search Form */}
-        <div className="w-full container-7xl bg-[#D8D8D857]/35 backdrop-blur-sm rounded-xl p-4 sm:p-6 ">
+        {/* Event Search Form */}
+        <div className="w-full container-7xl bg-[#D8D8D857]/35 backdrop-blur-sm rounded-xl p-4 sm:p-6">
           <div className="flex flex-col md:grid sm:grid-cols-2 lg:grid-cols-5 gap-4 md:items-end">
             {/* Type of Events */}
             <div className="w-full md:col-span-1">
@@ -98,7 +110,7 @@ function Hero({ onSearchNow, onReset }) {
               </label>
               <div className="relative">
                 <img
-                  src={searchIcon}
+                  src={searchButtonIcon}
                   alt="Event"
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 z-10"
                 />
@@ -137,7 +149,7 @@ function Hero({ onSearchNow, onReset }) {
                 />
                 <input
                   type="text"
-                  placeholder={t('search_your_location')}
+                  placeholder={t('search_location')}
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   className="input-mobile pl-10 pr-4 py-3 bg-white/80 backdrop-blur-sm shadow-sm w-full"
@@ -145,20 +157,19 @@ function Hero({ onSearchNow, onReset }) {
               </div>
             </div>
 
-            {/* Date */}
-            <div className="w-full md:col-span-1 5xl:col-span-1">
+            {/* Search Date */}
+            <div className="w-full md:col-span-1">
               <label className="block text-white text-sm font-semibold mb-2">
-                {t('date')}
+                {t('search_date')}
               </label>
               <div className="relative">
                 <img
                   src={calendarIcon}
-                  alt="Calendar"
+                  alt="Date"
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 z-10"
                 />
                 <input
                   type="date"
-                  placeholder="Search your Date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   className="input-mobile pl-10 pr-4 py-3 bg-white/80 backdrop-blur-sm shadow-sm w-full"
@@ -166,10 +177,10 @@ function Hero({ onSearchNow, onReset }) {
               </div>
             </div>
 
-            {/* Time */}
-            <div className="w-full md:col-span-1 5xl:col-span-1">
+            {/* Search Time */}
+            <div className="w-full md:col-span-1">
               <label className="block text-white text-sm font-semibold mb-2">
-                {t('time')}
+                {t('search_time')}
               </label>
               <div className="relative">
                 <img
@@ -179,7 +190,6 @@ function Hero({ onSearchNow, onReset }) {
                 />
                 <input
                   type="time"
-                  placeholder="Search your Time"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
                   className="input-mobile pl-10 pr-4 py-3 bg-white/80 backdrop-blur-sm shadow-sm w-full"
@@ -188,31 +198,27 @@ function Hero({ onSearchNow, onReset }) {
             </div>
 
             {/* Search Button */}
-            <div className="w-full md:col-span-2 lg:col-span-1">
-              <button 
-                onClick={handleBookNow}
-                className={`btn-primary-mobile w-full flex items-center justify-center py-2 px-12 ${!selectedEvent ? 'cursor-not-allowed' : ''}`}
+            <div className="w-full md:col-span-1">
+              <button
+                type="button"
+                onClick={handleSearchNow}
+                className="btn-primary-mobile w-full flex items-center justify-center py-2 px-12"
                 disabled={!selectedEvent}
               >
-                <img
-                  src={searchButtonIcon}
-                  alt="Search"
-                  className="h-8 w-6 mb-0 mr-2"
-                />
-                <span className="font-bold text-lg">{t('search_now')}</span>
+                {t('search_now')}
               </button>
             </div>
           </div>
         </div>
+
+        {/* Vendor Register Modal */}
+        {vendorModalOpen && (
+          <VendorRegister
+            isOpen={vendorModalOpen}
+            onClose={closeVendorModal}
+          />
+        )}
       </div>
-      
-      {/* Vendor Modal */}
-      {vendorModalOpen && (
-      <VendorRegister
-          onClose={closeVendorModal}
-          onSwitchToClient={closeVendorModal}
-        />
-      )}
     </section>
   );
 }
