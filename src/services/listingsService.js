@@ -93,21 +93,21 @@ class ListingsService {
       };
     }
   }
-  // // Get listings by service type
-  // async getListingsByServiceType(type) {
-  //   try {
-  //     const response = await api.get(endPoints.listings.byServiceType(type));
-  //     return {
-  //       success: true,
-  //       listings: response.data.listings,
-  //     };
-  //   } catch (error) {
-  //     return {
-  //       success: false,
-  //       error: error.response?.data?.message || 'Failed to load listings by service type',
-  //     };
-  //   }
-  // }
+  // Get listings by service type
+  async getListingsByServiceType(type) {
+    try {
+      const response = await api.get(endPoints.listings.byServiceType(type));
+      return {
+        success: true,
+        listings: response.data.listings,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to load listings by service type',
+      };
+    }
+  }
   // Get availability for a listing
   async getListingAvailability(id) {
     try {

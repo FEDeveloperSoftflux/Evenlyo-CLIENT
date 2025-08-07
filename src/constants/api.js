@@ -1,23 +1,22 @@
-
 /**
  * API Headers
  */
 export const apiHeaders = {
-  application_json: 'application/json',
-  multipart_data: 'multipart/form-data',
-  text_plain: 'text/plain',
-  application_form_urlencoded: 'application/x-www-form-urlencoded',
+  application_json: "application/json",
+  multipart_data: "multipart/form-data",
+  text_plain: "text/plain",
+  application_form_urlencoded: "application/x-www-form-urlencoded",
 };
 
 /**
  * HTTP Request Types
  */
 export const requestType = {
-  GET: 'GET',
-  POST: 'POST',
-  PUT: 'PUT',
-  PATCH: 'PATCH',
-  DELETE: 'DELETE',
+  GET: "GET",
+  POST: "POST",
+  PUT: "PUT",
+  PATCH: "PATCH",
+  DELETE: "DELETE",
 };
 
 /**
@@ -26,32 +25,32 @@ export const requestType = {
 export const endPoints = {
   // Authentication endpoints
   auth: {
-    login: 'client/login',
-    register: 'client/register',
-    logout: 'auth/logout',
-    refreshToken: 'client/refresh-token',
-    sendOtp: 'auth/send-otp',
-    verifyOtp: 'auth/verify-forgot-otp',
-    forgotPassword: 'auth/forgot-password',
-    resetPassword: 'auth/reset-password',
-    changePassword: 'auth/change-password',
-    me: 'auth/me',
+    login: "client/login",
+    register: "client/register",
+    logout: "auth/logout",
+    refreshToken: "client/refresh-token",
+    sendOtp: "auth/send-otp",
+    verifyOtp: "auth/verify-forgot-otp",
+    forgotPassword: "auth/forgot-password",
+    resetPassword: "auth/reset-password",
+    changePassword: "auth/change-password",
+    me: "auth/me",
   },
 
   // Client profile endpoints
   profile: {
-    get: 'client/profile',
-    update: 'client/profile',
-    uploadAvatar: 'client/profile/avatar',
-    deleteAccount: 'client/profile/delete',
-    getPreferences: 'client/profile/preferences',
-    updatePreferences: 'client/profile/preferences',
+    get: "client/profile",
+    update: "client/profile",
+    uploadAvatar: "client/profile/avatar",
+    deleteAccount: "client/profile/delete",
+    getPreferences: "client/profile/preferences",
+    updatePreferences: "client/profile/preferences",
   },
 
   // Booking endpoints
   bookings: {
-    create: 'client/bookings',
-    all: 'client/bookings',
+    create: "client/bookings",
+    all: "client/bookings",
     byId: (id) => `client/bookings/${id}`,
     cancel: (id) => `client/bookings/${id}/cancel`,
     reschedule: (id) => `client/bookings/${id}/reschedule`,
@@ -59,17 +58,17 @@ export const endPoints = {
     messages: (id) => `client/bookings/${id}/messages`,
     invoice: (id) => `client/bookings/${id}/invoice`,
     timeline: (id) => `client/bookings/${id}/timeline`,
-    upcoming: 'client/bookings/upcoming',
-    history: 'client/bookings/history',
+    upcoming: "client/bookings/upcoming",
+    history: "client/bookings/history",
   },
 
   // Vendor discovery endpoints
   vendors: {
-    search: 'client/vendors/search',
+    search: "client/vendors/search",
     byId: (id) => `client/vendors/${id}`,
-    categories: 'client/vendors/categories',
-    featured: 'client/vendors/featured',
-    nearby: 'client/vendors/nearby',
+    categories: "client/vendors/categories",
+    featured: "client/vendors/featured",
+    nearby: "client/vendors/nearby",
     reviews: (id) => `client/vendors/${id}/reviews`,
     availability: (id) => `client/vendors/${id}/availability`,
     packages: (id) => `client/vendors/${id}/packages`,
@@ -78,48 +77,37 @@ export const endPoints = {
 
   // Category endpoints
   categories: {
-    all: '/categories',
-    bySearch: (searchTerm) => `/categories/search/${searchTerm}`,
-    byId: (id) => `/categories/${id}`,
-
+    all: "categories",
+    bySearch: (searchTerm) => `categories/search/${searchTerm}`,
+    byId: (id) => `categories/${id}`,
   },
-
-
-
 
   // Subcategory endpoints
   subcategories: {
-    all: '/subcategories',
-    byId: (id) => `/subcategories/${id}`,
-    byCategory: (categoryId) => `/subcategories/category/${categoryId}`,
-    // bySearch: (searchTerm) => `/subcategories/search/${searchTerm}`,
-
-
+    all: "subcategories",
+    byId: (id) => `subcategories/${id}`,
+    byCategory: (categoryId) => `subcategories/category/${categoryId}`,
   },
-
 
   // Listing endpoints
   listings: {
-    all: 'client/listings',
-    byId: (id) => `client/listings/${id}`,
-    // create: 'client/listings',
-    // update: (id) => `client/listings/${id}`,
-    // delete: (id) => `client/listings/${id}`,
-    search: 'client/listings/search',
-    featured: 'client/listings/featured',
-    popular: 'client/listings/popular',
+    all: "listings",
+    byId: (id) => `listings/${id}`,
+    search: "listings/search",
+    featured: "listings/featured",
+    popular: "listings/popular",
     byCategory: (categoryId) => `client/listings/category/${categoryId}`,
-    bySubCategory: (subCategoryId) => `client/listings/subcategory/${subCategoryId}`,
+    bySubCategory: (subCategoryId) =>
+      `client/listings/subcategory/${subCategoryId}`,
     byVendor: (vendorId) => `listings/vendor/${vendorId}`,
-    // byServiceType: (type) => `listings/service-type/${type}`,
+    byServiceType: (type) => `listings/service-type/${type}`,
     availability: (id) => `client/listings/${id}/availability`,
   },
 
-
   // Events endpoints
   events: {
-    create: 'client/events',
-    all: 'client/events',
+    create: "client/events",
+    all: "client/events",
     byId: (id) => `client/events/${id}`,
     update: (id) => `client/events/${id}`,
     delete: (id) => `client/events/${id}`,
@@ -130,38 +118,38 @@ export const endPoints = {
 
   // Wishlist endpoints
   wishlist: {
-    get: 'client/wishlist',
-    add: 'client/wishlist',
+    get: "client/wishlist",
+    add: "client/wishlist",
     remove: (id) => `client/wishlist/${id}`,
-    clear: 'client/wishlist/clear',
+    clear: "client/wishlist/clear",
   },
 
   // Cart endpoints
   cart: {
-    get: 'client/cart',
-    add: 'client/cart',
+    get: "client/cart",
+    add: "client/cart",
     update: (id) => `client/cart/${id}`,
     remove: (id) => `client/cart/${id}`,
-    clear: 'client/cart/clear',
-    checkout: 'client/cart/checkout',
+    clear: "client/cart/clear",
+    checkout: "client/cart/checkout",
   },
 
   // Payment endpoints
   payments: {
-    process: 'client/payments/process',
-    verify: 'client/payments/verify',
+    process: "client/payments/process",
+    verify: "client/payments/verify",
     refund: (id) => `client/payments/${id}/refund`,
-    history: 'client/payments/history',
-    methods: 'client/payments/methods',
-    addMethod: 'client/payments/methods',
+    history: "client/payments/history",
+    methods: "client/payments/methods",
+    addMethod: "client/payments/methods",
     removeMethod: (id) => `client/payments/methods/${id}`,
   },
 
   // Review endpoints
   reviews: {
-    create: 'client/reviews',
+    create: "client/reviews",
     byVendor: (vendorId) => `client/reviews/vendor/${vendorId}`,
-    byClient: 'client/reviews/my-reviews',
+    byClient: "client/reviews/my-reviews",
     update: (id) => `client/reviews/${id}`,
     delete: (id) => `client/reviews/${id}`,
     helpful: (id) => `client/reviews/${id}/helpful`,
@@ -169,59 +157,59 @@ export const endPoints = {
 
   // Notification endpoints
   notifications: {
-    all: 'client/notifications',
+    all: "client/notifications",
     markRead: (id) => `client/notifications/${id}/read`,
-    markAllRead: 'client/notifications/mark-all-read',
+    markAllRead: "client/notifications/mark-all-read",
     delete: (id) => `client/notifications/${id}`,
-    settings: 'client/notifications/settings',
+    settings: "client/notifications/settings",
   },
 
   // Support endpoints
   support: {
-    tickets: 'client/support/tickets',
-    createTicket: 'client/support/tickets',
+    tickets: "client/support/tickets",
+    createTicket: "client/support/tickets",
     ticketById: (id) => `client/support/tickets/${id}`,
     addMessage: (id) => `client/support/tickets/${id}/messages`,
     closeTicket: (id) => `client/support/tickets/${id}/close`,
-    faq: 'client/support/faq',
-    contactInfo: 'client/support/contact',
+    faq: "client/support/faq",
+    contactInfo: "client/support/contact",
   },
 
   // Blog endpoints
   blog: {
-    posts: 'client/blog/posts',
+    posts: "client/blog/posts",
     postById: (id) => `client/blog/posts/${id}`,
-    categories: 'client/blog/categories',
-    featured: 'client/blog/posts/featured',
-    search: 'client/blog/search',
+    categories: "client/blog/categories",
+    featured: "client/blog/posts/featured",
+    search: "client/blog/search",
     comments: (postId) => `client/blog/posts/${postId}/comments`,
     addComment: (postId) => `client/blog/posts/${postId}/comments`,
   },
 
   // Search endpoints
   search: {
-    global: 'client/search',
-    vendors: 'client/search/vendors',
-    events: 'client/search/events',
-    suggestions: 'client/search/suggestions',
-    filters: 'client/search/filters',
+    global: "client/search",
+    vendors: "client/search/vendors",
+    events: "client/search/events",
+    suggestions: "client/search/suggestions",
+    filters: "client/search/filters",
   },
 
   // Location endpoints
   locations: {
-    cities: 'client/locations/cities',
+    cities: "client/locations/cities",
     areas: (cityId) => `client/locations/cities/${cityId}/areas`,
-    nearby: 'client/locations/nearby',
-    popular: 'client/locations/popular',
+    nearby: "client/locations/nearby",
+    popular: "client/locations/popular",
   },
 
   // General endpoints
   general: {
-    settings: 'client/settings',
-    terms: 'client/terms',
-    privacy: 'client/privacy',
-    about: 'client/about',
-    contact: 'client/contact',
+    settings: "client/settings",
+    terms: "client/terms",
+    privacy: "client/privacy",
+    about: "client/about",
+    contact: "client/contact",
   },
 };
 
@@ -246,13 +234,13 @@ export const statusCodes = {
  * API Error Messages
  */
 export const errorMessages = {
-  NETWORK_ERROR: 'Network error. Please check your connection.',
-  SERVER_ERROR: 'Server error. Please try again later.',
-  UNAUTHORIZED: 'Please login to continue.',
-  FORBIDDEN: 'You don\'t have permission to perform this action.',
-  NOT_FOUND: 'Resource not found.',
-  VALIDATION_ERROR: 'Please check your input and try again.',
-  SESSION_EXPIRED: 'Your session has expired. Please login again.',
+  NETWORK_ERROR: "Network error. Please check your connection.",
+  SERVER_ERROR: "Server error. Please try again later.",
+  UNAUTHORIZED: "Please login to continue.",
+  FORBIDDEN: "You don't have permission to perform this action.",
+  NOT_FOUND: "Resource not found.",
+  VALIDATION_ERROR: "Please check your input and try again.",
+  SESSION_EXPIRED: "Your session has expired. Please login again.",
 };
 
 /**

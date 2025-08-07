@@ -1,39 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import categoryService from '../../services/categoriesService';
-
-// Async thunks
-export const fetchCategories = createAsyncThunk(
-  'categories/fetchCategories',
-  async () => {
-    const result = await categoryService.getCategories();
-    if (!result.success) {
-      throw new Error(result.error);
-    }
-    return result.categories;
-  }
-);
-
-export const searchCategories = createAsyncThunk(
-  'categories/searchCategories',
-  async (searchTerm) => {
-    const result = await categoryService.getCategoriesBySearch(searchTerm);
-    if (!result.success) {
-      throw new Error(result.error);
-    }
-    return result.categories;
-  }
-);
-
-export const fetchSubcategories = createAsyncThunk(
-  'categories/fetchSubcategories',
-  async (categoryId) => {
-    const result = await categoryService.getSubCategoriesByCategory(categoryId);
-    if (!result.success) {
-      throw new Error(result.error);
-    }
-    return result.subCategories;
-  }
-);
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   categories: [],
@@ -44,16 +9,53 @@ const initialState = {
   loading: {
     categories: false,
     subcategories: false,
-    search: false
+    search: false,
   },
   error: null,
-  searchTerm: ''
+  searchTerm: "",
 };
 
 const categoriesSlice = createSlice({
-  name: 'categories',
+  name: "categories",
   initialState,
   reducers: {
+    setCategories: (state, action) => {
+      state.categories = Array.isArray(action.payload) ? action.payload : [];
+      state.loading.categories = false;
+      state.error = null;
+    },
+    setCategoriesLoading: (state, action) => {
+      state.loading.categories = action.payload;
+    },
+    setCategoriesError: (state, action) => {
+      state.error = action.payload;
+      state.loading.categories = false;
+    },
+    setSearchResults: (state, action) => {
+      state.searchResults = Array.isArray(action.payload) ? action.payload : [];
+      state.loading.search = false;
+      state.error = null;
+    },
+    setSearchLoading: (state, action) => {
+      state.loading.search = action.payload;
+    },
+    setSearchError: (state, action) => {
+      state.error = action.payload;
+      state.loading.search = false;
+    },
+    setSubcategories: (state, action) => {
+      // Defensive check to ensure only arrays are stored
+      state.subcategories = Array.isArray(action.payload) ? action.payload : [];
+      state.loading.subcategories = false;
+      state.error = null;
+    },
+    setSubcategoriesLoading: (state, action) => {
+      state.loading.subcategories = action.payload;
+    },
+    setSubcategoriesError: (state, action) => {
+      state.error = action.payload;
+      state.loading.subcategories = false;
+    },
     setSelectedCategory: (state, action) => {
       state.selectedCategory = action.payload;
       state.selectedSubcategory = null;
@@ -67,57 +69,24 @@ const categoriesSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
-    }
+    },
   },
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchCategories.pending, (state) => {
-        state.loading.categories = true;
-        state.error = null;
-      })
-      .addCase(fetchCategories.fulfilled, (state, action) => {
-        state.loading.categories = false;
-        state.categories = action.payload;
-        state.error = null;
-      })
-      .addCase(fetchCategories.rejected, (state, action) => {
-        state.loading.categories = false;
-        state.error = action.error.message;
-      })
-      .addCase(searchCategories.pending, (state) => {
-        state.loading.search = true;
-        state.error = null;
-      })
-      .addCase(searchCategories.fulfilled, (state, action) => {
-        state.loading.search = false;
-        state.searchResults = action.payload;
-        state.error = null;
-      })
-      .addCase(searchCategories.rejected, (state, action) => {
-        state.loading.search = false;
-        state.error = action.error.message;
-      })
-      .addCase(fetchSubcategories.pending, (state) => {
-        state.loading.subcategories = true;
-        state.error = null;
-      })
-      .addCase(fetchSubcategories.fulfilled, (state, action) => {
-        state.loading.subcategories = false;
-        state.subcategories = action.payload;
-        state.error = null;
-      })
-      .addCase(fetchSubcategories.rejected, (state, action) => {
-        state.loading.subcategories = false;
-        state.error = action.error.message;
-      });
-  }
 });
 
 export const {
+  setCategories,
+  setCategoriesLoading,
+  setCategoriesError,
+  setSearchResults,
+  setSearchLoading,
+  setSearchError,
+  setSubcategories,
+  setSubcategoriesLoading,
+  setSubcategoriesError,
   setSelectedCategory,
   setSelectedSubcategory,
   setSearchTerm,
-  clearError
+  clearError,
 } = categoriesSlice.actions;
 
 export default categoriesSlice.reducer;

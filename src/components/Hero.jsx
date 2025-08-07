@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useDispatch } from 'react-redux';
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
-import { searchListings } from '../store/slices/listingsSlice';
+import { fetchListingsBySearch } from '../store/actions/listingsActions';
 import VendorRegister from "../auth/VendorRegister";
 
 // Import assets
@@ -42,7 +42,7 @@ function Hero({ onSearchNow, onReset }) {
       date,
       time
     };
-    dispatch(searchListings(searchParams));
+    dispatch(fetchListingsBySearch(searchParams));
 
     if (onSearchNow) {
       onSearchNow();
