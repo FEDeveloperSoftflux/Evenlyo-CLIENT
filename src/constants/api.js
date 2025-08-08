@@ -66,7 +66,7 @@ export const endPoints = {
   vendors: {
     search: "client/vendors/search",
     byId: (id) => `client/vendors/${id}`,
-    categories: "client/vendors/categories",
+    byCategory: (categoryId) => `vendor/bycategory/${categoryId}`,
     featured: "client/vendors/featured",
     nearby: "client/vendors/nearby",
     reviews: (id) => `client/vendors/${id}/reviews`,
@@ -96,12 +96,12 @@ export const endPoints = {
     search: "listings/search",
     featured: "listings/featured",
     popular: "listings/popular",
-    byCategory: (categoryId) => `client/listings/category/${categoryId}`,
+    byCategory: (categoryId) => `listings/category/${categoryId}`,
     bySubCategory: (subCategoryId) =>
-      `client/listings/subcategory/${subCategoryId}`,
+      `listings/subcategory/${subCategoryId}`,
     byVendor: (vendorId) => `listings/vendor/${vendorId}`,
     byServiceType: (type) => `listings/service-type/${type}`,
-    availability: (id) => `client/listings/${id}/availability`,
+    availability: (id) => `listings/${id}/availability`,
   },
 
   // Events endpoints

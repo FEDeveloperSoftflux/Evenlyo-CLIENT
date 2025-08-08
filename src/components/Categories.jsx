@@ -1,44 +1,201 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from 'react-router-dom';
 import api from "../store/api";
+import { endPoints } from "../constants/api";
 
-const Categories = ({ hideText = false }) => {
+const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVendorsLoading, hideText = false }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [listings, setListings] = useState([]);
+  const [selectedSubcategory, setSelectedSubcategory] = useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const [showAllVendors, setShowAllVendors] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Fetch categories on component mount
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-
-    const fetchData = async () => {
+    const fetchCategories = async () => {
       try {
-        const catRes = await api.get("categories");
-        const subcatRes = await api.get("subcategories");
-        const listRes = await api.get("listings");
+        setLoading(true);
+        const catRes = await api.get(endPoints.categories.all);
+        const categoriesData = catRes.data.data || [];
+        setCategories(categoriesData);
 
-        // Convert objects to arrays for mapping
-        setCategories(Object.values(catRes.data || {}));
-        setSubcategories(Object.values(subcatRes.data || {}));
-        setListings(Object.values(listRes.data || {}));
+        // Set default selected category if not already set
+        if (!selectedCategory && categoriesData.length > 0) {
+          const firstCategory = categoriesData[0];
+          const categoryName = getName(firstCategory);
+          setSelectedCategory && setSelectedCategory(categoryName);
+          setSelectedCategoryId(firstCategory._id || firstCategory.id);
+        } else if (selectedCategory) {
+          // Find the selected category ID
+          const foundCategory = categoriesData.find(cat => getName(cat) === selectedCategory);
+          if (foundCategory) {
+            setSelectedCategoryId(foundCategory._id || foundCategory.id);
+          }
+        }
+
         setLoading(false);
-
-        // Debug logs
-        console.log("Categories:", catRes.data);
-        console.log("Subcategories:", subcatRes.data);
-        console.log("Listings:", listRes.data);
       } catch (err) {
-        setError(err.message || "Failed to fetch data");
+        setError(err.message || "Failed to fetch categories");
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchCategories();
   }, []);
+
+  // Fetch subcategories when category changes
+  useEffect(() => {
+    const fetchSubcategories = async () => {
+      if (!selectedCategoryId) return;
+
+      try {
+        const subcatRes = await api.get(endPoints.subcategories.byCategory(selectedCategoryId));
+        const subcategoriesData = subcatRes.data.data || [];
+        setSubcategories(subcategoriesData);
+
+        // Set first subcategory as default
+        if (subcategoriesData.length > 0 && !selectedSubcategory) {
+          setSelectedSubcategory(getName(subcategoriesData[0]));
+        }
+
+        console.log("Subcategories for category:", subcategoriesData);
+      } catch (err) {
+        console.error("Failed to fetch subcategories:", err);
+        setSubcategories([]);
+      }
+    };
+
+    fetchSubcategories();
+  }, [selectedCategoryId]);
+
+  // Fetch listings when subcategory changes
+  useEffect(() => {
+    const fetchListings = async () => {
+      if (!selectedSubcategory) return;
+      
+      try {
+        // Find the selected subcategory ID
+        const foundSubcategory = subcategories.find(subcat => getName(subcat) === selectedSubcategory);
+        if (foundSubcategory) {
+          const subcategoryId = foundSubcategory._id || foundSubcategory.id;
+          const listRes = await api.get(endPoints.listings.bySubCategory(subcategoryId));
+          const listingsData = listRes.data.data || [];
+          setListings(listingsData);
+          
+          console.log("Listings for subcategory:", listingsData);
+        }
+      } catch (err) {
+        console.error("Failed to fetch listings:", err);
+        setListings([]);
+      }
+    };
+
+    fetchListings();
+  }, [selectedSubcategory, subcategories]);
+
+  // Fetch vendors by category
+  useEffect(() => {
+    const fetchVendorsByCategory = async () => {
+      if (!selectedCategoryId || !setVendors || !setVendorsLoading) return;
+      
+      try {
+        setVendorsLoading(true);
+        console.log("Fetching vendors for category ID:", selectedCategoryId);
+        const vendorRes = await api.get(endPoints.vendors.byCategory(selectedCategoryId));
+        const vendorsData = vendorRes.data.data || vendorRes.data || [];
+        console.log("Raw vendor API response:", vendorRes.data);
+        console.log("Processed vendors data:", vendorsData);
+        setVendors(vendorsData);
+      } catch (err) {
+        console.error("Failed to fetch vendors:", err);
+        console.error("API endpoint used:", endPoints.vendors.byCategory(selectedCategoryId));
+        setVendors([]);
+      } finally {
+        setVendorsLoading(false);
+      }
+    };
+
+    fetchVendorsByCategory();
+  }, [selectedCategoryId, setVendors, setVendorsLoading]);
+
+  const getName = (item) => {
+    if (!item) return "No Name";
+    
+    // Debug log to see the actual structure
+    console.log('getName called with item:', item);
+    
+    // Handle different name formats
+    if (typeof item.name === "string") return item.name;
+    if (item.name && typeof item.name === "object") {
+      if (item.name.en) return item.name.en;
+      if (item.name.nl) return item.name.nl;
+      // If name is an object but doesn't have en/nl, try to get first value
+      const firstKey = Object.keys(item.name)[0];
+      if (firstKey) return item.name[firstKey];
+    }
+    
+    // Fallback to other possible fields
+    return item.title || item.label || item.categoryName || item.subcategoryName || "No Name";
+  };
+  
+  const getIcon = (item) => {
+    if (!item) return null;
+    
+    console.log('getIcon called with item:', item);
+    
+    // Handle different icon formats
+    if (typeof item.icon === "string" && item.icon.trim() !== '') {
+      // If it's a URL or path, return it
+      if (item.icon.includes('/') || item.icon.includes('.')) {
+        return item.icon;
+      }
+      // If it's just an emoji or text, return it
+      return item.icon;
+    }
+    
+    // Check for other possible icon fields
+    return item.iconUrl || item.image || null;
+  };
+
+  const handleCategoryClick = (category) => {
+    const categoryName = getName(category);
+    const categoryId = category._id || category.id;
+    console.log("Category clicked:", categoryName, "ID:", categoryId);
+    
+    setSelectedCategory && setSelectedCategory(categoryName);
+    setSelectedCategoryId(categoryId);
+    setSelectedSubcategory(''); // Reset subcategory when category changes
+  };
+
+  const handleSubcategoryClick = (subcategory) => {
+    setSelectedSubcategory(getName(subcategory));
+  };
+
+  // Get current subcategories for selected category
+  const getCurrentSubcategories = () => {
+    return subcategories || [];
+  };
+
+  // Filter listings for selected subcategory
+  const filteredListings = listings.filter(listing => {
+    if (!selectedSubcategory) return true;
+    // You can add more sophisticated filtering here based on your data structure
+    return true;
+  });
+
+  // Determine how many listings to show on mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 448;
+  let listingsToShow = filteredListings;
+  if (!showAllVendors && filteredListings.length > 3) {
+    listingsToShow = isMobile ? filteredListings.slice(0, 3) : filteredListings;
+  }
 
   if (loading) {
     return (
@@ -59,102 +216,279 @@ const Categories = ({ hideText = false }) => {
   }
 
   return (
-    <section
-      className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-16 bg-gray-50"
-      id="categories"
-    >
+    <section className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-16 bg-gray-50">
       <div className="max-w-7xl mx-auto">
         {/* Section Title */}
         {!hideText && (
           <div className="text-center mb-responsive">
             <h2 className="text-responsive-h2 text-gray-900">
-              {t("explore_categories")}
+              Explore <span className="text-primary-500">Categories</span>
             </h2>
           </div>
         )}
 
-        {/* Categories Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.length > 0 ? (
-            categories.map((category) => (
+        {/* Category Icons */}
+        {!hideText && (
+          <div
+            className="grid grid-cols-3 gap-y-6 gap-x-2 justify-items-center mb-responsive md:flex md:justify-center md:items-start md:gap-y-0 md:gap-x-0 md:space-x-8 md:overflow-visible md:pb-0"
+          >
+            {/* First row: first 3 categories */}
+            {categories.slice(0, 3).map((category) => (
               <div
                 key={category._id || category.id}
-                className="bg-white rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => handleCategoryClick(category)}
+                className={`flex flex-col items-center cursor-pointer transition-all duration-300 min-w-max ${selectedCategory === getName(category) ? 'transform scale-105' : 'hover:scale-102'
+                  }`}
               >
-                <img
-                  src={category.image || "/default-category.svg"}
-                  alt={category.name || "Category"}
-                  className="w-12 h-12 mb-2"
-                />
-                <h3 className="text-lg font-semibold">
-                  {category.name || "No Name"}
-                </h3>
+                <div
+                  className={`category-card-mobile sm:category-card-desktop border-4 transition-all duration-300 ${selectedCategory === getName(category)
+                    ? 'bg-gradient-to-b from-secondary via-primary-500 to-primary-600 border-white shadow-category'
+                    : 'bg-white border-gray-200 hover:border-primary-300 shadow-card'
+                    }`}
+                >
+                  {(() => {
+                    const iconSrc = getIcon(category);
+                    if (iconSrc && (iconSrc.includes('/') || iconSrc.includes('.'))) {
+                      // It's an image URL/path
+                      return (
+                        <img
+                          src={iconSrc}
+                          alt={getName(category)}
+                          className={`w-6 h-6 sm:w-8 sm:h-8 transition-all duration-300 ${
+                            selectedCategory === getName(category) ? 'filter brightness-0 invert' : ''
+                          }`}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'inline';
+                          }}
+                        />
+                      );
+                    } else if (iconSrc) {
+                      // It's an emoji or text
+                      return (
+                        <span className={`text-2xl ${
+                          selectedCategory === getName(category) ? 'filter brightness-0 invert' : ''
+                        }`}>{iconSrc}</span>
+                      );
+                    } else {
+                      // Fallback
+                      return (
+                        <span className={`text-2xl ${
+                          selectedCategory === getName(category) ? 'filter brightness-0 invert' : ''
+                        }`}>📁</span>
+                      );
+                    }
+                  })()}
+                  <span className="text-2xl hidden">📁</span>
+                </div>
+                <span
+                  className={`text-xs sm:text-sm font-medium text-center max-w-20 sm:max-w-28 leading-tight transition-all duration-300 ${
+                    selectedCategory === getName(category) ? 'text-primary-500 font-semibold' : 'text-gray-700'
+                  }`}
+                >
+                  {getName(category)}
+                </span>
               </div>
-            ))
-          ) : (
-            <div className="col-span-full text-center text-gray-500">
-              No categories found
+            ))}
+            {/* Second row: remaining categories, centered on mobile */}
+            {categories.length > 3 && (
+              <div className="col-span-3 flex justify-center gap-x-4 md:col-span-1 md:flex-none md:justify-start md:gap-x-8">
+                {categories.slice(3).map((category) => (
+                  <div
+                    key={category._id || category.id}
+                    onClick={() => handleCategoryClick(category)}
+                    className={`flex flex-col items-center cursor-pointer transition-all duration-300 min-w-max ${selectedCategory === getName(category) ? 'transform scale-105' : 'hover:scale-102'
+                      }`}
+                  >
+                    <div
+                      className={`category-card-mobile sm:category-card-desktop border-4 transition-all duration-300 ${selectedCategory === getName(category)
+                        ? 'bg-gradient-to-b from-secondary via-primary-500 to-primary-600 border-white shadow-category'
+                        : 'bg-white border-gray-200 hover:border-primary-300 shadow-card'
+                        }`}
+                    >
+                      {category.icon ? (
+                        <img
+                          src={category.icon}
+                          alt={getName(category)}
+                          className={`w-6 h-6 sm:w-8 sm:h-8 transition-all duration-300 ${selectedCategory === getName(category) ? 'filter brightness-0 invert' : ''
+                            }`}
+                        />
+                      ) : (
+                        <span className={`text-2xl ${selectedCategory === getName(category) ? 'filter brightness-0 invert' : ''
+                          }`}>📁</span>
+                      )}
+                    </div>
+                    <span
+                      className={`text-xs sm:text-sm font-medium text-center max-w-20 sm:max-w-28 leading-tight transition-all duration-300 ${selectedCategory === getName(category) ? 'text-primary-500 font-semibold' : 'text-gray-700'
+                        }`}
+                    >
+                      {getName(category)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Subcategory Pills */}
+        {!hideText && (
+          <div className="flex justify-center items-center space-x-2 sm:space-x-3 mb-responsive flex-wrap gap-2">
+            {getCurrentSubcategories().map((subcategory) => (
+              <button
+                key={subcategory._id || subcategory.id}
+                onClick={() => handleSubcategoryClick(subcategory)}
+                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 flex items-center space-x-2 ${selectedSubcategory === getName(subcategory)
+                  ? 'bg-gradient-to-b from-secondary via-primary-500 to-primary-600 text-white shadow-md'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:border-primary-300 hover:text-primary-500'
+                  }`}
+              >
+                {(() => {
+                  const iconSrc = getIcon(subcategory);
+                  if (iconSrc && (iconSrc.includes('/') || iconSrc.includes('.'))) {
+                    // It's an image URL/path
+                    return (
+                      <img
+                        src={iconSrc}
+                        alt={getName(subcategory)}
+                        className="w-8 h-8 bg-white rounded-lg"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'inline';
+                        }}
+                      />
+                    );
+                  } else if (iconSrc) {
+                    // It's an emoji or text
+                    return <span className="text-lg">{iconSrc}</span>;
+                  } else {
+                    // Fallback
+                    return <span className="text-lg">📂</span>;
+                  }
+                })()}
+                <span className="text-lg hidden">📂</span>
+                <span>{getName(subcategory)}</span>
+              </button>
+            ))}
+            <button className="px-4 py-2.5 bg-white border border-gray-200 rounded-full text-primary-500 hover:bg-primary-50 text-sm font-medium transition-colors">
+              See All
+            </button>
+          </div>
+        )}
+
+        {/* Listings Section Title */}
+        {!hideText && (
+          <div className="text-center mb-responsive">
+            <h3 className="text-responsive-h2 text-gray-900 mb-2">
+              All {selectedSubcategory || 'Listings'} <span className="text-gray-400">({filteredListings.length})</span>
+            </h3>
+            <p className="text-responsive-body text-gray-600">
+              Start to book {selectedSubcategory || 'services'} for your <span className="font-semibold text-primary-500">Event</span> Because everything is on place
+            </p>
+          </div>
+        )}
+
+        {/* Listings Cards */}
+        {selectedCategory && (
+          <div className="mb-10">
+            <div className="mb-6">
+              {listingsToShow.length === 0 ? (
+                <div className="text-center text-gray-500 py-8 text-lg">
+                  Not Available😌
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                  {listingsToShow.map(listing => (
+                    <div key={listing._id || listing.id} className="card-mobile vendor-card-desktop">
+                      {/* Listing Image */}
+                      <div className="relative image-container-mobile sm:image-container-desktop bg-gradient-to-br from-gray-200 to-gray-300">
+                        <img
+                          src={listing.images && listing.images.length > 0 ? listing.images[0] : `/src/assets/icons/categorycard.svg`}
+                          alt={getName(listing)}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none'
+                            e.target.nextSibling.style.display = 'flex'
+                          }}
+                        />
+                        <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 hidden items-center justify-center">
+                          <span className="text-gray-500 text-sm">Service Image</span>
+                        </div>
+                      </div>
+
+                      {/* Listing Details */}
+                      <div className="space-mobile-sm sm:p-5">
+                        {/* Vendor Avatar and Name */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center">
+                            <img
+                              src="/src/assets/icons/Profile.svg"
+                              alt="Provider"
+                              className="w-8 h-8 rounded-full mr-3"
+                            />
+                            <span className="text-black-600 text-sm font-medium">
+                              {listing.vendor?.name || listing.providerName || 'Service Provider'}
+                            </span>
+                          </div>
+                          <span className="text-green-600 text-sm font-medium bg-green-100 rounded-lg px-2">
+                            • {listing.availability || 'Available'}
+                          </span>
+                        </div>
+
+                        <h4 className="font-bold text-base sm:text-lg text-gray-900 mb-2">{getName(listing)}</h4>
+                        <p className="text-gray-600 text-xs sm:text-sm mb-4">
+                          {listing.description || listing.shortDescription || 'Professional service for your events...'}
+                        </p>
+
+                        {/* Listing Info */}
+                        <div className="space-y-2 mb-4">
+                          <div className="flex items-center text-sm text-gray-600">
+                            <span className="font-medium">Location:</span>
+                            <span className="ml-2">{listing.location || listing.address || 'Available Citywide'}</span>
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600">
+                            <span className="font-medium">Experience:</span>
+                            <span className="ml-2">{listing.experience || '5+ years'}</span>
+                          </div>
+                        </div>
+
+                        {/* Rating and Price */}
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center">
+                            <span className="text-yellow-400 text-lg">⭐</span>
+                            <span className="ml-1 font-semibold text-gray-900">
+                              {listing.rating || listing.averageRating || '4.5'}/5
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-gray-900">
+                              ${listing.price || listing.basePrice || '300'}
+                            </div>
+                            <div className="text-xs text-gray-500">Per Event</div>
+                          </div>
+                        </div>
+
+                        {/* Book Now Button */}
+                        <button
+                          className="btn-primary-mobile w-full touch-button"
+                          onClick={() => navigate('/bookingpage')}
+                        >
+                          Book Now
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-
-        {/* Subcategories Grid */}
-        <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">All Subcategories</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {subcategories.length > 0 ? (
-              subcategories.map((subcategory) => (
-                <div
-                  key={subcategory._id || subcategory.id}
-                  className="bg-white rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-                >
-                  <img
-                    src={subcategory.image || "/default-subcategory.svg"}
-                    alt={subcategory.name || "Subcategory"}
-                    className="w-12 h-12 mb-2"
-                  />
-                  <h3 className="text-lg font-semibold">
-                    {subcategory.name || "No Name"}
-                  </h3>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full text-center text-gray-500">
-                No subcategories found
-              </div>
-            )}
           </div>
-        </div>
+        )}
 
-        {/* Listings Grid */}
-        <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">All Listings</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {listings.length > 0 ? (
-              listings.map((listing) => (
-                <div
-                  key={listing._id || listing.id}
-                  className="bg-white rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-                >
-                  <img
-                    src={listing.image || "/default-listing.svg"}
-                    alt={listing.title || "Listing"}
-                    className="w-12 h-12 mb-2"
-                  />
-                  <h3 className="text-lg font-semibold">
-                    {listing.title || "No Title"}
-                  </h3>
-                  <p className="text-gray-600">
-                    {listing.description || "No Description"}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full text-center text-gray-500">
-                No listings found
-              </div>
-            )}
-          </div>
+        {/* View All Button */}
+        <div className="text-center hidden md:block">
+          <button className="px-8 py-3 border-2 border-primary-500 text-primary-500 rounded-full font-medium hover:bg-primary-50 transition-colors duration-300">
+            View All →
+          </button>
         </div>
       </div>
     </section>

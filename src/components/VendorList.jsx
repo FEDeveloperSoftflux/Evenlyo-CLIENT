@@ -2,15 +2,45 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next'
 
-// Import assets
+// Import assets for fallback
 import vendor1Png from '../assets/images/Vendor1.png';
 import vendor2Png from '../assets/images/Vendor2.png';
-import vendor3Png from '../assets/images/Vendor3.png';;
+import vendor3Png from '../assets/images/Vendor3.png';
 
-const VendorList = ({ selectedCategory }) => {
+const VendorList = ({ selectedCategory, vendors = [], loading = false }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const vendors = [
+  
+  // Helper function to get name from API data
+  const getName = (vendor) => {
+    if (!vendor) return "No Name";
+    
+    // Handle different name formats from API
+    if (typeof vendor.name === "string") return vendor.name;
+    if (vendor.name && typeof vendor.name === "object") {
+      if (vendor.name.en) return vendor.name.en;
+      if (vendor.name.nl) return vendor.name.nl;
+      // If name is an object but doesn't have en/nl, try to get first value
+      const firstKey = Object.keys(vendor.name)[0];
+      if (firstKey) return vendor.name[firstKey];
+    }
+    
+    // Fallback to other possible fields
+    return vendor.businessName || vendor.companyName || vendor.title || vendor.vendorName || "Vendor";
+  };
+  
+  // Helper function to get vendor image
+  const getVendorImage = (vendor, index) => {
+    if (vendor.logo) return vendor.logo;
+    if (vendor.image) return vendor.image;
+    if (vendor.images && vendor.images.length > 0) return vendor.images[0];
+    // Fallback to imported assets
+    const fallbackImages = [vendor1Png, vendor2Png, vendor3Png];
+    return fallbackImages[index % fallbackImages.length];
+  };
+  
+  // Fallback static data for when no API data is available
+  const staticVendors = [
     // Entertainment & Attractions
     {
       id: 1,
@@ -217,17 +247,46 @@ const VendorList = ({ selectedCategory }) => {
     },
   ];
 
-  const filteredVendors = selectedCategory
-    ? vendors.filter((v) => v.category === selectedCategory)
-    : vendors;
+  // Debug logging
+  console.log('VendorList render:', {
+    selectedCategory,
+    vendors,
+    vendorsLength: vendors.length,
+    loading
+  });
+
+  // Use API data if available, otherwise use static data filtered by category
+  const displayVendors = vendors.length > 0 ? vendors : 
+    (selectedCategory ? staticVendors.filter((v) => v.category === selectedCategory) : staticVendors);
+  
+  console.log('DisplayVendors:', displayVendors);
 
   const renderStars = (rating) => {
+    const numStars = Math.floor(rating) || 4;
     return Array.from({ length: 5 }, (_, index) => (
-      <span key={index} className="text-orange-400 text-lg">
+      <span key={index} className={`text-lg ${
+        index < numStars ? 'text-orange-400' : 'text-gray-300'
+      }`}>
         ★
       </span>
     ));
   };
+
+  if (loading) {
+    return (
+      <section id="vendor-feature" className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-16 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 sm:mb-12 text-center">
+            {t('related_vendors')}
+          </h2>
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+            <p className="mt-4 text-gray-600">Loading vendors...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="vendor-feature" className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-16 bg-white">
@@ -238,29 +297,29 @@ const VendorList = ({ selectedCategory }) => {
 
         {/* Desktop Layout */}
         <div className="hidden lg:block space-y-6">
-          {filteredVendors.length === 0 ? (
+          {displayVendors.length === 0 ? (
             <div className="text-center text-gray-500 py-12 text-lg font-medium">
               No vendors found for this category.
             </div>
           ) : (
-            filteredVendors.map((vendor, index) => (
+            displayVendors.map((vendor, index) => (
               <div
-                key={vendor.id}
-                onClick={() => navigate(`/vendor/${vendor.id}`)}
+                key={vendor.id || vendor._id || index}
+                onClick={() => navigate(`/vendor/${vendor.id || vendor._id}`)}
                 className="bg-white rounded-lg shadow-md p-6 flex items-center justify-between hover:shadow-lg transition-shadow duration-300 border-gradient-brand relative cursor-pointer"
               >
                 {/* Available Status Pill */}
                 <div className="absolute right-4 top-4 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">
-                  Available
+                  {vendor.status || 'Available'}
                 </div>
                 {/* Left Section - Logo and Details */}
                 <div className="flex items-center space-x-6 flex-1">
                   {/* Logo */}
                   <div className="flex-shrink-0">
                     <img
-                      src={vendor.logo}
-                      alt={vendor.name}
-                      className="w-40 h-40 rounded-lg"
+                      src={getVendorImage(vendor, index)}
+                      alt={getName(vendor)}
+                      className="w-40 h-40 rounded-lg object-cover"
                     />
                   </div>
 
@@ -268,28 +327,28 @@ const VendorList = ({ selectedCategory }) => {
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
                       <h3 className="text-xl font-bold text-gray-900">
-                        {vendor.name}
+                        {getName(vendor)}
                       </h3>
                       <div className="flex items-center">
-                        {renderStars(vendor.rating)}
+                        {renderStars(vendor.rating || vendor.averageRating)}
                       </div>
                     </div>
 
                     <div className="space-y-1 text-sm text-gray-600">
                       <p>
                         <span className="font-medium">Services:</span>{" "}
-                        {vendor.services}
+                        {vendor.services || vendor.serviceTypes || 'General Services'}
                       </p>
                       <p>
                         <span className="font-medium">Location:</span>{" "}
-                        {vendor.location}
+                        {vendor.location || vendor.address || 'Various Locations'}
                       </p>
-                      <p className="text-gray-500">{vendor.coverage}</p>
+                      <p className="text-gray-500">{vendor.coverage || vendor.serviceArea || 'Available Citywide'}</p>
                       <p className="mt-2">
                         <span className="font-medium text-gray-700">
                           Why Choose Us:
                         </span>{" "}
-                        {vendor.whyChoose}
+                        {vendor.whyChoose || vendor.description || 'Professional service provider with excellent reviews.'}
                         <span className="text-primary-500 ml-1 cursor-pointer hover:underline font-medium">
                           View Profile
                         </span>
@@ -307,12 +366,12 @@ const VendorList = ({ selectedCategory }) => {
                     <div className="flex items-center justify-end space-x-1">
                       <span>📞</span>
                       <span className="font-medium">Call:</span>
-                      <span>{vendor.phone}</span>
+                      <span>{vendor.phone || vendor.contactNumber || 'Available upon booking'}</span>
                     </div>
                     <div className="flex items-center justify-end space-x-1">
                       <span>📧</span>
                       <span className="font-medium">Email:</span>
-                      <span>{vendor.email}</span>
+                      <span>{vendor.email || vendor.contactEmail || 'Available upon booking'}</span>
                     </div>
                   </div>
                 </div>
@@ -323,53 +382,58 @@ const VendorList = ({ selectedCategory }) => {
 
         {/* Mobile & Tablet Card Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:hidden gap-4 md:gap-6">
-          {filteredVendors.length === 0 ? (
+          {displayVendors.length === 0 ? (
             <div className="col-span-full text-center text-gray-500 py-12 text-lg font-medium">
               No vendors found for this category.
             </div>
           ) : (
-            filteredVendors.map((vendor, index) => (
+            displayVendors.map((vendor, index) => (
               <div
+                key={vendor.id || vendor._id || index}
                 className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden flex flex-col cursor-pointer"
-                onClick={() => navigate(`/vendor/${vendor.id}`)}
+                onClick={() => navigate(`/vendor/${vendor.id || vendor._id}`)}
               >
                 {/* Vendor Image */}
-                <img src={vendor.logo} alt={vendor.name} className=" ml-5 mr-5 w-70 h-60 mt-2 mb-2 " />
+                <img 
+                  src={getVendorImage(vendor, index)} 
+                  alt={getName(vendor)} 
+                  className=" ml-5 mr-5 w-70 h-60 mt-2 mb-2 object-cover rounded-lg" 
+                />
 
                 <div className="p-4 flex-1 flex flex-col">
                   {/* Name & Discount */}
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-bold text-lg text-gray-900">{vendor.name}</h3>
+                    <h3 className="font-bold text-lg text-gray-900">{getName(vendor)}</h3>
                     <span className="bg-green-100 text-green-600 text-xs font-semibold px-2 py-1 rounded-lg whitespace-nowrap">
                       • 20% OFF
                     </span>
                   </div>
                   {/* Coverage/Location */}
-                  <div className="text-gray-500 text-sm mb-2">{vendor.coverage}</div>
+                  <div className="text-gray-500 text-sm mb-2">{vendor.coverage || vendor.serviceArea || 'Available Citywide'}</div>
                   {/* Location */}
-                  <div className="text-xs mb-2"><span className="font-bold">Location:</span> {vendor.location}</div>
+                  <div className="text-xs mb-2"><span className="font-bold">Location:</span> {vendor.location || vendor.address || 'Various Locations'}</div>
                   {/* Services */}
                   <div className="flex flex-wrap gap-2 mb-2">
-                  <span className="font-bold text-xs">Services:</span>
-                    {vendor.services.split(',').map((service, i) => (
+                    <span className="font-bold text-xs">Services:</span>
+                    {(vendor.services || vendor.serviceTypes || 'General Services').split(',').map((service, i) => (
                       <span key={i} className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">{service.trim()}</span>
                     ))}
                     <span className="bg-pink-50 text-pink-600 text-xs px-2 py-1 rounded-full cursor-pointer">See All</span>
                   </div>
                   {/* Why Choose Us */}
                   <div className="text-xs text-gray-600 mb-2">
-                    <span className="font-medium text-gray-700">Why Chose Us :</span>
-                    {vendor.whyChoose}
+                    <span className="font-medium text-gray-700">Why Choose Us:</span>
+                    {vendor.whyChoose || vendor.description || 'Professional service provider with excellent reviews.'}
                     <span className="text-pink-500 ml-1 cursor-pointer hover:underline font-medium">View More</span>
                   </div>
                   {/* Rating & Reviews and CTA Button */}
                   <div className="flex items-center justify-between gap- mb-3">
                     <div className="flex items-center gap-1 text-xs text-gray-500">
-                      <span className="text-yellow-400">★★★★</span>
-                      <span className="font-semibold text-gray-800">4.8</span>
-                      <span>(127 reviews)</span>
+                      {renderStars(vendor.rating || vendor.averageRating || 4.8)}
+                      <span className="font-semibold text-gray-800">{vendor.rating || vendor.averageRating || '4.8'}</span>
+                      <span>({vendor.reviewCount || '127'} reviews)</span>
                     </div>
-                    <button className="btn-primary-mobile  text-white font-bold py-2 px-8 rounded-lg whitespace-nowrap">View Profile</button>
+                    <button className="btn-primary-mobile text-white font-bold py-2 px-8 rounded-lg whitespace-nowrap">View Profile</button>
                   </div>
                 </div>
               </div>

@@ -112,8 +112,9 @@ function Hero({ onSearchNow, onReset }) {
                 <img
                   src={searchButtonIcon}
                   alt="Event"
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 z-10"
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4"
                 />
+
                 <input
                   type="text"
                   placeholder={t('search_event')}
