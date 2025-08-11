@@ -65,6 +65,7 @@ export const endPoints = {
   // Vendor discovery endpoints
   vendors: {
     search: "client/vendors/search",
+    byProfile: (vendorId) => `vendor/profile/${vendorId}`,
     byId: (id) => `client/vendors/${id}`,
     byCategory: (categoryId) => `vendor/bycategory/${categoryId}`,
     featured: "client/vendors/featured",
@@ -177,13 +178,9 @@ export const endPoints = {
 
   // Blog endpoints
   blog: {
-    posts: "client/blog/posts",
-    postById: (id) => `client/blog/posts/${id}`,
-    categories: "client/blog/categories",
-    featured: "client/blog/posts/featured",
-    search: "client/blog/search",
-    comments: (postId) => `client/blog/posts/${postId}/comments`,
-    addComment: (postId) => `client/blog/posts/${postId}/comments`,
+      all: 'blogs', // GET /api/blogs
+      byId: (id) => `blogs/${id}`, // GET /api/blogs/:id
+      addComment: (id) => `blogs/${id}/comments` // POST /api/blogs/:id/comments
   },
 
   // Search endpoints
@@ -201,6 +198,11 @@ export const endPoints = {
     areas: (cityId) => `client/locations/cities/${cityId}/areas`,
     nearby: "client/locations/nearby",
     popular: "client/locations/popular",
+  },
+
+  // Plans endpoints
+  plans: {
+    all: "plans",
   },
 
   // General endpoints

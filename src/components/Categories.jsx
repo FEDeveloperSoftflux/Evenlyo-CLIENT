@@ -456,7 +456,14 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
                               className="w-8 h-8 rounded-full mr-3"
                             />
                             <span className="text-black-600 text-sm font-medium">
-                              {listing.vendorName || 'Service Provider'}
+                              {(() => {
+                                // Handle vendorName field safely
+                                if (typeof listing.vendorName === 'string') return listing.vendorName;
+                                if (listing.vendorName && typeof listing.vendorName === 'object') {
+                                  return listing.vendorName.en || listing.vendorName.nl || Object.values(listing.vendorName)[0] || 'Service Provider';
+                                }
+                                return 'Service Provider';
+                              })()} 
                             </span>
                           </div>
                           <span className="text-green-600 text-sm font-medium bg-green-100 rounded-lg px-2">
@@ -464,20 +471,34 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
                           </span>
                         </div>
 
-                        <h4 className="font-bold text-base sm:text-lg text-gray-900 mb-2">{listing.title}</h4>
+                        <h4 className="font-bold text-base sm:text-lg text-gray-900 mb-2">{getName(listing) || 'Service'}</h4>
                         <p className="text-gray-600 text-xs sm:text-sm mb-4">
-                          {listing.description || 'Professional service for your events...'}
+                          {typeof listing.description === 'string' ? listing.description : 'Professional service for your events...'}
                         </p>
 
                         {/* Listing Info */}
                         <div className="space-y-2 mb-4">
                           <div className="flex items-center text-sm text-gray-600">
                             <span className="font-medium">Location:</span>
-                            <span className="ml-2">{listing.location || 'Available Citywide'}</span>
+                            <span className="ml-2">{typeof listing.location === 'string' ? listing.location : 'Available Citywide'}</span>
                           </div>
                           <div className="flex items-center text-sm text-gray-600">
                             <span className="font-medium">Category:</span>
-                            <span className="ml-2">{listing.category || listing.subCategory || 'General Service'}</span>
+                            <span className="ml-2">
+                              {(() => {
+                                // Handle category field safely
+                                if (typeof listing.category === 'string') return listing.category;
+                                if (typeof listing.subCategory === 'string') return listing.subCategory;
+                                // If they're objects, try to get string values
+                                if (listing.category && typeof listing.category === 'object') {
+                                  return listing.category.en || listing.category.nl || Object.values(listing.category)[0] || 'General Service';
+                                }
+                                if (listing.subCategory && typeof listing.subCategory === 'object') {
+                                  return listing.subCategory.en || listing.subCategory.nl || Object.values(listing.subCategory)[0] || 'General Service';
+                                }
+                                return 'General Service';
+                              })()} 
+                            </span>
                           </div>
                         </div>
 

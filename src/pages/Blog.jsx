@@ -1,126 +1,74 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Link } from 'react-router-dom';
 import Header from "../components/Header";
 import { useTranslation } from 'react-i18next';
-import Footer from "../components/Footer"
+import Footer from "../components/Footer";
+import api from '../services/api';
+import { endPoints } from '../constants/api';
 
 // Import assets
-import blogCardImage from '../assets/images/blog-card.png';;
+import blogCardImage from '../assets/images/blog-card.png';
 
 function Blog() {
   const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCard, setSelectedCard] = useState(null);
   const [showViewCard, setShowViewCard] = useState(false);
+  const [blogs, setBlogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const itemsPerPage = 9;
   const totalPages = 3;
 
-  // Sample blog data
-  const blogPosts = [
-    {
-      id: 1,
-      title: "The Future of Event Management: Embracing Digital Transformation",
-      description:
-        "Discover how digital technologies are revolutionizing the event management industry and what it means for vendors and clients.",
-      date: "March 15, 2024",
-      author: "Sarah Johnson",
-      category: "Technology",
-      readTime: "5 min read",
-      image: "/assets/blog-main.png",
-      isMain: true,
-    },
-    {
-      id: 2,
-      title: "Top 10 Wedding Trends for 2024",
-      description:
-        "Stay ahead of the curve with the latest wedding trends that are making waves this year.",
-      date: "March 12, 2024",
-      author: "Emily Davis",
-      category: "Wedding",
-      readTime: "4 min read",
-      image: "/assets/blog-card.png",
-    },
-    {
-      id: 3,
-      title: "How to Choose the Perfect Venue for Your Event",
-      description:
-        "A comprehensive guide to selecting the right venue that matches your event's vision and budget.",
-      date: "March 10, 2024",
-      author: "Michael Brown",
-      category: "Planning",
-      readTime: "6 min read",
-      image: "/assets/blog-card.png",
-    },
-    {
-      id: 4,
-      title: "Maximizing Your Event Budget: Tips from Industry Experts",
-      description:
-        "Learn how to get the most value from your event budget with these proven strategies.",
-      date: "March 8, 2024",
-      author: "Jennifer Wilson",
-      category: "Budget",
-      readTime: "3 min read",
-      image: "/assets/blog-card.png",
-    },
-    {
-      id: 5,
-      title: "The Art of Event Photography: Capturing Perfect Moments",
-      description:
-        "Professional tips for capturing stunning event photos that tell your story.",
-      date: "March 5, 2024",
-      author: "David Lee",
-      category: "Photography",
-      readTime: "7 min read",
-      image: "/assets/blog-card.png",
-    },
-    {
-      id: 6,
-      title: "Sustainable Event Planning: Going Green Without Compromise",
-      description:
-        "How to create memorable events while maintaining environmental responsibility.",
-      date: "March 3, 2024",
-      author: "Lisa Thompson",
-      category: "Sustainability",
-      readTime: "5 min read",
-      image: "/assets/blog-card.png",
-    },
-    {
-      id: 7,
-      title: "Corporate Events That Drive Results: Best Practices",
-      description:
-        "Transform your corporate events into powerful business tools with these strategies.",
-      date: "March 1, 2024",
-      author: "Robert Garcia",
-      category: "Corporate",
-      readTime: "4 min read",
-      image: "/assets/blog-card.png",
-    },
-    {
-      id: 8,
-      title: "Social Media Marketing for Event Professionals",
-      description:
-        "Leverage social media to grow your event business and engage with your audience.",
-      date: "February 28, 2024",
-      author: "Amanda Clark",
-      category: "Marketing",
-      readTime: "6 min read",
-      image: "/assets/blog-card.png",
-    },
-    {
-      id: 9,
-      title: "The Psychology of Event Design: Creating Memorable Experiences",
-      description:
-        "Understanding how design elements impact guest emotions and behavior.",
-      date: "February 25, 2024",
-      author: "Thomas Anderson",
-      category: "Design",
-      readTime: "8 min read",
-      image: "/assets/blog-card.png",
-    },
-  ];
+  // Fetch blogs from API
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(endPoints.blog.all);
+        const blogData = response.data.data || response.data || [];
+        setBlogs(blogData);
+      } catch (err) {
+        console.error('Error fetching blogs:', err);
+        setError('Failed to load blogs. Please try again later.');
+        // Fallback to sample data if API fails
+        setBlogs([
+          {
+            id: 1,
+            title: "The Future of Event Management: Embracing Digital Transformation",
+            description:
+              "Discover how digital technologies are revolutionizing the event management industry and what it means for vendors and clients.",
+            date: "March 15, 2024",
+            author: "Sarah Johnson",
+            category: "Technology",
+            readTime: "5 min read",
+            image: "/assets/blog-main.png",
+            isMain: true,
+          },
+          {
+            id: 2,
+            title: "Top 10 Wedding Trends for 2024",
+            description:
+              "Stay ahead of the curve with the latest wedding trends that are making waves this year.",
+            date: "March 12, 2024",
+            author: "Emily Davis",
+            category: "Wedding",
+            readTime: "4 min read",
+            image: "/assets/blog-card.png",
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const mainPost = blogPosts.find((post) => post.isMain);
-  const otherPosts = blogPosts.filter((post) => !post.isMain);
+    fetchBlogs();
+  }, []);
+
+  // Process blogs for main and other posts
+  const mainPost = blogs.length > 0 ? (blogs.find((post) => post.isMain) || blogs[0]) : null;
+  const otherPosts = blogs.length > 0 ? blogs.filter((post, index) => (post._id || post.id) !== (mainPost?._id || mainPost?.id) && index !== 0) : [];
 
   const handleCardClick = (post) => {
     setSelectedCard(post);
@@ -231,9 +179,9 @@ function Blog() {
   const BlogCard = ({ post, isMain = false }) => {
     if (isMain) {
       return (
-        <div
-          className="flex flex-col lg:flex-row gap-6 sm:gap-8 items-start cursor-pointer group"
-          onClick={() => handleCardClick(post)}
+        <Link
+          to={`/blog/${post._id || post.id}`}
+          className="flex flex-col lg:flex-row gap-6 sm:gap-8 items-start cursor-pointer group block"
         >
           {/* Image Section */}
           <div className="w-full lg:w-1/2 relative overflow-hidden rounded-xl sm:rounded-2xl">
@@ -312,14 +260,14 @@ function Blog() {
               </svg>
             </button>
           </div>
-        </div>
+        </Link>
       );
     }
 
     return (
-      <div
-        className="bg-white rounded-xl sm:rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden cursor-pointer group"
-        onClick={() => handleCardClick(post)}
+      <Link
+        to={`/blog/${post._id || post.id}`}
+        className="bg-white rounded-xl sm:rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden cursor-pointer group block"
       >
         <div className="relative overflow-hidden">
           <img
@@ -398,7 +346,7 @@ function Blog() {
             </svg>
           </div>
         </div>
-      </div>
+      </Link>
     );
   };
 
@@ -729,6 +677,20 @@ function Blog() {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex justify-center items-center h-96">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   if (showViewCard && selectedCard) {
     return <ViewCard post={selectedCard} />;
   }
@@ -784,7 +746,7 @@ function Blog() {
         {/* Other Blog Posts Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {otherPosts.map((post) => (
-            <BlogCard key={post.id} post={post} />
+            <BlogCard key={post._id || post.id} post={post} />
           ))}
         </div>
 
