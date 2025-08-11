@@ -67,7 +67,7 @@ export const endPoints = {
     search: "client/vendors/search",
     byId: (id) => `client/vendors/${id}`,
     byCategory: (categoryId) => `vendor/bycategory/${categoryId}`,
-    featured: "vendor/featured",
+    featured: "client/vendors/featured",
     nearby: "client/vendors/nearby",
     reviews: (id) => `client/vendors/${id}/reviews`,
     availability: (id) => `client/vendors/${id}/availability`,
@@ -96,9 +96,9 @@ export const endPoints = {
     search: "listings/search",
     featured: "listings/featured",
     popular: "listings/popular",
+    filter: "listings/filter", // Filter endpoint that accepts categoryId and/or subCategoryId as query params
     byCategory: (categoryId) => `listings/category/${categoryId}`,
-    bySubCategory: (subCategoryId) =>
-      `listings/subcategory/${subCategoryId}`,
+    bySubCategory: (subCategoryId) => `listings/subcategory/${subCategoryId}`,
     byVendor: (vendorId) => `listings/vendor/${vendorId}`,
     byServiceType: (type) => `listings/service-type/${type}`,
     availability: (id) => `listings/${id}/availability`,

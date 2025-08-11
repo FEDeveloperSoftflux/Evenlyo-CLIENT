@@ -75,36 +75,51 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
     fetchSubcategories();
   }, [selectedCategoryId]);
 
-  // Fetch listings when subcategory changes
+  // Fetch listings when category or subcategory changes
   useEffect(() => {
     const fetchListings = async () => {
-      if (!selectedSubcategory) return;
+      if (!selectedCategoryId) return;
       
       try {
-        // Find the selected subcategory ID
-        const foundSubcategory = subcategories.find(subcat => getName(subcat) === selectedSubcategory);
-        if (foundSubcategory) {
-          const subcategoryId = foundSubcategory._id || foundSubcategory.id;
-          const listRes = await api.get(endPoints.listings.bySubCategory(subcategoryId));
-          const listingsData = listRes.data.data || [];
-          setListings(listingsData);
-          
-          console.log("Listings for subcategory:", listingsData);
+        // Build query parameters for filter endpoint
+        const queryParams = new URLSearchParams();
+        queryParams.append('categoryId', selectedCategoryId);
+        
+        // Add subcategory if one is selected
+        if (selectedSubcategory) {
+          const foundSubcategory = subcategories.find(subcat => getName(subcat) === selectedSubcategory);
+          if (foundSubcategory) {
+            const subcategoryId = foundSubcategory._id || foundSubcategory.id;
+            queryParams.append('subCategoryId', subcategoryId);
+          }
         }
+        
+        // Add sorting and pagination
+        queryParams.append('sortBy', 'rating');
+        queryParams.append('sortOrder', 'desc');
+        queryParams.append('limit', '12');
+        
+        const listRes = await api.get(`${endPoints.listings.filter}?${queryParams.toString()}`);
+        const listingsData = listRes.data.data || [];
+        setListings(listingsData);
+        
+        console.log("Listings for category/subcategory:", listingsData);
+        console.log("API endpoint used:", `${endPoints.listings.filter}?${queryParams.toString()}`);
       } catch (err) {
         console.error("Failed to fetch listings:", err);
+        console.error("Error details:", err.response?.data || err.message);
         setListings([]);
       }
     };
 
     fetchListings();
-  }, [selectedSubcategory, subcategories]);
+  }, [selectedCategoryId, selectedSubcategory, subcategories]);
 
   // Fetch vendors by category
   useEffect(() => {
     const fetchVendorsByCategory = async () => {
       if (!selectedCategoryId || !setVendors || !setVendorsLoading) return;
-      
+
       try {
         setVendorsLoading(true);
         console.log("Fetching vendors for category ID:", selectedCategoryId);
@@ -127,29 +142,47 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
 
   const getName = (item) => {
     if (!item) return "No Name";
-    
-    // Debug log to see the actual structure
-    console.log('getName called with item:', item);
-    
-    // Handle different name formats
-    if (typeof item.name === "string") return item.name;
-    if (item.name && typeof item.name === "object") {
-      if (item.name.en) return item.name.en;
-      if (item.name.nl) return item.name.nl;
-      // If name is an object but doesn't have en/nl, try to get first value
-      const firstKey = Object.keys(item.name)[0];
-      if (firstKey) return item.name[firstKey];
+
+    // Handle different name formats - ensure we always return a string
+    if (typeof item.name === "string") {
+      return item.name;
     }
     
-    // Fallback to other possible fields
-    return item.title || item.label || item.categoryName || item.subcategoryName || "No Name";
+    if (item.name && typeof item.name === "object") {
+      // Prioritize English, then Dutch, then first available value
+      if (item.name.en && typeof item.name.en === "string") {
+        return item.name.en;
+      }
+      if (item.name.nl && typeof item.name.nl === "string") {
+        return item.name.nl;
+      }
+      // If name is an object but doesn't have en/nl, try to get first value
+      const firstKey = Object.keys(item.name)[0];
+      if (firstKey && typeof item.name[firstKey] === "string") {
+        return item.name[firstKey];
+      }
+    }
+
+    // Check other possible string fields
+    if (typeof item.title === "string") return item.title;
+    if (typeof item.label === "string") return item.label;
+    if (typeof item.categoryName === "string") return item.categoryName;
+    if (typeof item.subcategoryName === "string") return item.subcategoryName;
+    
+    // Handle if title is also an object
+    if (item.title && typeof item.title === "object") {
+      if (item.title.en && typeof item.title.en === "string") return item.title.en;
+      if (item.title.nl && typeof item.title.nl === "string") return item.title.nl;
+    }
+    
+    return "No Name";
   };
-  
+
   const getIcon = (item) => {
     if (!item) return null;
-    
+
     console.log('getIcon called with item:', item);
-    
+
     // Handle different icon formats
     if (typeof item.icon === "string" && item.icon.trim() !== '') {
       // If it's a URL or path, return it
@@ -159,7 +192,7 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
       // If it's just an emoji or text, return it
       return item.icon;
     }
-    
+
     // Check for other possible icon fields
     return item.iconUrl || item.image || null;
   };
@@ -168,7 +201,7 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
     const categoryName = getName(category);
     const categoryId = category._id || category.id;
     console.log("Category clicked:", categoryName, "ID:", categoryId);
-    
+
     setSelectedCategory && setSelectedCategory(categoryName);
     setSelectedCategoryId(categoryId);
     setSelectedSubcategory(''); // Reset subcategory when category changes
@@ -254,9 +287,8 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
                         <img
                           src={iconSrc}
                           alt={getName(category)}
-                          className={`w-6 h-6 sm:w-8 sm:h-8 transition-all duration-300 ${
-                            selectedCategory === getName(category) ? 'filter brightness-0 invert' : ''
-                          }`}
+                          className={`w-6 h-6 sm:w-8 sm:h-8 transition-all duration-300 ${selectedCategory === getName(category) ? 'filter brightness-0 invert' : ''
+                            }`}
                           onError={(e) => {
                             e.target.style.display = 'none';
                             e.target.nextSibling.style.display = 'inline';
@@ -266,25 +298,22 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
                     } else if (iconSrc) {
                       // It's an emoji or text
                       return (
-                        <span className={`text-2xl ${
-                          selectedCategory === getName(category) ? 'filter brightness-0 invert' : ''
-                        }`}>{iconSrc}</span>
+                        <span className={`text-2xl ${selectedCategory === getName(category) ? 'filter brightness-0 invert' : ''
+                          }`}>{iconSrc}</span>
                       );
                     } else {
                       // Fallback
                       return (
-                        <span className={`text-2xl ${
-                          selectedCategory === getName(category) ? 'filter brightness-0 invert' : ''
-                        }`}>📁</span>
+                        <span className={`text-2xl ${selectedCategory === getName(category) ? 'filter brightness-0 invert' : ''
+                          }`}>📁</span>
                       );
                     }
                   })()}
                   <span className="text-2xl hidden">📁</span>
                 </div>
                 <span
-                  className={`text-xs sm:text-sm font-medium text-center max-w-20 sm:max-w-28 leading-tight transition-all duration-300 ${
-                    selectedCategory === getName(category) ? 'text-primary-500 font-semibold' : 'text-gray-700'
-                  }`}
+                  className={`text-xs sm:text-sm font-medium text-center max-w-20 sm:max-w-28 leading-tight transition-all duration-300 ${selectedCategory === getName(category) ? 'text-primary-500 font-semibold' : 'text-gray-700'
+                    }`}
                 >
                   {getName(category)}
                 </span>
@@ -403,8 +432,8 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
                       {/* Listing Image */}
                       <div className="relative image-container-mobile sm:image-container-desktop bg-gradient-to-br from-gray-200 to-gray-300">
                         <img
-                          src={listing.images && listing.images.length > 0 ? listing.images[0] : `/src/assets/icons/categorycard.svg`}
-                          alt={getName(listing)}
+                          src={listing.featuredImage || `/src/assets/icons/categorycard.svg`}
+                          alt={listing.title || 'Service'}
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             e.target.style.display = 'none'
@@ -427,28 +456,28 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
                               className="w-8 h-8 rounded-full mr-3"
                             />
                             <span className="text-black-600 text-sm font-medium">
-                              {listing.vendor?.name || listing.providerName || 'Service Provider'}
+                              {listing.vendorName || 'Service Provider'}
                             </span>
                           </div>
                           <span className="text-green-600 text-sm font-medium bg-green-100 rounded-lg px-2">
-                            • {listing.availability || 'Available'}
+                            • Available
                           </span>
                         </div>
 
-                        <h4 className="font-bold text-base sm:text-lg text-gray-900 mb-2">{getName(listing)}</h4>
+                        <h4 className="font-bold text-base sm:text-lg text-gray-900 mb-2">{listing.title}</h4>
                         <p className="text-gray-600 text-xs sm:text-sm mb-4">
-                          {listing.description || listing.shortDescription || 'Professional service for your events...'}
+                          {listing.description || 'Professional service for your events...'}
                         </p>
 
                         {/* Listing Info */}
                         <div className="space-y-2 mb-4">
                           <div className="flex items-center text-sm text-gray-600">
                             <span className="font-medium">Location:</span>
-                            <span className="ml-2">{listing.location || listing.address || 'Available Citywide'}</span>
+                            <span className="ml-2">{listing.location || 'Available Citywide'}</span>
                           </div>
                           <div className="flex items-center text-sm text-gray-600">
-                            <span className="font-medium">Experience:</span>
-                            <span className="ml-2">{listing.experience || '5+ years'}</span>
+                            <span className="font-medium">Category:</span>
+                            <span className="ml-2">{listing.category || listing.subCategory || 'General Service'}</span>
                           </div>
                         </div>
 
@@ -457,14 +486,14 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
                           <div className="flex items-center">
                             <span className="text-yellow-400 text-lg">⭐</span>
                             <span className="ml-1 font-semibold text-gray-900">
-                              {listing.rating || listing.averageRating || '4.5'}/5
+                              {listing.rating || '4.5'}/5
                             </span>
+                            <span className="text-xs text-gray-500 ml-1">({listing.ratingCount || '0'} reviews)</span>
                           </div>
                           <div className="text-right">
                             <div className="text-2xl font-bold text-gray-900">
-                              ${listing.price || listing.basePrice || '300'}
+                              {listing.pricingPerEvent || 'Quote on request'}
                             </div>
-                            <div className="text-xs text-gray-500">Per Event</div>
                           </div>
                         </div>
 
