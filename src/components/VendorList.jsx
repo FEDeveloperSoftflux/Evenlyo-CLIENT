@@ -10,11 +10,11 @@ import vendor3Png from '../assets/images/Vendor3.png';
 const VendorList = ({ selectedCategory, vendors = [], loading = false }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  
+
   // Helper function to get name from API data
   const getName = (vendor) => {
     if (!vendor) return "No Name";
-    
+
     // Handle different name formats from API
     if (typeof vendor.name === "string") return vendor.name;
     if (vendor.name && typeof vendor.name === "object") {
@@ -24,21 +24,124 @@ const VendorList = ({ selectedCategory, vendors = [], loading = false }) => {
       const firstKey = Object.keys(vendor.name)[0];
       if (firstKey) return vendor.name[firstKey];
     }
-    
+
     // Fallback to other possible fields
     return vendor.businessName || vendor.companyName || vendor.title || vendor.vendorName || "Vendor";
   };
-  
+
+  // Helper function to get services from vendor data
+  const getServices = (vendor) => {
+    if (!vendor) return "General Services";
+    
+    // If services exists as a string, return it
+    if (vendor.services) return vendor.services;
+    
+    // If it's from the new API structure with categories
+    if (vendor.categories && vendor.categories.services) {
+      return Array.isArray(vendor.categories.services) 
+        ? vendor.categories.services.join(', ')
+        : vendor.categories.services;
+    }
+    
+    // If displayServices exists
+    if (vendor.categories && vendor.categories.displayServices) {
+      return Array.isArray(vendor.categories.displayServices) 
+        ? vendor.categories.displayServices.join(', ')
+        : vendor.categories.displayServices;
+    }
+    
+    return "General Services";
+  };
+
+  // Helper function to get location
+  const getLocation = (vendor) => {
+    if (!vendor) return "Various Locations";
+    
+    // Check different location fields
+    return vendor.location || 
+           vendor.address || 
+           vendor.businessLocation ||
+           vendor.businessAddress ||
+           (vendor.businessInfo && vendor.businessInfo.businessLocation) ||
+           "Various Locations";
+  };
+
+  // Helper function to get description
+  const getDescription = (vendor) => {
+    if (!vendor) return "Professional service provider";
+    
+    return vendor.whyChooseUs ||
+           vendor.description ||
+           vendor.businessDescription ||
+           (vendor.businessInfo && vendor.businessInfo.businessDescription) ||
+           (vendor.businessInfo && vendor.businessInfo.shortDescription) ||
+           (vendor.display && vendor.display.whyChooseUs) ||
+           "Professional service provider with excellent reviews.";
+  };
+
+  // Helper function to get rating
+  const getRating = (vendor) => {
+    if (!vendor) return 4.5;
+    
+    // Check different rating formats
+    if (vendor.rating) {
+      if (typeof vendor.rating === 'number') return vendor.rating;
+      if (vendor.rating.average) return vendor.rating.average;
+      if (vendor.rating.stars) return vendor.rating.stars;
+    }
+    
+    if (vendor.performance && vendor.performance.rating) {
+      return vendor.performance.rating.average || vendor.performance.rating.stars || 4.5;
+    }
+    
+    return vendor.averageRating || 4.5;
+  };
+
+  // Helper function to get contact info
+  const getContactInfo = (vendor) => {
+    if (!vendor) return { phone: 'Available upon booking', email: 'Available upon booking' };
+    
+    const phone = vendor.phone || 
+                 vendor.contactNumber ||
+                 vendor.businessPhone ||
+                 (vendor.businessInfo && vendor.businessInfo.businessPhone) ||
+                 (vendor.contact && vendor.contact.phone) ||
+                 'Available upon booking';
+                 
+    const email = vendor.email ||
+                 vendor.contactEmail ||
+                 vendor.businessEmail ||
+                 (vendor.businessInfo && vendor.businessInfo.businessEmail) ||
+                 (vendor.contact && vendor.contact.email) ||
+                 'Available upon booking';
+    
+    return { phone, email };
+  };
+
   // Helper function to get vendor image
   const getVendorImage = (vendor, index) => {
+    // Check various image fields from different API structures
     if (vendor.logo) return vendor.logo;
     if (vendor.image) return vendor.image;
     if (vendor.images && vendor.images.length > 0) return vendor.images[0];
+    
+    // Check new API structure
+    if (vendor.media) {
+      if (vendor.media.businessLogo) return vendor.media.businessLogo;
+      if (vendor.media.bannerImage) return vendor.media.bannerImage;
+      if (vendor.media.gallery && vendor.media.gallery.length > 0) return vendor.media.gallery[0];
+    }
+    
+    // Check business info structure
+    if (vendor.businessLogo) return vendor.businessLogo;
+    if (vendor.bannerImage) return vendor.bannerImage;
+    if (vendor.gallery && vendor.gallery.length > 0) return vendor.gallery[0];
+    
     // Fallback to imported assets
     const fallbackImages = [vendor1Png, vendor2Png, vendor3Png];
     return fallbackImages[index % fallbackImages.length];
   };
-  
+
   // Fallback static data for when no API data is available
   const staticVendors = [
     // Entertainment & Attractions
@@ -256,17 +359,16 @@ const VendorList = ({ selectedCategory, vendors = [], loading = false }) => {
   });
 
   // Use API data if available, otherwise use static data filtered by category
-  const displayVendors = vendors.length > 0 ? vendors : 
+  const displayVendors = vendors.length > 0 ? vendors :
     (selectedCategory ? staticVendors.filter((v) => v.category === selectedCategory) : staticVendors);
-  
+
   console.log('DisplayVendors:', displayVendors);
 
   const renderStars = (rating) => {
     const numStars = Math.floor(rating) || 4;
     return Array.from({ length: 5 }, (_, index) => (
-      <span key={index} className={`text-lg ${
-        index < numStars ? 'text-orange-400' : 'text-gray-300'
-      }`}>
+      <span key={index} className={`text-lg ${index < numStars ? 'text-orange-400' : 'text-gray-300'
+        }`}>
         ★
       </span>
     ));
@@ -330,25 +432,25 @@ const VendorList = ({ selectedCategory, vendors = [], loading = false }) => {
                         {getName(vendor)}
                       </h3>
                       <div className="flex items-center">
-                        {renderStars(vendor.rating || vendor.averageRating)}
+                        {renderStars(getRating(vendor))}
                       </div>
                     </div>
 
                     <div className="space-y-1 text-sm text-gray-600">
                       <p>
                         <span className="font-medium">Services:</span>{" "}
-                        {vendor.services || vendor.serviceTypes || 'General Services'}
+                        {getServices(vendor)}
                       </p>
                       <p>
                         <span className="font-medium">Location:</span>{" "}
-                        {vendor.location || vendor.address || 'Various Locations'}
+                        {getLocation(vendor)}
                       </p>
                       <p className="text-gray-500">{vendor.coverage || vendor.serviceArea || 'Available Citywide'}</p>
                       <p className="mt-2">
                         <span className="font-medium text-gray-700">
                           Why Choose Us:
                         </span>{" "}
-                        {vendor.whyChoose || vendor.description || 'Professional service provider with excellent reviews.'}
+                        {getDescription(vendor)}
                         <span className="text-primary-500 ml-1 cursor-pointer hover:underline font-medium">
                           View Profile
                         </span>
@@ -366,12 +468,12 @@ const VendorList = ({ selectedCategory, vendors = [], loading = false }) => {
                     <div className="flex items-center justify-end space-x-1">
                       <span>📞</span>
                       <span className="font-medium">Call:</span>
-                      <span>{vendor.phone || vendor.contactNumber || 'Available upon booking'}</span>
+                      <span>{getContactInfo(vendor).phone}</span>
                     </div>
                     <div className="flex items-center justify-end space-x-1">
                       <span>📧</span>
                       <span className="font-medium">Email:</span>
-                      <span>{vendor.email || vendor.contactEmail || 'Available upon booking'}</span>
+                      <span>{getContactInfo(vendor).email}</span>
                     </div>
                   </div>
                 </div>
@@ -394,10 +496,10 @@ const VendorList = ({ selectedCategory, vendors = [], loading = false }) => {
                 onClick={() => navigate(`/vendor/${vendor.id || vendor._id}`)}
               >
                 {/* Vendor Image */}
-                <img 
-                  src={getVendorImage(vendor, index)} 
-                  alt={getName(vendor)} 
-                  className=" ml-5 mr-5 w-70 h-60 mt-2 mb-2 object-cover rounded-lg" 
+                <img
+                  src={getVendorImage(vendor, index)}
+                  alt={getName(vendor)}
+                  className=" ml-5 mr-5 w-70 h-60 mt-2 mb-2 object-cover rounded-lg"
                 />
 
                 <div className="p-4 flex-1 flex flex-col">
@@ -411,11 +513,11 @@ const VendorList = ({ selectedCategory, vendors = [], loading = false }) => {
                   {/* Coverage/Location */}
                   <div className="text-gray-500 text-sm mb-2">{vendor.coverage || vendor.serviceArea || 'Available Citywide'}</div>
                   {/* Location */}
-                  <div className="text-xs mb-2"><span className="font-bold">Location:</span> {vendor.location || vendor.address || 'Various Locations'}</div>
+                  <div className="text-xs mb-2"><span className="font-bold">Location:</span> {getLocation(vendor)}</div>
                   {/* Services */}
                   <div className="flex flex-wrap gap-2 mb-2">
                     <span className="font-bold text-xs">Services:</span>
-                    {(vendor.services || vendor.serviceTypes || 'General Services').split(',').map((service, i) => (
+                    {getServices(vendor).split(',').map((service, i) => (
                       <span key={i} className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">{service.trim()}</span>
                     ))}
                     <span className="bg-pink-50 text-pink-600 text-xs px-2 py-1 rounded-full cursor-pointer">See All</span>
@@ -423,14 +525,14 @@ const VendorList = ({ selectedCategory, vendors = [], loading = false }) => {
                   {/* Why Choose Us */}
                   <div className="text-xs text-gray-600 mb-2">
                     <span className="font-medium text-gray-700">Why Choose Us:</span>
-                    {vendor.whyChoose || vendor.description || 'Professional service provider with excellent reviews.'}
+                    {getDescription(vendor)}
                     <span className="text-pink-500 ml-1 cursor-pointer hover:underline font-medium">View More</span>
                   </div>
                   {/* Rating & Reviews and CTA Button */}
                   <div className="flex items-center justify-between gap- mb-3">
                     <div className="flex items-center gap-1 text-xs text-gray-500">
-                      {renderStars(vendor.rating || vendor.averageRating || 4.8)}
-                      <span className="font-semibold text-gray-800">{vendor.rating || vendor.averageRating || '4.8'}</span>
+                      {renderStars(getRating(vendor))}
+                      <span className="font-semibold text-gray-800">{getRating(vendor)}</span>
                       <span>({vendor.reviewCount || '127'} reviews)</span>
                     </div>
                     <button className="btn-primary-mobile text-white font-bold py-2 px-8 rounded-lg whitespace-nowrap">View Profile</button>

@@ -67,7 +67,7 @@ export const endPoints = {
     search: "client/vendors/search",
     byId: (id) => `client/vendors/${id}`,
     byCategory: (categoryId) => `vendor/bycategory/${categoryId}`,
-    featured: "client/vendors/featured",
+    featured: "vendor/featured",
     nearby: "client/vendors/nearby",
     reviews: (id) => `client/vendors/${id}/reviews`,
     availability: (id) => `client/vendors/${id}/availability`,
