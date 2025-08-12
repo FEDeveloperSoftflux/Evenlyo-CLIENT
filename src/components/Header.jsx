@@ -124,7 +124,7 @@ function ResponsiveHeader() {
 
   return (
     <>
-<header className="bg-white border-b border-gray-100 py-3 sticky top-0 z-40">
+      <header className="bg-white border-b border-gray-100 py-3 sticky top-0 z-40">
         <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Left Section - Logo and Rating */}
           <div className="flex items-center space-x-3 md:space-x-6">
@@ -147,7 +147,7 @@ function ResponsiveHeader() {
           </div>
 
           {/* Center Navigation - Desktop Only */}
-          <nav className="nav-desktop flex items-center space-x-6 relative hidden lg:flex">
+          <nav className="nav-desktop flex items-center space-x-6 relative md:hidden lg:flex">
             {navigationItems.map((item) => {
               const isActive = item.href === currentPath;
               if (item.name === t('customer_support')) {
@@ -173,18 +173,16 @@ function ResponsiveHeader() {
                   <button
                     type="button"
                     onClick={() => setIsFeaturesOpen((open) => !open)}
-                    className={`relative font-medium text-subtitle-6 transition-colors pb-1 group-hover:text-primary-500 ${
-                      isActive
-                        ? "text-gray-900 hover:text-primary-500"
-                        : "text-gray-600 hover:text-primary-500"
-                    }`}
+                    className={`relative font-medium text-subtitle-6 transition-colors pb-1 group-hover:text-primary-500 ${isActive
+                      ? "text-gray-900 hover:text-primary-500"
+                      : "text-gray-600 hover:text-primary-500"
+                      }`}
                   >
                     {item.name}
-                    <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-secondary via-primary-500 to-primary-600 rounded-full transition-transform duration-300 ${
-                      isActive
-                        ? "scale-x-100"
-                        : "scale-x-0 group-hover:scale-x-100"
-                    }`}></div>
+                    <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-secondary via-primary-500 to-primary-600 rounded-full transition-transform duration-300 ${isActive
+                      ? "scale-x-100"
+                      : "scale-x-0 group-hover:scale-x-100"
+                      }`}></div>
                   </button>
                   {/* Dropdown */}
                   {isFeaturesOpen && (
@@ -234,18 +232,16 @@ function ResponsiveHeader() {
                 <a
                   key={item.name}
                   href={item.href}
-                  className={`relative font-medium text-subtitle-6 transition-colors pb-1 group ${
-                    isActive
-                      ? "text-gray-900 hover:text-primary-500"
-                      : "text-gray-600 hover:text-primary-500"
-                  }`}
+                  className={`relative font-medium text-subtitle-6 transition-colors pb-1 group ${isActive
+                    ? "text-gray-900 hover:text-primary-500"
+                    : "text-gray-600 hover:text-primary-500"
+                    }`}
                 >
                   {item.name}
-                  <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-secondary via-primary-500 to-primary-600 rounded-full transition-transform duration-300 ${
-                    isActive
-                      ? "scale-x-100"
-                      : "scale-x-0 group-hover:scale-x-100"
-                  }`}></div>
+                  <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-secondary via-primary-500 to-primary-600 rounded-full transition-transform duration-300 ${isActive
+                    ? "scale-x-100"
+                    : "scale-x-0 group-hover:scale-x-100"
+                    }`}></div>
                 </a>
               );
             })}
@@ -262,9 +258,8 @@ function ResponsiveHeader() {
               >
                 <span>{selectedLanguage}</span>
                 <svg
-                  className={`w-4 h-4 text-gray-400 transition-transform ${
-                    isLanguageOpen ? "rotate-180" : ""
-                  }`}
+                  className={`w-4 h-4 text-gray-400 transition-transform ${isLanguageOpen ? "rotate-180" : ""
+                    }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -332,7 +327,7 @@ function ResponsiveHeader() {
                     <ul className="divide-y divide-gray-100 mb-3">
                       {notifications.map((notif) => {
                         const text = notif.text.toLowerCase();
-                        let onClick = () => {};
+                        let onClick = () => { };
                         if (text.includes('message')) {
                           onClick = () => { window.location.href = '/chat/1'; };
                         } else if (text.includes('booking')) {
@@ -384,7 +379,7 @@ function ResponsiveHeader() {
                 </button>
                 {/* Profile Dropdown */}
                 {profileDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-70 lg:w-80 bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100 z-50 p-3 sm:p-6 flex flex-col items-center animate-fade-in max-w-[calc(100vw-1rem)] mx-1 sm:mx-0" style={{minWidth: '240px'}}>
+                  <div className="absolute right-0 top-full mt-2 w-70 lg:w-80 bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100 z-50 p-3 sm:p-6 flex flex-col items-center animate-fade-in max-w-[calc(100vw-1rem)] mx-1 sm:mx-0" style={{ minWidth: '240px' }}>
                     {/* Profile Card */}
                     <img
                       src={profileIcon}
@@ -410,7 +405,7 @@ function ResponsiveHeader() {
                         onClick={async () => {
                           try {
                             await import('../store/api').then(({ default: api }) => api.post('/auth/logout'));
-                          } catch (e) {}
+                          } catch (e) { }
                           dispatch(logoutAction());
                           window.location.href = '/';
                         }}
@@ -425,8 +420,8 @@ function ResponsiveHeader() {
                 )}
                 {/* Optional: Add backdrop for mobile to close dropdown when clicking outside */}
                 {profileDropdownOpen && (
-                  <div 
-                    className="fixed inset-0 z-40 sm:hidden" 
+                  <div
+                    className="fixed inset-0 z-40 sm:hidden"
                     onClick={() => setProfileDropdownOpen(false)}
                   />
                 )}
@@ -492,9 +487,8 @@ function ResponsiveHeader() {
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-mobile" onClick={toggleMobileMenu}></div>
-          <div className={`fixed top-0 right-0 w-80 h-full bg-white shadow-xl mobile-menu-slide ${
-            isMobileMenuOpen ? 'open' : ''
-          }`}>
+          <div className={`fixed top-0 right-0 w-80 h-full bg-white shadow-xl mobile-menu-slide ${isMobileMenuOpen ? 'open' : ''
+            }`}>
             <div className="flex flex-col h-full">
               {/* Mobile Menu Header */}
               <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-accent-pink">
@@ -529,11 +523,10 @@ function ResponsiveHeader() {
                     <a
                       key={item.name}
                       href={item.href}
-                      className={`mobile-menu-item block px-6 py-4 text-lg font-medium transition-all duration-300 w-full text-left flex items-center space-x-3 ${
-                        item.active 
-                          ? "text-primary-500 bg-gradient-to-r from-primary-50 to-transparent border-r-4 border-primary-500 font-semibold" 
-                          : "text-gray-700 hover:text-primary-500 hover:bg-gradient-to-r hover:from-gray-50 hover:to-transparent hover:border-r-4 hover:border-primary-200"
-                      }`}
+                      className={`mobile-menu-item block px-6 py-4 text-lg font-medium transition-all duration-300 w-full text-left flex items-center space-x-3 ${item.active
+                        ? "text-primary-500 bg-gradient-to-r from-primary-50 to-transparent border-r-4 border-primary-500 font-semibold"
+                        : "text-gray-700 hover:text-primary-500 hover:bg-gradient-to-r hover:from-gray-50 hover:to-transparent hover:border-r-4 hover:border-primary-200"
+                        }`}
                       onClick={toggleMobileMenu}
                     >
                       <span className="text-primary-500 opacity-60">•</span>
@@ -575,7 +568,7 @@ function ResponsiveHeader() {
                     ))}
                   </select>
                 </div>
-                
+
                 {/* Mobile Sign In Button - Only show if not logged in */}
                 {!isLoggedIn && (
                   <button

@@ -65,7 +65,7 @@ export const endPoints = {
   // Vendor discovery endpoints
   vendors: {
     search: "client/vendors/search",
-    byProfile: (vendorId) => `vendor/profile/${vendorId}`,
+    byDetails: (vendorId) => `vendor/details/${vendorId}`,
     byId: (id) => `client/vendors/${id}`,
     byCategory: (categoryId) => `vendor/bycategory/${categoryId}`,
     featured: "client/vendors/featured",
@@ -178,9 +178,9 @@ export const endPoints = {
 
   // Blog endpoints
   blog: {
-      all: 'blogs', // GET /api/blogs
-      byId: (id) => `blogs/${id}`, // GET /api/blogs/:id
-      addComment: (id) => `blogs/${id}/comments` // POST /api/blogs/:id/comments
+    all: 'blogs', // GET /api/blogs
+    byId: (id) => `blogs/${id}`, // GET /api/blogs/:id
+    addComment: (id) => `blogs/${id}/comments` // POST /api/blogs/:id/comments
   },
 
   // Search endpoints
@@ -203,6 +203,16 @@ export const endPoints = {
   // Plans endpoints
   plans: {
     all: "plans",
+  },
+
+  // Settings endpoints
+  settings: {
+    getPersonalInfo: "settings/personal-info",
+    updateProfile: "settings/personal-info",
+    updateProfilePicture: "settings/profile-picture",
+    updatePassword: "settings/change-password",
+    getNotifications: "settings/notifications",
+    updateNotifications: "settings/notifications",
   },
 
   // General endpoints
