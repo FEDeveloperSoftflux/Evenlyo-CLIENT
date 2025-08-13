@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import BookNowModal from './BookNowModal';
+import api from '../../store/api';
+import { endPoints } from '../../constants/api';
 
 const AddToCart = () => {
   const [activeTab, setActiveTab] = useState('requests');

@@ -47,19 +47,22 @@ export const endPoints = {
     updatePreferences: "client/profile/preferences",
   },
 
-  // Booking endpoints
+  // Booking endpoints (matching backend structure)
   bookings: {
-    create: "client/bookings",
-    all: "client/bookings",
-    byId: (id) => `client/bookings/${id}`,
-    cancel: (id) => `client/bookings/${id}/cancel`,
-    reschedule: (id) => `client/bookings/${id}/reschedule`,
-    review: (id) => `client/bookings/${id}/review`,
-    messages: (id) => `client/bookings/${id}/messages`,
-    invoice: (id) => `client/bookings/${id}/invoice`,
-    timeline: (id) => `client/bookings/${id}/timeline`,
-    upcoming: "client/bookings/upcoming",
-    history: "client/bookings/history",
+    create: "booking/request",
+    history: "booking/history",
+    accepted: "booking/accepted",
+    pending: "booking/pending",
+    vendorHistory: "booking/vendor-history",
+    byId: (id) => `booking/${id}`,
+    accept: (id) => `booking/${id}/accept`,
+    reject: (id) => `booking/${id}/reject`,
+    pay: (id) => `booking/${id}/pay`,
+    markOnTheWay: (id) => `booking/${id}/mark-on-the-way`,
+    markReceived: (id) => `booking/${id}/mark-received`,
+    markPickedUp: (id) => `booking/${id}/mark-picked-up`,
+    markComplete: (id) => `booking/${id}/mark-complete`,
+    createClaim: (id) => `booking/${id}/claim`,
   },
 
   // Vendor discovery endpoints
@@ -125,14 +128,14 @@ export const endPoints = {
     clear: "client/wishlist/clear",
   },
 
-  // Cart endpoints
+  // Cart endpoints (matching backend structure)
   cart: {
-    get: "client/cart",
-    add: "client/cart",
-    update: (id) => `client/cart/${id}`,
-    remove: (id) => `client/cart/${id}`,
-    clear: "client/cart/clear",
-    checkout: "client/cart/checkout",
+    get: "cart",
+    add: "cart/add",
+    update: (listingId) => `cart/${listingId}`,
+    remove: (listingId) => `cart/${listingId}`,
+    clear: "cart",
+    submit: "cart/submit",
   },
 
   // Payment endpoints

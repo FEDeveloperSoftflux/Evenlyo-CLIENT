@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BookNowModal from './BookNowModal';
 import OrderSummaryModal from './OrderSummaryModal';
 import RequestSuccessModal from './RequestSuccessModal';
 import TrackOrderModal from '../TrackOrderModal';
+import api from '../../store/api';
+import { endPoints } from '../../constants/api';
 
-const BookingCalendar = () => {
+const BookingCalendar = ({ vendorData, listingData, vendorId, listingId }) => {
   const navigate = useNavigate();
   const [currentMonth, setCurrentMonth] = useState(new Date(2025, 2)); // March 2025
   const [activeTab, setActiveTab] = useState('details');
@@ -20,6 +22,10 @@ const BookingCalendar = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragCurrentDate, setDragCurrentDate] = useState(null);
   const dragMovedRef = React.useRef(false);
+  const [availabilityData, setAvailabilityData] = useState(null);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [cartSuccess, setCartSuccess] = useState(false);
   
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const dayShortNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -161,12 +167,95 @@ const BookingCalendar = () => {
     setIsBookNowModalOpen(true);
   };
   
-  const handleAddToCart = () => {
-    navigate('/add-to-cart'); // Redirect to Add to Cart page
+  const handleAddToCart = async () => {
+    // Validate requirements
+    if (!listingData || !listingId) {
+      alert('Listing information is missing.');
+      return;
+    }
+
+    if (selectedDates.length === 0) {
+      alert('Please select at least one date before adding to cart.');
+      return;
+    }
+
+    setIsAddingToCart(true);
+
+    try {
+      // Prepare cart item details
+      const sortedDates = selectedDates.sort((a, b) => a - b);
+      const startDate = sortedDates[0];
+      const endDate = sortedDates[sortedDates.length - 1];
+      
+      // Format dates for API
+      const formatDate = (date) => {
+        return date.toISOString().split('T')[0]; // YYYY-MM-DD
+      };
+
+      // Create temporary booking details for cart
+      const tempDetails = {
+        eventDate: formatDate(startDate),
+        eventTime: '10:00', // Default time, can be updated later
+        endDate: sortedDates.length > 1 ? formatDate(endDate) : undefined,
+        endTime: sortedDates.length > 1 ? '18:00' : undefined,
+        eventLocation: 'To be specified', // This will be updated by user in cart
+        eventType: 'Event', // Default event type
+        guestCount: 50, // Default guest count
+        specialRequests: '',
+        contactPreference: 'email'
+      };
+
+      console.log('Adding to cart:', {
+        listingId,
+        tempDetails
+      });
+
+      // Call the cart API
+      const response = await api.post(endPoints.cart.add, {
+        listingId,
+        tempDetails
+      });
+
+      if (response.data.success) {
+        setCartSuccess(true);
+        // Reset success state after 3 seconds
+        setTimeout(() => setCartSuccess(false), 3000);
+        
+        console.log('Successfully added to cart:', response.data.message);
+        
+        // Optional: Show success message
+        alert('Item successfully added to cart! You can view and edit it in your cart.');
+        
+        // Optional: Clear selected dates after adding to cart
+        setSelectedDates([]);
+        
+        // Optional: Navigate to cart page
+        // navigate('/add-to-cart');
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to add item to cart. Please try again.';
+      alert(errorMessage);
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
   
-  const handleBookingSuccess = () => {
+  const handleBookingSuccess = (bookingData) => {
     setIsBookNowModalOpen(false);
+    
+    // Store the booking data for the success modal
+    if (bookingData?.data?.bookingRequest) {
+      setTrackOrderData({
+        bookingId: bookingData.data.bookingRequest._id || bookingData.data.bookingRequest.id,
+        trackingId: bookingData.data.bookingRequest.trackingId,
+        vendorId: vendorId,
+        location: bookingData.data.bookingRequest.details?.eventLocation,
+        dateTime: `${bookingData.data.bookingRequest.details?.startDate} ${bookingData.data.bookingRequest.details?.startTime}`,
+        status: bookingData.data.bookingRequest.status || 'pending'
+      });
+    }
+    
     setIsRequestSuccessModalOpen(true);
   };
   
@@ -313,6 +402,39 @@ const BookingCalendar = () => {
     }
   };
 
+  // Fetch availability data when listingId changes or month changes
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      if (!listingId) return;
+      
+      try {
+        setAvailabilityLoading(true);
+        console.log('Fetching availability for listing:', listingId);
+        
+        // Fetch availability for current month
+        const year = currentMonth.getFullYear();
+        const month = currentMonth.getMonth() + 1;
+        const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
+        const endDate = new Date(year, month, 0).getDate();
+        const endDateStr = `${year}-${month.toString().padStart(2, '0')}-${endDate.toString().padStart(2, '0')}`;
+        
+        const response = await api.get(`${endPoints.listings.availability(listingId)}?startDate=${startDate}&endDate=${endDateStr}`);
+        const availabilityInfo = response.data.data || response.data;
+        
+        console.log('Availability data received:', availabilityInfo);
+        setAvailabilityData(availabilityInfo);
+      } catch (error) {
+        console.warn('Failed to fetch availability:', error);
+        // Don't throw error, just continue with default availability
+        setAvailabilityData(null);
+      } finally {
+        setAvailabilityLoading(false);
+      }
+    };
+    
+    fetchAvailability();
+  }, [listingId, currentMonth]);
+
   // Add event listener to handle mouse up outside calendar
   React.useEffect(() => {
     if (!isDragging) return;
@@ -428,41 +550,71 @@ const BookingCalendar = () => {
         
         {/* Details Content Section */}
         <div className="space-y-6">
-          {/* User Info */}
+          {/* User/Vendor Info */}
           <div className="flex items-center space-x-3">
             <img
-              src="/assets/jaydeep.png"
-              alt="Jaydeep"
+              src={vendorData?.vendor?.profileImage || "/assets/jaydeep.png"}
+              alt={vendorData?.vendor?.businessName || "Vendor"}
               className="w-8 h-8 rounded-full object-cover border-2 border-blue-200"
             />
-            <span className="text-sm text-gray-600">Jaydeep</span>
+            <span className="text-sm text-gray-600">
+              {vendorData?.vendor?.businessName || vendorData?.vendor?.firstName || "Vendor"}
+            </span>
           </div>
           
-          {/* Event Title */}
+          {/* Listing Title */}
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              DJ Abz Wine || DJ Ray Beatz Let the Bass Move You!
+              {(() => {
+                // Handle title field safely
+                if (typeof listingData?.title === 'string') return listingData.title;
+                if (listingData?.title && typeof listingData.title === 'object') {
+                  return listingData.title.en || listingData.title.nl || Object.values(listingData.title)[0] || 'Service';
+                }
+                if (typeof listingData?.name === 'string') return listingData.name;
+                if (listingData?.name && typeof listingData.name === 'object') {
+                  return listingData.name.en || listingData.name.nl || Object.values(listingData.name)[0] || 'Service';
+                }
+                return 'Professional Service';
+              })()} 
             </h1>
             <p className="text-gray-600 text-sm">
-              Vendor: <span className="font-medium">Pulse Events & Entertainment</span>
+              Vendor: <span className="font-medium">{vendorData?.vendor?.businessName || 'Service Provider'}</span>
             </p>
           </div>
           
           {/* Rating */}
           <div className="flex items-center space-x-1">
             {[...Array(5)].map((_, i) => (
-              <svg key={i} className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+              <svg key={i} className={`w-4 h-4 fill-current ${
+                i < Math.floor(listingData?.rating || vendorData?.vendor?.rating || 4.5) 
+                  ? 'text-yellow-400' 
+                  : 'text-gray-300'
+              }`} viewBox="0 0 20 20">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
               </svg>
             ))}
-            <span className="text-sm text-gray-600 ml-2">4.8</span>
+            <span className="text-sm text-gray-600 ml-2">
+              {(listingData?.rating || vendorData?.vendor?.rating || 4.5).toFixed(1)}
+            </span>
           </div>
           
           {/* Description */}
           <div>
             <h3 className="font-semibold text-gray-900 mb-2">Description:</h3>
             <p className="text-gray-600 text-sm leading-relaxed">
-              With over 7 years of event experience, DJ Ray Beatz is known for high-energy dance floors, seamless transitions, and crowd-pleasing remixes. From cleat weddings to corporate raves, he brings the perfect vibe for every crowd.
+              {(() => {
+                // Handle description field safely
+                if (typeof listingData?.description === 'string') return listingData.description;
+                if (listingData?.description && typeof listingData.description === 'object') {
+                  return listingData.description.en || listingData.description.nl || Object.values(listingData.description)[0];
+                }
+                if (typeof vendorData?.vendor?.businessDescription === 'string') return vendorData.vendor.businessDescription;
+                if (vendorData?.vendor?.businessDescription && typeof vendorData.vendor.businessDescription === 'object') {
+                  return vendorData.vendor.businessDescription.en || vendorData.vendor.businessDescription.nl || Object.values(vendorData.vendor.businessDescription)[0];
+                }
+                return 'Professional service provider with years of experience in delivering quality services for events and occasions.';
+              })()} 
             </p>
           </div>
           
@@ -470,19 +622,38 @@ const BookingCalendar = () => {
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Contact:</span>
-              <span className="text-sm font-medium text-gray-900">+8323344344</span>
+              <span className="text-sm font-medium text-gray-900">
+                {vendorData?.vendor?.businessPhone || vendorData?.vendor?.phone || 'Not available'}
+              </span>
             </div>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Email:</span>
-              <span className="text-sm font-medium text-gray-900">some@gmail.com</span>
+              <span className="text-sm font-medium text-gray-900">
+                {vendorData?.vendor?.businessEmail || vendorData?.vendor?.email || 'Not available'}
+              </span>
             </div>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Location:</span>
-              <span className="text-sm font-medium text-gray-900">Los Angeles, CA</span>
+              <span className="text-sm font-medium text-gray-900">
+                {(() => {
+                  // Handle location field safely
+                  if (typeof listingData?.location === 'string') return listingData.location;
+                  if (listingData?.location && typeof listingData.location === 'object') {
+                    return listingData.location.city || listingData.location.address || Object.values(listingData.location)[0];
+                  }
+                  if (typeof vendorData?.vendor?.businessAddress === 'string') return vendorData.vendor.businessAddress;
+                  if (vendorData?.vendor?.businessAddress && typeof vendorData.vendor.businessAddress === 'object') {
+                    return vendorData.vendor.businessAddress.city || vendorData.vendor.businessAddress.address || Object.values(vendorData.vendor.businessAddress)[0];
+                  }
+                  return 'Available Citywide';
+                })()} 
+              </span>
             </div>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Experience:</span>
-              <span className="text-sm font-medium text-gray-900">8+ years</span>
+              <span className="text-sm font-medium text-gray-900">
+                {vendorData?.vendor?.experience || vendorData?.vendor?.yearsOfExperience || '5+ years'}
+              </span>
             </div>
           </div>
           
@@ -490,24 +661,89 @@ const BookingCalendar = () => {
           <div className="space-y-2">
             <p className="text-xs text-gray-500">USD(incl. of all taxes)</p>
             <div className="flex items-center space-x-4">
-              <div>
-                <span className="text-2xl font-bold text-gray-900">$300 - $500</span>
-                <span className="text-sm text-gray-600 ml-2">PER EVENT</span>
-              </div>
-              <div>
-                <span className="text-2xl font-bold text-gray-900">$100 - $200</span>
-                <span className="text-sm text-gray-600 ml-2">PER HOURS</span>
-              </div>
+              {listingData?.pricing?.perEvent && (
+                <div>
+                  <span className="text-2xl font-bold text-gray-900">
+                    ${listingData.pricing.perEvent}
+                  </span>
+                  <span className="text-sm text-gray-600 ml-2">PER EVENT</span>
+                </div>
+              )}
+              {listingData?.pricing?.perHour && (
+                <div>
+                  <span className="text-2xl font-bold text-gray-900">
+                    ${listingData.pricing.perHour}
+                  </span>
+                  <span className="text-sm text-gray-600 ml-2">PER HOUR</span>
+                </div>
+              )}
+              {listingData?.pricing?.perDay && (
+                <div>
+                  <span className="text-2xl font-bold text-gray-900">
+                    ${listingData.pricing.perDay}
+                  </span>
+                  <span className="text-sm text-gray-600 ml-2">PER DAY</span>
+                </div>
+              )}
+              {!listingData?.pricing?.perEvent && !listingData?.pricing?.perHour && !listingData?.pricing?.perDay && (
+                <div>
+                  <span className="text-2xl font-bold text-gray-900">
+                    {listingData?.formattedPrice || listingData?.pricingPerEvent || 'Quote on request'}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           
+          {/* Selected Dates Summary */}
+          {selectedDates.length > 0 && (
+            <div className="bg-blue-50 rounded-lg p-4 mb-4">
+              <h4 className="text-sm font-medium text-blue-900 mb-2">
+                Selected Dates ({selectedDates.length} day{selectedDates.length > 1 ? 's' : ''})
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {selectedDates.sort((a, b) => a - b).map((date, index) => (
+                  <span key={index} className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">
+                    {date.toLocaleDateString()}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex space-x-4">
             <button 
               onClick={handleAddToCart}
-              className="px-6 py-3 border-2 border-primary text-primary rounded-2xl font-medium hover:bg-primary/10 transition-colors"
+              disabled={isAddingToCart || selectedDates.length === 0}
+              className={`px-6 py-3 border-2 rounded-2xl font-medium transition-all flex items-center justify-center ${
+                cartSuccess
+                  ? 'border-green-500 text-green-500 bg-green-50'
+                  : isAddingToCart || selectedDates.length === 0
+                    ? 'border-gray-300 text-gray-400 cursor-not-allowed'
+                    : 'border-primary text-primary hover:bg-primary/10'
+              }`}
             >
-              Add To Cart
+              {isAddingToCart ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                  Adding...
+                </>
+              ) : cartSuccess ? (
+                <>
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Added to Cart!
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5 6m0 0h9m-9 0h9" />
+                  </svg>
+                  Add To Cart
+                </>
+              )}
             </button>
             <button 
               onClick={handleBookNow}
@@ -516,6 +752,12 @@ const BookingCalendar = () => {
               Book Now
             </button>
           </div>
+          
+          {selectedDates.length === 0 && (
+            <p className="text-xs text-gray-500 mt-2">
+              Please select at least one date to add to cart
+            </p>
+          )}
         </div>
       </div>
       
@@ -525,6 +767,10 @@ const BookingCalendar = () => {
         onClose={() => setIsBookNowModalOpen(false)}
         onSuccess={handleBookingSuccess}
         selectedDates={selectedDates}
+        vendorData={vendorData}
+        listingData={listingData}
+        vendorId={vendorId}
+        listingId={listingId}
       />
       
       <OrderSummaryModal 
@@ -537,6 +783,7 @@ const BookingCalendar = () => {
         isOpen={isRequestSuccessModalOpen} 
         onClose={() => setIsRequestSuccessModalOpen(false)}
         onTrackBooking={handleTrackBooking}
+        bookingData={trackOrderData}
       />
       <TrackOrderModal
         open={isTrackOrderModalOpen}

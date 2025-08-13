@@ -42,7 +42,8 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/bookingpage" element={<BookingPage />} />
+          <Route path="/booking" element={<BookingPage />} />
+          <Route path="/booking/:listingId" element={<BookingPage />} />
           <Route path="/bookings" element={<Bookings />} />
           <Route path="/add-to-cart" element={<AddToCartPage />} />
           <Route path="/support" element={<Support />} />

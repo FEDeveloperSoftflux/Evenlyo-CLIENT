@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
+import api from "../../services/api";
+import { endPoints } from "../../constants/api";
 
-const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, editMode = false, item = null, onSaveEdit }) => {
+const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, listingData, vendorId, listingId, editMode = false, item = null, onSaveEdit }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [bookingResult, setBookingResult] = useState(null);
   // Format date to readable string
   const formatDate = (dateObj) => {
     if (!dateObj) return '';
@@ -54,27 +59,222 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, editMode = fa
 
   if (!isOpen) return null;
 
-  const duration = 8; // hours
-  const hourlyRate = 108;
-  const subtotal = duration * hourlyRate;
-  const securityFee = 25;
-  const kilometerFee = 25;
-  const total =
-    subtotal + (hasSecurityProtection ? securityFee : 0) + kilometerFee;
+  // Calculate pricing based on listing data and selected dates
+  const calculatePricing = () => {
+    if (!listingData?.pricing || selectedDatesState.length === 0) {
+      return {
+        duration: 0,
+        days: 0,
+        hourlyRate: 0,
+        dailyRate: 0,
+        eventRate: 0,
+        subtotal: 0,
+        securityFee: 0,
+        systemFee: 0,
+        total: 0
+      };
+    }
 
+    const sortedDates = [...selectedDatesState].sort((a, b) => a - b);
+    const startDateObj = sortedDates[0];
+    const endDateObj = sortedDates[sortedDates.length - 1];
+    const diffTime = Math.abs(endDateObj - startDateObj);
+    const days = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
+    const isMultiDay = days > 1;
+
+    // Calculate hours per day
+    const calculateHours = (startTime, endTime) => {
+      const start = new Date(`2000-01-01 ${startTime}`);
+      const end = new Date(`2000-01-01 ${endTime}`);
+      let diffHours = (end - start) / (1000 * 60 * 60);
+      if (diffHours < 0) diffHours += 24; // Handle overnight
+      return Math.max(diffHours, 1);
+    };
+
+    const dailyHours = calculateHours(
+      startTime.includes(':') ? startTime : '09:00',
+      endTime.includes(':') ? endTime : '17:00'
+    );
+    const totalHours = dailyHours * days;
+
+    const pricing = listingData.pricing;
+    let subtotal = 0;
+    let hourlyRate = 0;
+    let dailyRate = 0;
+    let eventRate = 0;
+
+    // Calculate based on pricing type
+    if (pricing.type === 'daily' && pricing.perDay) {
+      dailyRate = pricing.perDay;
+      subtotal = pricing.perDay * days;
+    } else if (pricing.type === 'hourly' && pricing.perHour) {
+      hourlyRate = pricing.perHour;
+      subtotal = pricing.perHour * totalHours;
+    } else if (pricing.type === 'per_event' && pricing.perEvent) {
+      eventRate = pricing.perEvent;
+      subtotal = pricing.perEvent * (isMultiDay ? days : 1);
+    }
+
+    // Apply multi-day discounts if applicable
+    if (isMultiDay && pricing.multiDayDiscount?.enabled) {
+      const discountPercent = pricing.multiDayDiscount.percent || 0;
+      const minDays = pricing.multiDayDiscount.minDays || 2;
+      
+      if (days >= minDays) {
+        const discount = (subtotal * discountPercent) / 100;
+        subtotal = subtotal - discount;
+      }
+    }
+
+    const securityFee = pricing.securityFee || 0;
+    const systemFee = subtotal * 0.02; // 2% system fee
+    const total = subtotal + securityFee + systemFee;
+
+    return {
+      duration: dailyHours,
+      days,
+      hourlyRate,
+      dailyRate,
+      eventRate,
+      subtotal,
+      securityFee,
+      systemFee,
+      total,
+      isMultiDay,
+      currency: pricing.currency || 'EUR'
+    };
+  };
+
+  const pricingInfo = calculatePricing();
+  
   // Mock calculation for km
   const calculatedKm = location ? 12 : 0;
 
-  const handleAddToCart = () => {
-    console.log("Added to cart");
-    onClose(); // Close the modal
+  const handleAddToCart = async () => {
+    if (!listingId || selectedDatesState.length === 0 || !location.trim()) {
+      alert('Please fill in all required fields (dates, location)');
+      return;
+    }
+
+    setIsAddingToCart(true);
+    try {
+      // Prepare temporary details for cart
+      const sortedDates = [...selectedDatesState].sort((a, b) => a - b);
+      const eventDate = sortedDates[0].toISOString().split('T')[0];
+      const endDate = sortedDates[sortedDates.length - 1].toISOString().split('T')[0];
+      
+      // Convert time format
+      const convertTimeFormat = (timeStr) => {
+        if (timeStr.includes('AM') || timeStr.includes('PM')) {
+          const [time, period] = timeStr.split(' ');
+          let [hours, minutes] = time.split(':');
+          hours = parseInt(hours);
+          
+          if (period === 'PM' && hours !== 12) {
+            hours += 12;
+          } else if (period === 'AM' && hours === 12) {
+            hours = 0;
+          }
+          
+          return `${hours.toString().padStart(2, '0')}:${minutes}`;
+        }
+        return timeStr;
+      };
+
+      const tempDetails = {
+        eventDate,
+        endDate: sortedDates.length > 1 ? endDate : null,
+        eventTime: convertTimeFormat(startTime),
+        endTime: convertTimeFormat(endTime),
+        eventLocation: location.trim(),
+        specialRequests: instructions.trim() || null,
+        contactPreference: 'email'
+      };
+
+      // Add to cart
+      const response = await api.post(endPoints.cart.add, {
+        listingId,
+        tempDetails
+      });
+
+      console.log('Added to cart successfully:', response.data);
+      alert('Item added to cart successfully!');
+      onClose();
+      
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to add to cart';
+      alert(`Error: ${errorMessage}`);
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
-  const handleSendBookingRequest = () => {
-    // Send booking request logic here
-    console.log("Booking request sent");
-    onSuccess();
-    onClose();
+  const handleSendBookingRequest = async () => {
+    if (!vendorId || !listingId || selectedDatesState.length === 0 || !location.trim()) {
+      console.error('Missing required booking information');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Prepare booking request data
+      const sortedDates = [...selectedDatesState].sort((a, b) => a - b);
+      const startDate = sortedDates[0];
+      const endDate = sortedDates[sortedDates.length - 1];
+      
+      // Convert time format from "HH:MM AM/PM" to "HH:MM"
+      const convertTimeFormat = (timeStr) => {
+        if (timeStr.includes('AM') || timeStr.includes('PM')) {
+          const [time, period] = timeStr.split(' ');
+          let [hours, minutes] = time.split(':');
+          hours = parseInt(hours);
+          
+          if (period === 'PM' && hours !== 12) {
+            hours += 12;
+          } else if (period === 'AM' && hours === 12) {
+            hours = 0;
+          }
+          
+          return `${hours.toString().padStart(2, '0')}:${minutes}`;
+        }
+        return timeStr; // Already in 24-hour format
+      };
+
+      const bookingData = {
+        listingId,
+        vendorId,
+        details: {
+          startDate: startDate.toISOString().split('T')[0], // YYYY-MM-DD format
+          endDate: endDate.toISOString().split('T')[0],
+          startTime: convertTimeFormat(startTime),
+          endTime: convertTimeFormat(endTime),
+          eventLocation: location.trim(),
+          specialRequests: instructions.trim() || null,
+          contactPreference: 'email'
+        }
+      };
+
+      console.log('Sending booking request:', bookingData);
+
+      // Send booking request to backend
+      const response = await api.post('/booking/request', bookingData);
+      
+      console.log('Booking request successful:', response.data);
+      setBookingResult(response.data.data?.bookingRequest || response.data);
+      
+      // Call success callback
+      onSuccess(response.data);
+      onClose();
+    } catch (error) {
+      console.error('Booking request failed:', error);
+      
+      // Handle error display
+      const errorMessage = error.response?.data?.message || error.message || 'Booking request failed';
+      alert(`Booking failed: ${errorMessage}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -304,33 +504,50 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, editMode = fa
           {/* Pricing Summary */}
           <div className="bg-gray-50/80 backdrop-blur-sm rounded-xl p-5 space-y-3 border border-gray-200/30">
             <h4 className="font-semibold text-gray-900 text-base mb-2">Pricing Summary</h4>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Duration: {duration} hours</span>
-              <span className="text-gray-900 font-medium">${hourlyRate}/hr</span>
-            </div>
+            
+            {pricingInfo.days > 1 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Duration: {pricingInfo.days} days</span>
+                <span className="text-gray-900 font-medium">{pricingInfo.currency} {pricingInfo.dailyRate}/day</span>
+              </div>
+            )}
+            
+            {pricingInfo.days === 1 && pricingInfo.duration > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Duration: {pricingInfo.duration.toFixed(1)} hours</span>
+                <span className="text-gray-900 font-medium">{pricingInfo.currency} {pricingInfo.hourlyRate}/hr</span>
+              </div>
+            )}
+            
+            {pricingInfo.eventRate > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Event Rate:</span>
+                <span className="text-gray-900 font-medium">{pricingInfo.currency} {pricingInfo.eventRate}</span>
+              </div>
+            )}
+            
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Subtotal:</span>
-              <span className="text-gray-900 font-medium">${subtotal.toFixed(2)}</span>
+              <span className="text-gray-900 font-medium">{pricingInfo.currency} {pricingInfo.subtotal.toFixed(2)}</span>
             </div>
+            
             {/* System Fee */}
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">System Fee (2%):</span>
-              <span className="text-gray-900 font-medium">${(subtotal * 0.02).toFixed(2)}</span>
+              <span className="text-gray-900 font-medium">{pricingInfo.currency} {pricingInfo.systemFee.toFixed(2)}</span>
             </div>
-            {hasSecurityProtection && (
+            
+            {pricingInfo.securityFee > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Security Fee:</span>
-                <span className="text-gray-900 font-medium">${securityFee.toFixed(2)}</span>
+                <span className="text-gray-900 font-medium">{pricingInfo.currency} {pricingInfo.securityFee.toFixed(2)}</span>
               </div>
             )}
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Kilometer: 10 km</span>
-              <span className="text-gray-900 font-medium">${kilometerFee.toFixed(2)}</span>
-            </div>
+            
             <div className="border-t border-gray-200/50 pt-3">
               <div className="flex justify-between text-xl font-bold">
                 <span className="text-gray-900">Total:</span>
-                <span className="text-gray-900">${(subtotal + (subtotal * 0.02) + (hasSecurityProtection ? securityFee : 0) + kilometerFee).toFixed(2)}</span>
+                <span className="text-gray-900">{pricingInfo.currency} {pricingInfo.total.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -378,16 +595,31 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, editMode = fa
               <>
                 <button
                   onClick={handleAddToCart}
-                  className="flex-1 py-2 px-3 border-2 border-pink-500 text-pink-500 rounded-2xl font-semibold hover:bg-pink-50 transition-all backdrop-blur-sm text-nowrap text-sm md:text-md"
+                  className="flex-1 py-2 px-3 border-2 border-pink-500 text-pink-500 rounded-2xl font-semibold hover:bg-pink-50 transition-all backdrop-blur-sm text-nowrap text-sm md:text-md disabled:opacity-50"
+                  disabled={!acceptedTerms || !location.trim() || isAddingToCart || selectedDatesState.length === 0}
                 >
-                  Add To Cart
+                  {isAddingToCart ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+                      <span>Adding...</span>
+                    </div>
+                  ) : (
+                    'Add To Cart'
+                  )}
                 </button>
                 <button
                   onClick={handleSendBookingRequest}
-                  className="flex-1 py-2 px-3 bg-gradient-brand text-white rounded-2xl font-semibold hover:shadow-lg transition-all  disabled:opacity-50 backdrop-blur-sm text-nowrap text-sm md:text-md"
-                  disabled={!acceptedTerms || !location}
+                  className="flex-1 py-2 px-3 bg-gradient-brand text-white rounded-2xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 backdrop-blur-sm text-nowrap text-sm md:text-md"
+                  disabled={!acceptedTerms || !location.trim() || isLoading || selectedDatesState.length === 0}
                 >
-                  Send Booking Request
+                  {isLoading ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Sending...</span>
+                    </div>
+                  ) : (
+                    'Send Booking Request'
+                  )}
                 </button>
               </>
             )}

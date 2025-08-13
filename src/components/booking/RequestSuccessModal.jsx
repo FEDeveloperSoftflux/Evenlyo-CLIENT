@@ -1,6 +1,6 @@
 import React from 'react';
 
-const RequestSuccessModal = ({ isOpen, onClose, onTrackBooking }) => {
+const RequestSuccessModal = ({ isOpen, onClose, onTrackBooking, bookingData }) => {
   if (!isOpen) return null;
 
   const handleTrackBooking = () => {
@@ -13,7 +13,8 @@ const RequestSuccessModal = ({ isOpen, onClose, onTrackBooking }) => {
   };
 
   const handleCopyBookingId = () => {
-    navigator.clipboard.writeText('BK-20250709-3733');
+    const bookingId = bookingData?.trackingId || 'BK-20250709-3733';
+    navigator.clipboard.writeText(bookingId);
     // You could add a toast notification here
   };
 
@@ -38,17 +39,36 @@ const RequestSuccessModal = ({ isOpen, onClose, onTrackBooking }) => {
               Request Sent Successfully!
             </h2>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Your request has been sent to<br />
-              vendor <span className="font-semibold">#VENDOR-2024-001</span>. Please wait for their<br />
-              confirmation.
+              Your booking request has been sent to the vendor.<br />
+              <span className="font-semibold text-gray-600">Vendor ID: {bookingData?.vendorId || 'N/A'}</span><br />
+              Please wait for their confirmation.
             </p>
           </div>
 
-          {/* Add Location Section */}
+          {/* Booking Details Section */}
           <div className="text-left">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Location </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Booking Details</h3>
+            <div className="space-y-3">
+              {bookingData?.location && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <span className="text-sm text-gray-600">Location:</span>
+                  <p className="font-medium text-gray-900">{bookingData.location}</p>
+                </div>
+              )}
+              {bookingData?.dateTime && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <span className="text-sm text-gray-600">Date & Time:</span>
+                  <p className="font-medium text-gray-900">{bookingData.dateTime}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Booking ID Section */}
+          <div className="text-left">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Booking Reference</h3>
             <div className="bg-gray-50 rounded-lg p-4 flex items-center justify-between">
-              <span className="text-gray-700 font-medium">BK-20250709-3733</span>
+              <span className="text-gray-700 font-medium">{bookingData?.trackingId || 'BK-20250709-3733'}</span>
               <button
                 onClick={handleCopyBookingId}
                 className="text-gray-400 hover:text-gray-600 transition-colors"

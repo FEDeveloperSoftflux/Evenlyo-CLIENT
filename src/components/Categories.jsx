@@ -521,7 +521,11 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
                         {/* Book Now Button */}
                         <button
                           className="btn-primary-mobile w-full touch-button"
-                          onClick={() => navigate('/bookingpage')}
+                          onClick={() => {
+                            const listingId = listing._id || listing.id;
+                            console.log('Navigating to booking with listing:', { listingId, listing });
+                            navigate(`/booking/${listingId}`);
+                          }}
                         >
                           Book Now
                         </button>
