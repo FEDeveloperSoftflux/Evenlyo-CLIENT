@@ -168,35 +168,30 @@ const BookingCalendar = ({ vendorData, listingData, vendorId, listingId }) => {
   };
   
   const handleAddToCart = async () => {
-    // Validate requirements
+    // Only validate listing information - dates are optional
     if (!listingData || !listingId) {
       alert('Listing information is missing.');
-      return;
-    }
-
-    if (selectedDates.length === 0) {
-      alert('Please select at least one date before adding to cart.');
       return;
     }
 
     setIsAddingToCart(true);
 
     try {
-      // Prepare cart item details
-      const sortedDates = selectedDates.sort((a, b) => a - b);
-      const startDate = sortedDates[0];
-      const endDate = sortedDates[sortedDates.length - 1];
+      // Prepare cart item details - dates are optional
+      const sortedDates = selectedDates.length > 0 ? selectedDates.sort((a, b) => a - b) : [];
+      const startDate = sortedDates.length > 0 ? sortedDates[0] : null;
+      const endDate = sortedDates.length > 1 ? sortedDates[sortedDates.length - 1] : null;
       
       // Format dates for API
       const formatDate = (date) => {
-        return date.toISOString().split('T')[0]; // YYYY-MM-DD
+        return date ? date.toISOString().split('T')[0] : null; // YYYY-MM-DD
       };
 
-      // Create temporary booking details for cart
+      // Create temporary booking details for cart - all optional
       const tempDetails = {
-        eventDate: formatDate(startDate),
+        eventDate: startDate ? formatDate(startDate) : null, // null instead of string for Mongoose Date validation
         eventTime: '10:00', // Default time, can be updated later
-        endDate: sortedDates.length > 1 ? formatDate(endDate) : undefined,
+        endDate: endDate ? formatDate(endDate) : undefined,
         endTime: sortedDates.length > 1 ? '18:00' : undefined,
         eventLocation: 'To be specified', // This will be updated by user in cart
         eventType: 'Event', // Default event type
@@ -205,36 +200,64 @@ const BookingCalendar = ({ vendorData, listingData, vendorId, listingId }) => {
         contactPreference: 'email'
       };
 
-      console.log('Adding to cart:', {
-        listingId,
+      // Prepare request payload
+      const requestPayload = {
+        listingId: listingId.toString(), // Ensure it's a string
         tempDetails
-      });
+      };
+
+      console.log('Adding to cart with payload:', JSON.stringify(requestPayload, null, 2));
+      console.log('API endpoint:', endPoints.cart.add);
+      console.log('Full API URL:', `${api.defaults.baseURL}${endPoints.cart.add}`);
 
       // Call the cart API
-      const response = await api.post(endPoints.cart.add, {
-        listingId,
-        tempDetails
-      });
+      const response = await api.post(endPoints.cart.add, requestPayload);
 
-      if (response.data.success) {
+      console.log('Cart API response:', response.data);
+
+      if (response.data && response.data.success) {
         setCartSuccess(true);
         // Reset success state after 3 seconds
         setTimeout(() => setCartSuccess(false), 3000);
         
         console.log('Successfully added to cart:', response.data.message);
         
-        // Optional: Show success message
-        alert('Item successfully added to cart! You can view and edit it in your cart.');
+        // Show appropriate success message
+        const successMessage = selectedDates.length > 0 
+          ? 'Item successfully added to cart with selected dates! You can view and edit it in your cart.'
+          : 'Item successfully added to cart! You can specify dates and details in your cart.';
+        alert(successMessage);
         
-        // Optional: Clear selected dates after adding to cart
+        // Clear selected dates after adding to cart
         setSelectedDates([]);
         
         // Optional: Navigate to cart page
         // navigate('/add-to-cart');
+      } else {
+        // Handle case where response doesn't indicate success
+        console.warn('Cart API did not return success:', response.data);
+        throw new Error(response.data?.message || 'Server did not confirm successful addition to cart');
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to add item to cart. Please try again.';
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      console.error('Error headers:', error.response?.headers);
+      
+      // Provide more detailed error messages
+      let errorMessage;
+      if (error.response?.status === 500) {
+        errorMessage = 'Server error occurred. Please check if you are logged in and try again.';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Please log in to add items to your cart.';
+      } else if (error.response?.status === 400) {
+        errorMessage = `Invalid request: ${error.response?.data?.message || 'Please check your data and try again.'}`;
+      } else if (error.code === 'NETWORK_ERROR') {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      } else {
+        errorMessage = error.response?.data?.message || error.message || 'Failed to add item to cart. Please try again.';
+      }
+      
       alert(errorMessage);
     } finally {
       setIsAddingToCart(false);
@@ -715,11 +738,11 @@ const BookingCalendar = ({ vendorData, listingData, vendorId, listingId }) => {
           <div className="flex space-x-4">
             <button 
               onClick={handleAddToCart}
-              disabled={isAddingToCart || selectedDates.length === 0}
+              disabled={isAddingToCart}
               className={`px-6 py-3 border-2 rounded-2xl font-medium transition-all flex items-center justify-center ${
                 cartSuccess
                   ? 'border-green-500 text-green-500 bg-green-50'
-                  : isAddingToCart || selectedDates.length === 0
+                  : isAddingToCart
                     ? 'border-gray-300 text-gray-400 cursor-not-allowed'
                     : 'border-primary text-primary hover:bg-primary/10'
               }`}
@@ -755,7 +778,7 @@ const BookingCalendar = ({ vendorData, listingData, vendorId, listingId }) => {
           
           {selectedDates.length === 0 && (
             <p className="text-xs text-gray-500 mt-2">
-              Please select at least one date to add to cart
+              You can add to cart without dates and specify them later, or select dates first for convenience
             </p>
           )}
         </div>

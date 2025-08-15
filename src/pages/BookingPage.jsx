@@ -31,11 +31,11 @@ const BookingPage = () => {
         setLoading(true);
 
         console.log('Fetching listing details for ID:', listingId);
-        
+
         // First, fetch the listing details
         const listingResponse = await api.get(endPoints.listings.byId(listingId));
         const listing = listingResponse.data.data || listingResponse.data;
-        
+
         if (!listing) {
           throw new Error('Listing not found');
         }
@@ -44,8 +44,9 @@ const BookingPage = () => {
         setListingData(listing);
 
         // Extract vendor ID from listing
-        const extractedVendorId = listing.vendor || listing.vendorId || listing.vendorDetails?._id || listing.vendorDetails?.id;
-        
+        const extractedVendorId = listing.vendor._id;
+        // || listing.vendorId || listing.vendorDetails?._id || listing.vendorDetails?.id;
+
         if (!extractedVendorId) {
           console.error('No vendor ID found in listing:', listing);
           throw new Error('Vendor information not available for this listing');
@@ -57,8 +58,8 @@ const BookingPage = () => {
         // Now fetch vendor details using the vendor details endpoint
         try {
           const vendorResponse = await api.get(endPoints.vendors.byDetails(extractedVendorId));
-          const vendorInfo = vendorResponse.data.data || vendorResponse.data;
-          
+          const vendorInfo = vendorResponse.data || vendorResponse.data;
+
           console.log('Vendor data received:', vendorInfo);
           setVendorData({
             vendor: vendorInfo.vendor || vendorInfo,
@@ -107,7 +108,7 @@ const BookingPage = () => {
             <p className="text-lg font-medium">{error}</p>
             <p className="text-sm text-gray-500 mt-2">Please try refreshing the page or go back to listings.</p>
           </div>
-          <button 
+          <button
             onClick={() => navigate('/')}
             className="px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
           >
@@ -120,7 +121,7 @@ const BookingPage = () => {
     switch (activeTab) {
       case 'details':
         return (
-          <BookingCalendar 
+          <BookingCalendar
             vendorData={vendorData}
             listingData={listingData}
             vendorId={vendorId}
@@ -133,7 +134,7 @@ const BookingPage = () => {
         return <ReviewsTab vendorData={vendorData} listingData={listingData} />;
       default:
         return (
-          <BookingCalendar 
+          <BookingCalendar
             vendorData={vendorData}
             listingData={listingData}
             vendorId={vendorId}
@@ -155,18 +156,16 @@ const BookingPage = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 px-6 py-3 rounded-2xl text-sm font-medium transition-all duration-200 ${
-                    activeTab === tab.id
-                      ? 'bg-gradient-brand text-white shadow-lg'
-                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
-                  }`}
+                  className={`flex items-center space-x-2 px-6 py-3 rounded-2xl text-sm font-medium transition-all duration-200 ${activeTab === tab.id
+                    ? 'bg-gradient-brand text-white shadow-lg'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                    }`}
                 >
-                  <img 
-                    src={tab.icon} 
-                    alt={tab.label} 
-                    className={`w-4 h-4 ${
-                      activeTab === tab.id ? 'filter brightness-0 invert' : ''
-                    }`} 
+                  <img
+                    src={tab.icon}
+                    alt={tab.label}
+                    className={`w-4 h-4 ${activeTab === tab.id ? 'filter brightness-0 invert' : ''
+                      }`}
                   />
                   <span>{tab.label}</span>
                 </button>
@@ -179,7 +178,7 @@ const BookingPage = () => {
             {renderTabContent()}
           </div>
         </div>
-        
+
         {/* Always visible MoreDJ Cards */}
         <MoreDJCards />
       </main>

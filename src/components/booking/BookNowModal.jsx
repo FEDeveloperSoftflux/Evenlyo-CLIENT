@@ -1,59 +1,104 @@
 import React, { useState, useEffect } from "react";
-import api from "../../services/api";
+import api from "../../store/api";
 import { endPoints } from "../../constants/api";
 
 const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, listingData, vendorId, listingId, editMode = false, item = null, onSaveEdit }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [bookingResult, setBookingResult] = useState(null);
+  
   // Format date to readable string
   const formatDate = (dateObj) => {
     if (!dateObj) return '';
     return dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   };
 
-  const [selectedDatesState, setSelectedDatesState] = useState(selectedDates || []);
-  const [isMultipleDay, setIsMultipleDay] = useState(false);
-  const [startTime, setStartTime] = useState("09:00 AM");
-  const [endTime, setEndTime] = useState("05:00 PM");
+  const [selectedDatesState, setSelectedDatesState] = useState([]);
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("17:00");
   const [location, setLocation] = useState("");
   const [instructions, setInstructions] = useState("");
   const [hasSecurityProtection, setHasSecurityProtection] = useState(true);
   const [acceptedTerms, setAcceptedTerms] = useState(true);
-  const [startDate, setStartDate] = useState("2025-07-11");
-  const [endDate, setEndDate] = useState("2025-07-12");
+  const [guestCount, setGuestCount] = useState(50);
+  const [eventType, setEventType] = useState("Event");
+  const [contactPreference, setContactPreference] = useState("email");
 
-  // Add state for editable dates if in edit mode
-  const [editSelectedDates, setEditSelectedDates] = useState(item && item.dates ? item.dates : []);
-  // State for time selection in edit mode
-  const [editStartTime, setEditStartTime] = useState(item && item.startTime ? item.startTime : "09:00");
-  const [editEndTime, setEditEndTime] = useState(item && item.endTime ? item.endTime : "17:00");
-
-  // Validation for enabling Save button in edit mode
-  const isSaveEnabled = editMode && editSelectedDates.length > 0 && (editSelectedDates.length > 1 || (editStartTime && editEndTime));
-
+  // Initialize form data when modal opens or item changes
   useEffect(() => {
-    if (selectedDates) {
+    if (!isOpen) return;
+    
+    if (editMode && item?.tempDetails) {
+      const tempDetails = item.tempDetails;
+      console.log('Loading edit mode with tempDetails:', tempDetails);
+      
+      // Set location
+      setLocation(tempDetails.eventLocation && tempDetails.eventLocation !== 'To be specified' ? tempDetails.eventLocation : '');
+      
+      // Set times (handle both 12-hour and 24-hour formats)
+      const convertTo24Hour = (timeStr) => {
+        if (!timeStr) return '09:00';
+        if (timeStr.includes('AM') || timeStr.includes('PM')) {
+          const [time, period] = timeStr.split(' ');
+          let [hours, minutes] = time.split(':');
+          hours = parseInt(hours);
+          if (period === 'PM' && hours !== 12) hours += 12;
+          if (period === 'AM' && hours === 12) hours = 0;
+          return `${hours.toString().padStart(2, '0')}:${minutes}`;
+        }
+        return timeStr;
+      };
+      
+      setStartTime(convertTo24Hour(tempDetails.eventTime));
+      setEndTime(convertTo24Hour(tempDetails.endTime));
+      
+      // Set other details
+      setInstructions(tempDetails.specialRequests || '');
+      setGuestCount(tempDetails.guestCount || 50);
+      setEventType(tempDetails.eventType || 'Event');
+      setContactPreference(tempDetails.contactPreference || 'email');
+      
+      // Handle dates
+      const dates = [];
+      if (tempDetails.eventDate && tempDetails.eventDate !== 'To be specified') {
+        try {
+          dates.push(new Date(tempDetails.eventDate));
+        } catch (e) {
+          console.warn('Invalid event date:', tempDetails.eventDate);
+        }
+      }
+      if (tempDetails.endDate && tempDetails.endDate !== tempDetails.eventDate) {
+        try {
+          dates.push(new Date(tempDetails.endDate));
+        } catch (e) {
+          console.warn('Invalid end date:', tempDetails.endDate);
+        }
+      }
+      setSelectedDatesState(dates);
+    } else if (!editMode && selectedDates) {
       setSelectedDatesState(selectedDates);
+      // Reset form for new booking
+      setLocation('');
+      setStartTime('09:00');
+      setEndTime('17:00');
+      setInstructions('');
+      setGuestCount(50);
+      setEventType('Event');
+      setContactPreference('email');
     }
-    if (editMode && item && item.dates) {
-      setEditSelectedDates(item.dates);
-      setEditStartTime(item.startTime || "09:00");
-      setEditEndTime(item.endTime || "17:00");
-    }
-  }, [selectedDates, editMode, item]);
+  }, [editMode, item, selectedDates, isOpen]);
 
   // Helper for toggling dates in edit mode
   const handleEditDateToggle = (dateObj) => {
-    const exists = editSelectedDates.some(
+    const exists = selectedDatesState.some(
       d => d.getDate() === dateObj.getDate() && d.getMonth() === dateObj.getMonth() && d.getFullYear() === dateObj.getFullYear()
     );
     if (exists) {
-      setEditSelectedDates(editSelectedDates.filter(
+      setSelectedDatesState(selectedDatesState.filter(
         d => !(d.getDate() === dateObj.getDate() && d.getMonth() === dateObj.getMonth() && d.getFullYear() === dateObj.getFullYear())
       ));
     } else {
-      setEditSelectedDates([...editSelectedDates, dateObj]);
+      setSelectedDatesState([...selectedDatesState, dateObj]);
     }
   };
 
@@ -314,7 +359,7 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
 
         {/* Content */}
         <div className="p-6 space-y-8">
-          {/* If in edit mode, show date picker for multiple dates */}
+          {/* Date and Time Selection */}
           {editMode ? (
             <div>
               <div className="text-xs text-gray-500 font-medium mb-1">Select Dates</div>
@@ -327,7 +372,7 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
               <div className="grid grid-cols-7 gap-1 mb-4">
                 {Array.from({ length: 31 }, (_, i) => i + 1).map(day => {
                   const dateObj = new Date(2025, 2, day); // March 2025 for demo
-                  const isSelected = editSelectedDates.some(
+                  const isSelected = selectedDatesState.some(
                     d => d.getDate() === dateObj.getDate() && d.getMonth() === dateObj.getMonth() && d.getFullYear() === dateObj.getFullYear()
                   );
                   return (
@@ -341,29 +386,28 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
                   );
                 })}
               </div>
-              {/* If only one date is selected, show time selection */}
-              {editSelectedDates.length === 1 && (
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
-                    <input
-                      type="time"
-                      value={editStartTime}
-                      onChange={e => setEditStartTime(e.target.value)}
-                      className="w-full px-3 py-2 border-gray-200 rounded-lg bg-gray-100 text-gray-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">End Time</label>
-                    <input
-                      type="time"
-                      value={editEndTime}
-                      onChange={e => setEditEndTime(e.target.value)}
-                      className="w-full px-3 py-2 border-gray-200 rounded-lg bg-gray-100 text-gray-700"
-                    />
-                  </div>
+              
+              {/* Time Selection for Edit Mode */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
+                  <input
+                    type="time"
+                    value={startTime}
+                    onChange={e => setStartTime(e.target.value)}
+                    className="w-full px-3 py-2 border-gray-200 rounded-lg bg-gray-100 text-gray-700"
+                  />
                 </div>
-              )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">End Time</label>
+                  <input
+                    type="time"
+                    value={endTime}
+                    onChange={e => setEndTime(e.target.value)}
+                    className="w-full px-3 py-2 border-gray-200 rounded-lg bg-gray-100 text-gray-700"
+                  />
+                </div>
+              </div>
             </div>
           ) : (
             // ... existing code for selected date(s) display ...
@@ -585,9 +629,27 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
           <div className="flex flex-row gap-1 mt-2">
             {editMode ? (
               <button
-                onClick={() => onSaveEdit && onSaveEdit({ dates: editSelectedDates, startTime: editStartTime, endTime: editEndTime })}
+                onClick={() => {
+                  if (!onSaveEdit) return;
+                  
+                  // Prepare data in the format expected by AddToCart handleSaveEdit
+                  const saveData = {
+                    eventDate: selectedDatesState.length > 0 ? selectedDatesState[0].toISOString().split('T')[0] : undefined,
+                    endDate: selectedDatesState.length > 1 ? selectedDatesState[selectedDatesState.length - 1].toISOString().split('T')[0] : undefined,
+                    eventTime: startTime,
+                    endTime: endTime,
+                    eventLocation: location.trim() || undefined,
+                    specialRequests: instructions.trim() || undefined,
+                    guestCount: guestCount,
+                    eventType: eventType,
+                    contactPreference: contactPreference
+                  };
+                  
+                  console.log('Saving edit data:', saveData);
+                  onSaveEdit(saveData);
+                }}
                 className="flex-1 py-2 px-3 bg-gradient-brand text-white rounded-2xl font-semibold hover:shadow-lg transition-all text-nowrap text-sm md:text-md"
-                disabled={!isSaveEnabled}
+                disabled={!selectedDatesState.length || !location.trim()}
               >
                 Save
               </button>

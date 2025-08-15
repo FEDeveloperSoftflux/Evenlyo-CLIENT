@@ -69,14 +69,13 @@ export const endPoints = {
   vendors: {
     search: "client/vendors/search",
     byDetails: (vendorId) => `vendor/details/${vendorId}`,
-    byId: (id) => `client/vendors/${id}`,
     byCategory: (categoryId) => `vendor/bycategory/${categoryId}`,
-    featured: "client/vendors/featured",
-    nearby: "client/vendors/nearby",
-    reviews: (id) => `client/vendors/${id}/reviews`,
-    availability: (id) => `client/vendors/${id}/availability`,
-    packages: (id) => `client/vendors/${id}/packages`,
-    gallery: (id) => `client/vendors/${id}/gallery`,
+    featured: "vendor/featured",
+    nearby: "vendor/nearby",
+    reviews: (id) => `vendors/${id}/reviews`,
+    availability: (id) => `vendor/${id}/availability`,
+    packages: (id) => `vendor/${id}/packages`,
+    gallery: (id) => `vendor/${id}/gallery`,
   },
 
   // Category endpoints

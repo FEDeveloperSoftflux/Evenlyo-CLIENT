@@ -79,12 +79,12 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
   useEffect(() => {
     const fetchListings = async () => {
       if (!selectedCategoryId) return;
-      
+
       try {
         // Build query parameters for filter endpoint
         const queryParams = new URLSearchParams();
         queryParams.append('categoryId', selectedCategoryId);
-        
+
         // Add subcategory if one is selected
         if (selectedSubcategory) {
           const foundSubcategory = subcategories.find(subcat => getName(subcat) === selectedSubcategory);
@@ -93,16 +93,16 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
             queryParams.append('subCategoryId', subcategoryId);
           }
         }
-        
+
         // Add sorting and pagination
         queryParams.append('sortBy', 'rating');
         queryParams.append('sortOrder', 'desc');
         queryParams.append('limit', '12');
-        
+
         const listRes = await api.get(`${endPoints.listings.filter}?${queryParams.toString()}`);
         const listingsData = listRes.data.data || [];
         setListings(listingsData);
-        
+
         console.log("Listings for category/subcategory:", listingsData);
         console.log("API endpoint used:", `${endPoints.listings.filter}?${queryParams.toString()}`);
       } catch (err) {
@@ -147,7 +147,7 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
     if (typeof item.name === "string") {
       return item.name;
     }
-    
+
     if (item.name && typeof item.name === "object") {
       // Prioritize English, then Dutch, then first available value
       if (item.name.en && typeof item.name.en === "string") {
@@ -168,13 +168,13 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
     if (typeof item.label === "string") return item.label;
     if (typeof item.categoryName === "string") return item.categoryName;
     if (typeof item.subcategoryName === "string") return item.subcategoryName;
-    
+
     // Handle if title is also an object
     if (item.title && typeof item.title === "object") {
       if (item.title.en && typeof item.title.en === "string") return item.title.en;
       if (item.title.nl && typeof item.title.nl === "string") return item.title.nl;
     }
-    
+
     return "No Name";
   };
 
@@ -463,7 +463,7 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
                                   return listing.vendorName.en || listing.vendorName.nl || Object.values(listing.vendorName)[0] || 'Service Provider';
                                 }
                                 return 'Service Provider';
-                              })()} 
+                              })()}
                             </span>
                           </div>
                           <span className="text-green-600 text-sm font-medium bg-green-100 rounded-lg px-2">
@@ -497,7 +497,7 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
                                   return listing.subCategory.en || listing.subCategory.nl || Object.values(listing.subCategory)[0] || 'General Service';
                                 }
                                 return 'General Service';
-                              })()} 
+                              })()}
                             </span>
                           </div>
                         </div>
@@ -523,8 +523,9 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
                           className="btn-primary-mobile w-full touch-button"
                           onClick={() => {
                             const listingId = listing._id || listing.id;
-                            console.log('Navigating to booking with listing:', { listingId, listing });
-                            navigate(`/booking/${listingId}`);
+                            const vendorId = listing.id || listing.vendor?._id || listing.vendor?.id;
+                            console.log('Navigating to booking with listing:', { listingId, listing, vendorId });
+                            navigate(`/booking/${listingId}`, { state: { listing, vendorId, listingId } });
                           }}
                         >
                           Book Now
