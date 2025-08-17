@@ -3,12 +3,15 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from 'react-router-dom';
 import api from "../store/api";
 import { endPoints } from "../constants/api";
+import { getAllCategories } from "../store/slices/categoriesSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { getName } from "../utils";
 
 const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVendorsLoading, hideText = false }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const [categories, setCategories] = useState([]);
+  // const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [listings, setListings] = useState([]);
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
@@ -16,39 +19,27 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
   const [showAllVendors, setShowAllVendors] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Fetch categories on component mount
+  const dispatch = useDispatch()
+  const categories = useSelector(state => state.categories.categories)
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setLoading(true);
-        const catRes = await api.get(endPoints.categories.all);
-        const categoriesData = catRes.data.data || [];
-        setCategories(categoriesData);
-
-        // Set default selected category if not already set
-        if (!selectedCategory && categoriesData.length > 0) {
-          const firstCategory = categoriesData[0];
-          const categoryName = getName(firstCategory);
-          setSelectedCategory && setSelectedCategory(categoryName);
-          setSelectedCategoryId(firstCategory._id || firstCategory.id);
-        } else if (selectedCategory) {
-          // Find the selected category ID
-          const foundCategory = categoriesData.find(cat => getName(cat) === selectedCategory);
-          if (foundCategory) {
-            setSelectedCategoryId(foundCategory._id || foundCategory.id);
-          }
-        }
-
-        setLoading(false);
-      } catch (err) {
-        setError(err.message || "Failed to fetch categories");
-        setLoading(false);
-      }
-    };
-
-    fetchCategories();
+    dispatch(getAllCategories())
   }, []);
+
+  useEffect(() => {
+    if (categories && categories.length > 0) {
+      if (!selectedCategory) {
+        const firstCategory = categories[0];
+        const categoryName = getName(firstCategory);
+        setSelectedCategory && setSelectedCategory(categoryName);
+        setSelectedCategoryId(firstCategory._id || firstCategory.id);
+      } else {
+        const foundCategory = categories.find(cat => getName(cat) === selectedCategory);
+        if (foundCategory) {
+          setSelectedCategoryId(foundCategory._id || foundCategory.id);
+        }
+      }
+    }
+  }, [categories, selectedCategory]);
 
   // Fetch subcategories when category changes
   useEffect(() => {
@@ -140,43 +131,6 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
     fetchVendorsByCategory();
   }, [selectedCategoryId, setVendors, setVendorsLoading]);
 
-  const getName = (item) => {
-    if (!item) return "No Name";
-
-    // Handle different name formats - ensure we always return a string
-    if (typeof item.name === "string") {
-      return item.name;
-    }
-
-    if (item.name && typeof item.name === "object") {
-      // Prioritize English, then Dutch, then first available value
-      if (item.name.en && typeof item.name.en === "string") {
-        return item.name.en;
-      }
-      if (item.name.nl && typeof item.name.nl === "string") {
-        return item.name.nl;
-      }
-      // If name is an object but doesn't have en/nl, try to get first value
-      const firstKey = Object.keys(item.name)[0];
-      if (firstKey && typeof item.name[firstKey] === "string") {
-        return item.name[firstKey];
-      }
-    }
-
-    // Check other possible string fields
-    if (typeof item.title === "string") return item.title;
-    if (typeof item.label === "string") return item.label;
-    if (typeof item.categoryName === "string") return item.categoryName;
-    if (typeof item.subcategoryName === "string") return item.subcategoryName;
-
-    // Handle if title is also an object
-    if (item.title && typeof item.title === "object") {
-      if (item.title.en && typeof item.title.en === "string") return item.title.en;
-      if (item.title.nl && typeof item.title.nl === "string") return item.title.nl;
-    }
-
-    return "No Name";
-  };
 
   const getIcon = (item) => {
     if (!item) return null;
@@ -199,6 +153,8 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
 
   const handleCategoryClick = (category) => {
     const categoryName = getName(category);
+    console.log(categoryName, "AFTER_CLICKKK");
+
     const categoryId = category._id || category.id;
     console.log("Category clicked:", categoryName, "ID:", categoryId);
 
@@ -230,15 +186,15 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
     listingsToShow = isMobile ? filteredListings.slice(0, 3) : filteredListings;
   }
 
-  if (loading) {
-    return (
-      <div className="text-center p-4">
-        <div className="spinner-border text-primary-500" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="text-center p-4">
+  //       <div className="spinner-border text-primary-500" role="status">
+  //         <span className="visually-hidden">Loading...</span>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   if (error) {
     return (
@@ -247,6 +203,12 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
       </div>
     );
   }
+
+
+
+
+  console.log(categories, "datadatadata");
+
 
   return (
     <section className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-16 bg-gray-50">

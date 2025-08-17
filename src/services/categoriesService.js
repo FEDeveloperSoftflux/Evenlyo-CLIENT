@@ -1,5 +1,6 @@
 import api from './api';
-import { endPoints } from '../constants/api';
+import { endPoints, requestType } from '../constants/api';
+import Api from './index';
 // Categories Service
 class CategoriesService {
   // Get all categories
@@ -100,4 +101,9 @@ class CategoriesService {
 }
 
 export default new CategoriesService();
+
+
+export const getCategories = () => {
+  return Api(endPoints.categories.all, null, requestType.GET);
+}
 

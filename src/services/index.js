@@ -2,7 +2,8 @@ import axios from 'axios';
 import { apiHeaders, requestType } from '../constants/api';
 
 // Base URL configuration - using backend .env reference
-export const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/';
+// export const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/';
+export const baseUrl = "https://0g01d8wd-5000.inc1.devtunnels.ms/api/"
 
 /**
  * Generic API service function

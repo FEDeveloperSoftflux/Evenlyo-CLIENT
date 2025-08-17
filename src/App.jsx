@@ -37,7 +37,6 @@ function App() {
     <Router>
       <ScrollToTop />
       <div className="App">
-
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
