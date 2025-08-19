@@ -1,5 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { getCategories } from "../../services/categoriesService";
+import { getSubcategories } from "../../services/categoriesService";
+
 
 const initialState = {
   categories: [],
@@ -33,6 +35,20 @@ const categoriesSlice = createSlice({
       state.categories = []
       state.loading.categories = false;
       state.error = action;
+    },
+
+    setSubcategoriesLoading: (state, action) => {
+      state.loading.subcategories = action.payload;
+    },
+    setSubcategories: (state, action) => {
+      state.subcategories = Array.isArray(action.payload) ? action.payload : [];
+      state.loading.subcategories = false;
+      state.error = null;
+    },
+    setSubcategoriesError: (state, action) => {
+      state.error = action.payload;
+      state.loading.subcategories = false;
+      state.subcategories = [];
     },
     // setCategoriesLoading: (state, action) => {
     //   state.loading.categories = action.payload;
@@ -86,7 +102,11 @@ const categoriesSlice = createSlice({
 export const {
   getIniialState,
   getCategoryFail,
-  getCategorySucess
+  getCategorySucess,
+
+  setSubcategoriesLoading,
+  setSubcategories,
+  setSubcategoriesError,
   // setCategories,
   // setCategoriesLoading,
   // setCategoriesError,
@@ -119,6 +139,25 @@ export function getAllCategories() {
       })
       .catch(error => {
         dispatch(getCategoryFail(error));
+      });
+  };
+}
+
+
+export function getSubcategoriesByCategory(categoryId) {
+  return dispatch => {
+    dispatch(setSubcategoriesLoading(true));
+    getSubcategories(categoryId)
+      .then(response => {
+        if (response?.status === 200 || response?.status === 201) {
+          let data = response?.data?.data;
+          dispatch(setSubcategories(data));
+        } else {
+          dispatch(setSubcategoriesError(response?.data?.message));
+        }
+      })
+      .catch(error => {
+        dispatch(setSubcategoriesError(error));
       });
   };
 }

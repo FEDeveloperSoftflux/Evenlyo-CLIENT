@@ -104,7 +104,8 @@ function Bookings() {
           listing: booking.listing,
           bookingDateTime: booking.bookingDateTime,
           createdAt: booking.createdAt,
-          updatedAt: booking.updatedAt
+          updatedAt: booking.updatedAt,
+          statusHistory: booking.statusHistory || []
         }));
 
         setBookings(transformedBookings);
@@ -331,40 +332,17 @@ function Bookings() {
         phone: booking.phone || '+1-234-567-8903',
         statusLabel: booking.status || 'On the way',
         totalPrice: booking.totalPrice || '$2100.00',
-        timeline: [
-          {
-            title: 'Request Sent',
-            description: 'Client sent order request', completed: true,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path d="M12 8v4l3 3" strokeWidth="2" /></svg>,
-            label: 'Client', labelColor: 'bg-pink-100 text-pink-600', date: '2025-01-07/07:45'
-          },
-          {
-            title: 'Order Accepted', description: 'Vendor accepted the order', completed: true,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path d="M9 12l2 2 4-4" strokeWidth="2" /></svg>,
-            label: 'Vendor', labelColor: 'bg-yellow-100 text-yellow-600', date: '2025-01-07/09:00'
-          },
-          {
-            title: 'Picked Up', description: 'Order picked up from location', completed: true,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4" strokeWidth="2" /></svg>,
-            label: 'Driver', labelColor: 'bg-green-100 text-green-600', date: '2025-01-06/11:15'
-          },
-          {
-            title: 'Delivered', description: 'Order delivered to destination', completed: false,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="7" rx="2" strokeWidth="2" /><path d="M16 11V7a4 4 0 00-8 0v4" strokeWidth="2" /></svg>,
-            label: 'Pending', labelColor: 'bg-gray-100 text-gray-400', date: null
-          },
-          {
-            title: 'Received', description: 'Client confirmed receipt', completed: false,
+        timeline: Array.isArray(booking.statusHistory)
+          ? booking.statusHistory.map((item) => ({
+            title: item.status.charAt(0).toUpperCase() + item.status.slice(1),
+            description: item.notes?.en || '',
+            completed: ['accepted', 'paid', 'on_the_way', 'received', 'complete', 'completed'].includes(item.status.toLowerCase()),
             icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /></svg>,
-            label: 'Pending', labelColor: 'bg-gray-100 text-gray-400', date: null
-          },
-          {
-            title: 'Completed', description: `Total Price: ${booking.totalPrice || '$2100.00'}`,
-            completed: false,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /></svg>,
-            label: 'Pending', labelColor: 'bg-gray-100 text-gray-400', date: null
-          }
-        ],
+            label: item.status,
+            labelColor: 'bg-gray-100 text-gray-700',
+            date: item.timestamp ? new Date(item.timestamp).toLocaleString() : ''
+          }))
+          : [],
         progressNote: 'Order is in progress. Next phase will be marked as completed once the current step is finished.'
       };
       buttons.push(
@@ -403,6 +381,27 @@ function Bookings() {
         );
       }
 
+      const trackOrderData = {
+        trackingId: booking.trackingId,
+        orderId: booking.orderId || 'ORD-003',
+        clientName: booking.clientName || 'Global Supply Co',
+        phone: booking.phone || '+1-234-567-8903',
+        statusLabel: booking.status || 'On the way',
+        totalPrice: booking.totalPrice || '$2100.00',
+
+        timeline: Array.isArray(booking.statusHistory)
+          ? booking.statusHistory.map((item) => ({
+            title: item.status.charAt(0).toUpperCase() + item.status.slice(1),
+            description: item.notes?.en || '',
+            completed: ['accepted', 'paid', 'on_the_way', 'received', 'complete', 'completed'].includes(item.status.toLowerCase()),
+            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /></svg>,
+            label: item.status,
+            labelColor: 'bg-gray-100 text-gray-700',
+            date: item.timestamp ? new Date(item.timestamp).toLocaleString() : '',
+          })) : [],
+        progressNote: 'Order is in progress. Next phase will be marked as completed once the current step is finished.'
+      };
+
       buttons.push(
         <Tooltip key="track" content="Track the status of this booking">
           <button className="px-3 py-1 text-sm border-2 rounded-full text-black hover:text-gray-800 transition-colors" onClick={() => { setSelectedTrackOrder(trackOrderData); setIsTrackOpen(true); }}>
@@ -427,40 +426,17 @@ function Bookings() {
         phone: booking.phone || '+1-234-567-8903',
         statusLabel: booking.status || 'On the way',
         totalPrice: booking.totalPrice || '$2100.00',
-        timeline: [
-          {
-            title: 'Request Sent',
-            description: 'Client sent order request', completed: true,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path d="M12 8v4l3 3" strokeWidth="2" /></svg>,
-            label: 'Client', labelColor: 'bg-pink-100 text-pink-600', date: '2025-01-07/07:45'
-          },
-          {
-            title: 'Order Accepted', description: 'Vendor accepted the order', completed: true,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path d="M9 12l2 2 4-4" strokeWidth="2" /></svg>,
-            label: 'Vendor', labelColor: 'bg-yellow-100 text-yellow-600', date: '2025-01-07/09:00'
-          },
-          {
-            title: 'Picked Up', description: 'Order picked up from location', completed: true,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4" strokeWidth="2" /></svg>,
-            label: 'Driver', labelColor: 'bg-green-100 text-green-600', date: '2025-01-06/11:15'
-          },
-          {
-            title: 'Delivered', description: 'Order delivered to destination', completed: false,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="7" rx="2" strokeWidth="2" /><path d="M16 11V7a4 4 0 00-8 0v4" strokeWidth="2" /></svg>,
-            label: 'Pending', labelColor: 'bg-gray-100 text-gray-400', date: null
-          },
-          {
-            title: 'Received', description: 'Client confirmed receipt', completed: false,
+        timeline: Array.isArray(booking.statusHistory)
+          ? booking.statusHistory.map((item) => ({
+            title: item.status.charAt(0).toUpperCase() + item.status.slice(1),
+            description: item.notes?.en || '',
+            completed: ['accepted', 'paid', 'on_the_way', 'received', 'complete', 'completed'].includes(item.status.toLowerCase()),
             icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /></svg>,
-            label: 'Pending', labelColor: 'bg-gray-100 text-gray-400', date: null
-          },
-          {
-            title: 'Completed', description: `Total Price: ${booking.totalPrice || '$2100.00'}`,
-            completed: false,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /></svg>,
-            label: 'Pending', labelColor: 'bg-gray-100 text-gray-400', date: null
-          }
-        ],
+            label: item.status,
+            labelColor: 'bg-gray-100 text-gray-700',
+            date: item.timestamp ? new Date(item.timestamp).toLocaleString() : ''
+          }))
+          : [],
         progressNote: 'Order is in progress. Next phase will be marked as completed once the current step is finished.'
       };
       buttons.push(
@@ -487,40 +463,17 @@ function Bookings() {
         phone: booking.phone || '+1-234-567-8903',
         statusLabel: booking.status || 'On the way',
         totalPrice: booking.totalPrice || '$2100.00',
-        timeline: [
-          {
-            title: 'Request Sent',
-            description: 'Client sent order request', completed: true,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path d="M12 8v4l3 3" strokeWidth="2" /></svg>,
-            label: 'Client', labelColor: 'bg-pink-100 text-pink-600', date: '2025-01-07/07:45'
-          },
-          {
-            title: 'Order Accepted', description: 'Vendor accepted the order', completed: true,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path d="M9 12l2 2 4-4" strokeWidth="2" /></svg>,
-            label: 'Vendor', labelColor: 'bg-yellow-100 text-yellow-600', date: '2025-01-07/09:00'
-          },
-          {
-            title: 'Picked Up', description: 'Order picked up from location', completed: true,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4" strokeWidth="2" /></svg>,
-            label: 'Driver', labelColor: 'bg-green-100 text-green-600', date: '2025-01-06/11:15'
-          },
-          {
-            title: 'Delivered', description: 'Order delivered to destination', completed: false,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="7" rx="2" strokeWidth="2" /><path d="M16 11V7a4 4 0 00-8 0v4" strokeWidth="2" /></svg>,
-            label: 'Pending', labelColor: 'bg-gray-100 text-gray-400', date: null
-          },
-          {
-            title: 'Received', description: 'Client confirmed receipt', completed: false,
+        timeline: Array.isArray(booking.statusHistory)
+          ? booking.statusHistory.map((item) => ({
+            title: item.status.charAt(0).toUpperCase() + item.status.slice(1),
+            description: item.notes?.en || '',
+            completed: ['accepted', 'paid', 'on_the_way', 'received', 'complete', 'completed'].includes(item.status.toLowerCase()),
             icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /></svg>,
-            label: 'Pending', labelColor: 'bg-gray-100 text-gray-400', date: null
-          },
-          {
-            title: 'Completed', description: `Total Price: ${booking.totalPrice || '$2100.00'}`,
-            completed: false,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /></svg>,
-            label: 'Pending', labelColor: 'bg-gray-100 text-gray-400', date: null
-          }
-        ],
+            label: item.status,
+            labelColor: 'bg-gray-100 text-gray-700',
+            date: item.timestamp ? new Date(item.timestamp).toLocaleString() : ''
+          }))
+          : [],
         progressNote: 'Order is in progress. Next phase will be marked as completed once the current step is finished.'
       };
       buttons.push(
@@ -556,40 +509,17 @@ function Bookings() {
         phone: booking.phone || '+1-234-567-8903',
         statusLabel: booking.status || 'On the way',
         totalPrice: booking.totalPrice || '$2100.00',
-        timeline: [
-          {
-            title: 'Request Sent',
-            description: 'Client sent order request', completed: true,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path d="M12 8v4l3 3" strokeWidth="2" /></svg>,
-            label: 'Client', labelColor: 'bg-pink-100 text-pink-600', date: '2025-01-07/07:45'
-          },
-          {
-            title: 'Order Accepted', description: 'Vendor accepted the order', completed: true,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path d="M9 12l2 2 4-4" strokeWidth="2" /></svg>,
-            label: 'Vendor', labelColor: 'bg-yellow-100 text-yellow-600', date: '2025-01-07/09:00'
-          },
-          {
-            title: 'Picked Up', description: 'Order picked up from location', completed: true,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4" strokeWidth="2" /></svg>,
-            label: 'Driver', labelColor: 'bg-green-100 text-green-600', date: '2025-01-06/11:15'
-          },
-          {
-            title: 'Delivered', description: 'Order delivered to destination', completed: false,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="7" rx="2" strokeWidth="2" /><path d="M16 11V7a4 4 0 00-8 0v4" strokeWidth="2" /></svg>,
-            label: 'Pending', labelColor: 'bg-gray-100 text-gray-400', date: null
-          },
-          {
-            title: 'Received', description: 'Client confirmed receipt', completed: false,
+        timeline: Array.isArray(booking.statusHistory)
+          ? booking.statusHistory.map((item) => ({
+            title: item.status.charAt(0).toUpperCase() + item.status.slice(1),
+            description: item.notes?.en || '',
+            completed: ['accepted', 'paid', 'on_the_way', 'received', 'complete', 'completed'].includes(item.status.toLowerCase()),
             icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /></svg>,
-            label: 'Pending', labelColor: 'bg-gray-100 text-gray-400', date: null
-          },
-          {
-            title: 'Completed', description: `Total Price: ${booking.totalPrice || '$2100.00'}`,
-            completed: false,
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /></svg>,
-            label: 'Pending', labelColor: 'bg-gray-100 text-gray-400', date: null
-          }
-        ],
+            label: item.status,
+            labelColor: 'bg-gray-100 text-gray-700',
+            date: item.timestamp ? new Date(item.timestamp).toLocaleString() : ''
+          }))
+          : [],
         progressNote: 'Order is in progress. Next phase will be marked as completed once the current step is finished.'
       };
       buttons.push(
