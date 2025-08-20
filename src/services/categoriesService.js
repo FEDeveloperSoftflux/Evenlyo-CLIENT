@@ -52,7 +52,7 @@ class CategoriesService {
 
 
   // Get all subcategories
-  async getSubCategories() {
+  async getSubcategories() {
     try {
       const response = await api.get(endPoints.subcategories.all);
       return {
@@ -107,6 +107,6 @@ export const getCategories = () => {
   return Api(endPoints.categories.all, null, requestType.GET);
 }
 
-export const getSubCategories = () => {
+export const getSubcategories = () => {
   return Api(endPoints.categories.all, null, requestType.GET);
 }

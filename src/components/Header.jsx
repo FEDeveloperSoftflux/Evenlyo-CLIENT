@@ -147,7 +147,7 @@ function ResponsiveHeader() {
           </div>
 
           {/* Center Navigation - Desktop Only */}
-          <nav className="nav-desktop flex items-center space-x-6 relative md:hidden lg:flex">
+          <nav className="nav-desktop flex items-center space-x-6 relative md:hidden sm:hidden lg:flex">
             {navigationItems.map((item) => {
               const isActive = item.href === currentPath;
               if (item.name === t('customer_support')) {

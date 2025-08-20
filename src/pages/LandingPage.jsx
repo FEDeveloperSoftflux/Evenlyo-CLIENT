@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Header from "../components/Header";
+import ResponsiveHeader from "../components/Header";
 import Hero from "../components/Hero";
 import AdvancedBookingSystem from "../components/AdvancedBookingSystem";
 import RentalTabs from "../components/RentalTabs";
@@ -22,15 +22,15 @@ function LandingPage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
+      <ResponsiveHeader />
       <Hero />
-      <Categories 
+      <Categories
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
         setVendors={setVendors}
         setVendorsLoading={setVendorsLoading}
       />
-      <VendorList 
+      <VendorList
         selectedCategory={selectedCategory}
         vendors={vendors}
         loading={vendorsLoading}

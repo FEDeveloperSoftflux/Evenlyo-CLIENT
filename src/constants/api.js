@@ -58,11 +58,11 @@ export const endPoints = {
     accept: (id) => `booking/${id}/accept`,
     reject: (id) => `booking/${id}/reject`,
     pay: (id) => `booking/${id}/pay`,
-    markOnTheWay: (id) => `booking/${id}/mark-on-the-way`,
+    cancel: (id) => `booking/${id}/cancel`,
     markReceived: (id) => `booking/${id}/mark-received`,
-    markPickedUp: (id) => `booking/${id}/mark-picked-up`,
     markComplete: (id) => `booking/${id}/mark-complete`,
     createClaim: (id) => `booking/${id}/claim`,
+    createReview: (id) => `booking/${id}/review`,
   },
 
   // Vendor discovery endpoints
@@ -131,22 +131,22 @@ export const endPoints = {
   cart: {
     get: "cart",
     add: "cart/add",
-    update: (listingId) => `cart/${listingId}`,
-    remove: (listingId) => `cart/${listingId}`,
+    update: (listingId) => `cart/update/${listingId}`,
+    remove: (listingId) => `cart/remove/${listingId}`,
     clear: "cart",
     submit: "cart/submit",
   },
 
-  // Payment endpoints
-  payments: {
-    process: "client/payments/process",
-    verify: "client/payments/verify",
-    refund: (id) => `client/payments/${id}/refund`,
-    history: "client/payments/history",
-    methods: "client/payments/methods",
-    addMethod: "client/payments/methods",
-    removeMethod: (id) => `client/payments/methods/${id}`,
-  },
+  // // Payment endpoints
+  // payments: {
+  //   process: "client/payments/process",
+  //   verify: "client/payments/verify",
+  //   refund: (id) => `client/payments/${id}/refund`,
+  //   history: "client/payments/history",
+  //   methods: "client/payments/methods",
+  //   addMethod: "client/payments/methods",
+  //   removeMethod: (id) => `client/payments/methods/${id}`,
+  // },
 
   // Review endpoints
   reviews: {

@@ -6,7 +6,7 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
   const [isLoading, setIsLoading] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [bookingResult, setBookingResult] = useState(null);
-  
+
   // Format date to readable string
   const formatDate = (dateObj) => {
     if (!dateObj) return '';
@@ -27,14 +27,14 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
   // Initialize form data when modal opens or item changes
   useEffect(() => {
     if (!isOpen) return;
-    
+
     if (editMode && item?.tempDetails) {
       const tempDetails = item.tempDetails;
       console.log('Loading edit mode with tempDetails:', tempDetails);
-      
+
       // Set location
       setLocation(tempDetails.eventLocation && tempDetails.eventLocation !== 'To be specified' ? tempDetails.eventLocation : '');
-      
+
       // Set times (handle both 12-hour and 24-hour formats)
       const convertTo24Hour = (timeStr) => {
         if (!timeStr) return '09:00';
@@ -48,16 +48,16 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
         }
         return timeStr;
       };
-      
+
       setStartTime(convertTo24Hour(tempDetails.eventTime));
       setEndTime(convertTo24Hour(tempDetails.endTime));
-      
+
       // Set other details
       setInstructions(tempDetails.specialRequests || '');
       setGuestCount(tempDetails.guestCount || 50);
       setEventType(tempDetails.eventType || 'Event');
       setContactPreference(tempDetails.contactPreference || 'email');
-      
+
       // Handle dates
       const dates = [];
       if (tempDetails.eventDate && tempDetails.eventDate !== 'To be specified') {
@@ -164,7 +164,7 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
     if (isMultiDay && pricing.multiDayDiscount?.enabled) {
       const discountPercent = pricing.multiDayDiscount.percent || 0;
       const minDays = pricing.multiDayDiscount.minDays || 2;
-      
+
       if (days >= minDays) {
         const discount = (subtotal * discountPercent) / 100;
         subtotal = subtotal - discount;
@@ -191,7 +191,7 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
   };
 
   const pricingInfo = calculatePricing();
-  
+
   // Mock calculation for km
   const calculatedKm = location ? 12 : 0;
 
@@ -205,29 +205,29 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
     try {
       // Prepare temporary details for cart
       const sortedDates = [...selectedDatesState].sort((a, b) => a - b);
-      const eventDate = sortedDates[0].toISOString().split('T')[0];
+      const startDate = sortedDates[0].toISOString().split('T')[0];
       const endDate = sortedDates[sortedDates.length - 1].toISOString().split('T')[0];
-      
+
       // Convert time format
       const convertTimeFormat = (timeStr) => {
         if (timeStr.includes('AM') || timeStr.includes('PM')) {
           const [time, period] = timeStr.split(' ');
           let [hours, minutes] = time.split(':');
           hours = parseInt(hours);
-          
+
           if (period === 'PM' && hours !== 12) {
             hours += 12;
           } else if (period === 'AM' && hours === 12) {
             hours = 0;
           }
-          
+
           return `${hours.toString().padStart(2, '0')}:${minutes}`;
         }
         return timeStr;
       };
 
       const tempDetails = {
-        eventDate,
+        startDate,
         endDate: sortedDates.length > 1 ? endDate : null,
         eventTime: convertTimeFormat(startTime),
         endTime: convertTimeFormat(endTime),
@@ -245,7 +245,7 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
       console.log('Added to cart successfully:', response.data);
       alert('Item added to cart successfully!');
       onClose();
-      
+
     } catch (error) {
       console.error('Error adding to cart:', error);
       const errorMessage = error.response?.data?.message || 'Failed to add to cart';
@@ -267,20 +267,20 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
       const sortedDates = [...selectedDatesState].sort((a, b) => a - b);
       const startDate = sortedDates[0];
       const endDate = sortedDates[sortedDates.length - 1];
-      
+
       // Convert time format from "HH:MM AM/PM" to "HH:MM"
       const convertTimeFormat = (timeStr) => {
         if (timeStr.includes('AM') || timeStr.includes('PM')) {
           const [time, period] = timeStr.split(' ');
           let [hours, minutes] = time.split(':');
           hours = parseInt(hours);
-          
+
           if (period === 'PM' && hours !== 12) {
             hours += 12;
           } else if (period === 'AM' && hours === 12) {
             hours = 0;
           }
-          
+
           return `${hours.toString().padStart(2, '0')}:${minutes}`;
         }
         return timeStr; // Already in 24-hour format
@@ -304,16 +304,16 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
 
       // Send booking request to backend
       const response = await api.post('/booking/request', bookingData);
-      
+
       console.log('Booking request successful:', response.data);
       setBookingResult(response.data.data?.bookingRequest || response.data);
-      
+
       // Call success callback
       onSuccess(response.data);
       onClose();
     } catch (error) {
       console.error('Booking request failed:', error);
-      
+
       // Handle error display
       const errorMessage = error.response?.data?.message || error.message || 'Booking request failed';
       alert(`Booking failed: ${errorMessage}`);
@@ -386,9 +386,9 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
                   );
                 })}
               </div>
-              
+
               {/* Time Selection for Edit Mode */}
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              {/* <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
                   <input
@@ -407,7 +407,7 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
                     className="w-full px-3 py-2 border-gray-200 rounded-lg bg-gray-100 text-gray-700"
                   />
                 </div>
-              </div>
+              </div> */}
             </div>
           ) : (
             // ... existing code for selected date(s) display ...
@@ -548,46 +548,46 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
           {/* Pricing Summary */}
           <div className="bg-gray-50/80 backdrop-blur-sm rounded-xl p-5 space-y-3 border border-gray-200/30">
             <h4 className="font-semibold text-gray-900 text-base mb-2">Pricing Summary</h4>
-            
+
             {pricingInfo.days > 1 && (
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Duration: {pricingInfo.days} days</span>
                 <span className="text-gray-900 font-medium">{pricingInfo.currency} {pricingInfo.dailyRate}/day</span>
               </div>
             )}
-            
+
             {pricingInfo.days === 1 && pricingInfo.duration > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Duration: {pricingInfo.duration.toFixed(1)} hours</span>
                 <span className="text-gray-900 font-medium">{pricingInfo.currency} {pricingInfo.hourlyRate}/hr</span>
               </div>
             )}
-            
+
             {pricingInfo.eventRate > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Event Rate:</span>
                 <span className="text-gray-900 font-medium">{pricingInfo.currency} {pricingInfo.eventRate}</span>
               </div>
             )}
-            
+
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Subtotal:</span>
               <span className="text-gray-900 font-medium">{pricingInfo.currency} {pricingInfo.subtotal.toFixed(2)}</span>
             </div>
-            
+
             {/* System Fee */}
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">System Fee (2%):</span>
               <span className="text-gray-900 font-medium">{pricingInfo.currency} {pricingInfo.systemFee.toFixed(2)}</span>
             </div>
-            
+
             {pricingInfo.securityFee > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Security Fee:</span>
                 <span className="text-gray-900 font-medium">{pricingInfo.currency} {pricingInfo.securityFee.toFixed(2)}</span>
               </div>
             )}
-            
+
             <div className="border-t border-gray-200/50 pt-3">
               <div className="flex justify-between text-xl font-bold">
                 <span className="text-gray-900">Total:</span>
@@ -631,20 +631,43 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
               <button
                 onClick={() => {
                   if (!onSaveEdit) return;
-                  
-                  // Prepare data in the format expected by AddToCart handleSaveEdit
+
+                  // Sort dates chronologically
+                  const sortedDates = [...selectedDatesState].sort((a, b) => a.getTime() - b.getTime());
+
+                  // Always set startDate and endDate in tempDetails for edit mode
+                  const startDate =
+                    sortedDates.length > 0
+                      ? sortedDates[0].toISOString().split('T')[0]
+                      : undefined;
+                  const endDate =
+                    sortedDates.length > 1
+                      ? sortedDates[sortedDates.length - 1].toISOString().split('T')[0]
+                      : sortedDates.length === 1
+                        ? sortedDates[0].toISOString().split('T')[0]
+                        : undefined;
+                  // Only include endDate if multi-day
                   const saveData = {
-                    eventDate: selectedDatesState.length > 0 ? selectedDatesState[0].toISOString().split('T')[0] : undefined,
-                    endDate: selectedDatesState.length > 1 ? selectedDatesState[selectedDatesState.length - 1].toISOString().split('T')[0] : undefined,
+                    startDate,
+                    endDate,
                     eventTime: startTime,
                     endTime: endTime,
-                    eventLocation: location.trim() || undefined,
-                    specialRequests: instructions.trim() || undefined,
+                    eventLocation: location && location.trim() ? location.trim() : undefined,
+                    specialRequests: instructions && instructions.trim() ? instructions.trim() : undefined,
                     guestCount: guestCount,
                     eventType: eventType,
                     contactPreference: contactPreference
                   };
-                  
+
+                  if (sortedDates.length > 1) {
+                    saveData.endDate = sortedDates[sortedDates.length - 1].toISOString().split('T')[0];
+                  }
+
+                  // Validation: startDate, endDate, and location required
+                  if (!startDate || !endDate || !saveData.eventLocation) {
+                    alert("Start date, end date, and location are required.");
+                    return;
+                  }
                   console.log('Saving edit data:', saveData);
                   onSaveEdit(saveData);
                 }}

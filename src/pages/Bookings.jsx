@@ -6,9 +6,66 @@ import CancelModal from '../components/CancelModal';
 import DownloadInvoiceModal from '../components/DownloadInvoiceModal';
 import TrackOrderModal from '../components/TrackOrderModal';
 import Tooltip from '../components/Tooltip';
-import ReviewModal from '../components/ReviewModal';
 import api from '../store/api';
 import { endPoints } from '../constants/api';
+
+// --- Review Modal ---
+function ReviewModal({
+  open,
+  onClose,
+  onSubmit,
+  stars,
+  setStars,
+  message,
+  setMessage,
+  loading,
+  error
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+      <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg">
+        <h2 className="text-lg font-bold mb-4">Add Review</h2>
+        <div className="mb-3">
+          <label className="block text-sm font-medium mb-1">Rating</label>
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((num) => (
+              <button
+                key={num}
+                type="button"
+                className={`text-2xl ${stars >= num ? 'text-yellow-400' : 'text-gray-300'}`}
+                onClick={() => setStars(num)}
+                disabled={loading}
+                aria-label={`Rate ${num} star${num > 1 ? 's' : ''}`}
+              >★</button>
+            ))}
+          </div>
+        </div>
+        <div className="mb-3">
+          <label className="block text-sm font-medium mb-1">Review</label>
+          <textarea
+            className="w-full border rounded-lg px-2 py-1"
+            rows={3}
+            value={message}
+            onChange={e => setMessage(e.target.value)}
+            disabled={loading}
+          />
+        </div>
+        {error && <div className="text-xs text-red-500 mb-2">{error}</div>}
+        <div className="flex justify-end gap-2 mt-4">
+          <button className="px-3 py-1 rounded-lg bg-gray-200" onClick={onClose} disabled={loading}>Cancel</button>
+          <button
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-1 disabled:opacity-50"
+            disabled={loading || stars < 1 || stars > 5 || !message.trim()}
+            onClick={onSubmit}
+          >
+            {loading ? "Submitting..." : "Submit"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Bookings() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,21 +78,39 @@ function Bookings() {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [selectedTrackOrder, setSelectedTrackOrder] = useState(null);
   const dropdownRef = useRef(null);
-  const [isReviewOpen, setIsReviewOpen] = useState(false);
-  const [reviewBooking, setReviewBooking] = useState(null);
 
-  // Handle click outside to close dropdown
+  // --- Review State ---
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewBookingId, setReviewBookingId] = useState(null);
+  const [reviewStars, setReviewStars] = useState(0);
+  const [reviewMessage, setReviewMessage] = useState('');
+  const [loadingReview, setLoadingReview] = useState(false);
+  const [errorReview, setErrorReview] = useState(null);
+
+  // --- Mark Complete State ---
+  const [loadingCompleteId, setLoadingCompleteId] = useState(null);
+  const [errorComplete, setErrorComplete] = useState(null);
+
+  // --- Claim/Cancel (untouched) ---
+  const [claimModalOpen, setClaimModalOpen] = useState(false);
+  const [claimBooking, setClaimBooking] = useState(null);
+  const [actionLoading, setActionLoading] = useState({});
+  const [actionError, setActionError] = useState({});
+
+  // --- Bookings Data ---
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Dropdown close on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const statusOptions = [
@@ -54,12 +129,7 @@ function Bookings() {
     setIsDropdownOpen(false);
   };
 
-  // State for managing bookings data
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Helper function to get status color
+  // Helper: status color
   const getStatusColor = (status) => {
     const statusColorMap = {
       'pending': 'bg-yellow-100',
@@ -73,200 +143,49 @@ function Bookings() {
     return statusColorMap[status?.toLowerCase()] || 'bg-gray-100';
   };
 
-  // Fetch bookings from API
+  // --- Refetch Bookings ---
+  const refetchBookings = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get(endPoints.bookings.history);
+      const bookingsData = response.data.data || response.data || [];
+      const bookingsArray = bookingsData.bookings || bookingsData || [];
+      const transformedBookings = bookingsArray.map((booking, index) => ({
+        id: booking._id || booking.id || index + 1,
+        slNo: index + 1,
+        trackingId: booking.trackingId || 'N/A',
+        startDate: booking.bookingDateTime?.start ? new Date(booking.bookingDateTime.start).toLocaleDateString() : 'N/A',
+        startTime: booking.bookingDateTime?.startTime || 'N/A',
+        endDate: booking.bookingDateTime?.end ? new Date(booking.bookingDateTime.end).toLocaleDateString() : booking.bookingDateTime?.start ? new Date(booking.bookingDateTime.start).toLocaleDateString() : 'N/A',
+        endTime: booking.bookingDateTime?.endTime || 'N/A',
+        totalPrice: booking.totalPrice ? `$${booking.totalPrice}` : 'Quote on request',
+        status: booking.status || 'pending',
+        statusColor: getStatusColor(booking.status),
+        vendorId: booking.vendor?._id,
+        vendor: booking.vendor,
+        listing: booking.listing,
+        bookingDateTime: booking.bookingDateTime,
+        createdAt: booking.createdAt,
+        updatedAt: booking.updatedAt,
+        statusHistory: booking.statusHistory || [],
+        review: booking.review,
+        reviewPending: booking.reviewPending,
+      }));
+      setBookings(transformedBookings);
+      setError(null);
+    } catch (err) {
+      setError(err.message || 'Failed to fetch bookings');
+      setBookings([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        setLoading(true);
-        console.log('Fetching booking history...');
-
-        const response = await api.get(endPoints.bookings.history);
-        const bookingsData = response.data.data || response.data || [];
-
-        console.log('Bookings data received:', bookingsData);
-
-        // Transform API data to match component format
-        const bookingsArray = bookingsData.bookings || bookingsData || [];
-        const transformedBookings = bookingsArray.map((booking, index) => ({
-          id: booking._id || booking.id || index + 1,
-          slNo: index + 1,
-          trackingId: booking.trackingId || 'N/A',
-          startDate: booking.bookingDateTime?.start ? new Date(booking.bookingDateTime.start).toLocaleDateString() : 'N/A',
-          startTime: booking.bookingDateTime?.startTime || 'N/A',
-          endDate: booking.bookingDateTime?.end ? new Date(booking.bookingDateTime.end).toLocaleDateString() : booking.bookingDateTime?.start ? new Date(booking.bookingDateTime.start).toLocaleDateString() : 'N/A',
-          endTime: booking.bookingDateTime?.endTime || 'N/A',
-          totalPrice: booking.totalPrice ? `$${booking.totalPrice}` : 'Quote on request',
-          status: booking.status || 'pending',
-          statusColor: getStatusColor(booking.status),
-          // Additional data
-          vendorId: booking.vendor?._id,
-          vendor: booking.vendor,
-          listing: booking.listing,
-          bookingDateTime: booking.bookingDateTime,
-          createdAt: booking.createdAt,
-          updatedAt: booking.updatedAt,
-          statusHistory: booking.statusHistory || []
-        }));
-
-        setBookings(transformedBookings);
-        setError(null);
-      } catch (err) {
-        console.error('Failed to fetch bookings:', err);
-        setError(err.message || 'Failed to fetch bookings');
-        // Fallback to demo data if API fails
-        setBookings([
-          {
-            id: 1,
-            slNo: 1,
-            trackingId: 'BR001236',
-            startDate: '7/3/2024',
-            startTime: '10:00 AM',
-            endDate: '7/3/2024',
-            endTime: '6:00 PM',
-            totalPrice: '$1500',
-            status: 'Received',
-            statusColor: 'bg-blue-400'
-          },
-          {
-            id: 2,
-            slNo: 2,
-            trackingId: 'BR001237',
-            startDate: '7/3/2024',
-            startTime: '10:00 AM',
-            endDate: '7/3/2024',
-            endTime: '6:00 PM',
-            totalPrice: '$1500',
-            status: 'Pending',
-            statusColor: 'bg-red-400'
-          },
-          {
-            id: 3,
-            slNo: 3,
-            trackingId: 'BR001236',
-            startDate: '7/3/2024',
-            startTime: '10:00 AM',
-            endDate: '7/3/2024',
-            endTime: '6:00 PM',
-            totalPrice: '$1500',
-            status: 'Paid',
-            statusColor: 'bg-orange-400'
-          },
-          {
-            id: 4,
-            slNo: 4,
-            trackingId: 'BR001236',
-            startDate: '7/3/2024',
-            startTime: '10:00 AM',
-            endDate: '7/3/2024',
-            endTime: '6:00 PM',
-            totalPrice: '$1500',
-            status: 'On the way',
-            statusColor: 'bg-green-400'
-          },
-          {
-            id: 5,
-            slNo: 5,
-            trackingId: 'BR001236',
-            startDate: '7/3/2024',
-            startTime: '10:00 AM',
-            endDate: '7/3/2024',
-            endTime: '6:00 PM',
-            totalPrice: '$1500',
-            status: 'Complete',
-            statusColor: 'bg-red-400'
-          },
-          {
-            id: 6,
-            slNo: 6,
-            trackingId: 'BR001236',
-            startDate: '7/3/2024',
-            startTime: '10:00 AM',
-            endDate: '7/3/2024',
-            endTime: '6:00 PM',
-            totalPrice: '$1500',
-            status: 'Accepted',
-            statusColor: 'bg-blue-400'
-          },
-          {
-            id: 7,
-            slNo: 7,
-            trackingId: 'BR001236',
-            startDate: '7/3/2024',
-            startTime: '10:00 AM',
-            endDate: '7/3/2024',
-            endTime: '6:00 PM',
-            totalPrice: '$1500',
-            status: 'Rejected',
-            statusColor: 'bg-blue-400'
-          }
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBookings();
+    refetchBookings();
   }, []);
 
-  // Add timer state for accepted bookings
-  const [cancelTimers, setCancelTimers] = useState({});
-
-  // Start timer when a booking is set to 'Accepted'
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCancelTimers((prev) => {
-        const updated = { ...prev };
-        Object.keys(updated).forEach((id) => {
-          if (updated[id] > 0) updated[id] -= 1;
-        });
-        return updated;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    setBookings((prev) => prev.map((b) => {
-      if (b.status === 'Accepted' && cancelTimers[b.id] === undefined) {
-        return { ...b, acceptedAt: Date.now() };
-      }
-      return b;
-    }));
-    // Initialize timers for accepted bookings
-    bookings.forEach((b) => {
-      if (b.status === 'Accepted' && cancelTimers[b.id] === undefined) {
-        setCancelTimers((prev) => ({ ...prev, [b.id]: 30 * 60 }));
-      }
-      if (b.status !== 'Accepted' && cancelTimers[b.id] !== undefined) {
-        setCancelTimers((prev) => {
-          const copy = { ...prev };
-          delete copy[b.id];
-          return copy;
-        });
-      }
-    });
-    // eslint-disable-next-line
-  }, [bookings]);
-
-  function formatTimer(seconds) {
-    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-    const s = (seconds % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  }
-
-  // Filter bookings based on search term and status
-  const filteredBookings = bookings.filter(booking => {
-    const matchesSearch = booking.trackingId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.slNo.toString().includes(searchTerm) ||
-      booking.startDate.includes(searchTerm) ||
-      booking.endDate.includes(searchTerm) ||
-      booking.totalPrice.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = statusFilter === 'All status' || booking.status.toLowerCase() === statusFilter.toLowerCase();
-
-    return matchesSearch && matchesStatus;
-  });
-
+  // Helper: status badge
   const getStatusBadge = (status) => {
     const colorMap = {
       'received': 'bg-blue-100 text-blue-800 font-medium',
@@ -287,292 +206,306 @@ function Bookings() {
       'Accepted': 'bg-green-100 text-green-600',
       'pending': 'bg-yellow-100 text-yellow-800 font-medium',
       'Pending': 'bg-yellow-100 text-yellow-800 font-medium',
+      'complete': 'bg-gray-100 text-gray-700',
+      'Complete': 'bg-gray-100 text-gray-700',
     };
-    return colorMap[status] || 'bg-gray-100 text-gray-700'; // fallback: light bg, dark text
+    return colorMap[status] || 'bg-gray-100 text-gray-700';
   };
 
+  // Helper: check if cancel allowed (within 30min of createdAt)
+  function canCancelBooking(booking) {
+    if (!booking.createdAt) return false;
+    const created = new Date(booking.createdAt).getTime();
+    const now = Date.now();
+    return (now - created) < 30 * 60 * 1000;
+  }
 
-  const getActionButtons = (status, booking) => {
+  // --- Mark Complete Handler ---
+  const handleMarkComplete = async (bookingId) => {
+    setLoadingCompleteId(bookingId);
+    setErrorComplete(null);
+    try {
+      await api.post(endPoints.bookings.markComplete(bookingId));
+      await refetchBookings();
+      setReviewBookingId(bookingId);
+      setReviewStars(0);
+      setReviewMessage('');
+      setReviewModalOpen(true);
+    } catch (err) {
+      setErrorComplete(err?.response?.data?.message || err.message || 'Mark complete failed');
+    } finally {
+      setLoadingCompleteId(null);
+    }
+  };
+
+  // --- Review Modal Submit Handler ---
+  const handleSubmitReview = async () => {
+    if (!reviewBookingId) return;
+    if (reviewStars < 1 || reviewStars > 5) {
+      setErrorReview("Please select a rating between 1 and 5 stars.");
+      return;
+    }
+    if (!reviewMessage.trim()) {
+      setErrorReview("Review message is required.");
+      return;
+    }
+    setLoadingReview(true);
+    setErrorReview(null);
+    try {
+      await api.post(endPoints.bookings.createReview(reviewBookingId), {
+        stars: reviewStars,
+        message: reviewMessage.trim()
+      });
+      setReviewModalOpen(false);
+      setReviewBookingId(null);
+      setReviewStars(0);
+      setReviewMessage('');
+      await refetchBookings();
+    } catch (err) {
+      setErrorReview(err?.response?.data?.message || err.message || 'Review failed');
+    } finally {
+      setLoadingReview(false);
+    }
+  };
+
+  // --- Review Modal Cancel Handler ---
+  const handleReviewCancel = () => {
+    setReviewModalOpen(false);
+    setReviewBookingId(null);
+    setReviewStars(0);
+    setReviewMessage('');
+    setErrorReview(null);
+  };
+
+  // --- Filter bookings ---
+  const filteredBookings = bookings.filter(booking => {
+    const matchesSearch = booking.trackingId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      booking.slNo.toString().includes(searchTerm) ||
+      booking.startDate.includes(searchTerm) ||
+      booking.endDate.includes(searchTerm) ||
+      booking.totalPrice.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'All status' || booking.status.toLowerCase() === statusFilter.toLowerCase();
+    return matchesSearch && matchesStatus;
+  });
+
+  // --- Action buttons per booking ---
+  const getActionButtons = (booking) => {
+    const status = booking.status?.toLowerCase();
     const buttons = [];
-    const statusLower = status?.toLowerCase();
-    if (statusLower === 'completed') {
-      // If review is pending, show badge and review button
-      if (booking.reviewPending && !booking.review) {
-        buttons.push(
-          <button
-            key="review-again"
-            className="px-3 py-1 text-sm border-2 rounded-full text-pink-600 border-pink-400 hover:bg-pink-50 transition-colors"
-            onClick={() => { setReviewBooking(booking); setIsReviewOpen(true); }}
-          >
-            Review
-          </button>
-        );
-      }
-      buttons.push(
-        <Tooltip key="complain" content="Raise a complaint for this booking">
-          <button className="px-3 py-1 text-sm border-2 rounded-full text-black hover:text-gray-800 transition-colors" onClick={() => setIsComplaintOpen(true)}>
-            Complain
-          </button>
-        </Tooltip>
-      );
-      return buttons;
-    }
-    if (statusLower === 'pending') {
-      buttons.push(
-        <Tooltip key="cancel" content="Cancel this pending booking">
-          <button className="px-3 py-1 text-sm border-2 rounded-full text-black hover:text-gray-800 transition-colors" onClick={() => setIsCancelOpen(true)}>
-            Cancel
-          </button>
-        </Tooltip>
-      );
-      const trackOrderData = {
-        trackingId: booking.trackingId,
-        orderId: booking.orderId || 'ORD-003',
-        clientName: booking.clientName || 'Global Supply Co',
-        phone: booking.phone || '+1-234-567-8903',
-        statusLabel: booking.status || 'On the way',
-        totalPrice: booking.totalPrice || '$2100.00',
-        timeline: Array.isArray(booking.statusHistory)
-          ? booking.statusHistory.map((item) => ({
-            title: item.status.charAt(0).toUpperCase() + item.status.slice(1),
-            description: item.notes?.en || '',
-            completed: ['accepted', 'paid', 'on_the_way', 'received', 'complete', 'completed'].includes(item.status.toLowerCase()),
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /></svg>,
-            label: item.status,
-            labelColor: 'bg-gray-100 text-gray-700',
-            date: item.timestamp ? new Date(item.timestamp).toLocaleString() : ''
-          }))
-          : [],
-        progressNote: 'Order is in progress. Next phase will be marked as completed once the current step is finished.'
-      };
-      buttons.push(
-        <Tooltip key="track" content="Track the status of this booking">
-          <button className="px-3 py-1 text-sm border-2 rounded-full text-black hover:text-gray-800 transition-colors" onClick={() => { setSelectedTrackOrder(trackOrderData); setIsTrackOpen(true); }}>
-            Track
-          </button>
-        </Tooltip>
-      );
-      return buttons;
-    }
-    if (status === 'accepted') {
-      // Cancel button only for 30 min
-      if (cancelTimers[booking.id] > 0) {
-        buttons.push(
-          <Tooltip key="cancel" content={cancelTimers[booking.id] === 1 ? 'Cancel period expired' : 'Cancel this booking within 30 minutes of acceptance'}>
-            <button
-              className="px-3 py-1 text-sm border-2 rounded-full text-black hover:text-gray-800 transition-colors mr-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={() => setIsCancelOpen(true)}
-              disabled={cancelTimers[booking.id] === 1}
-            >
-              Cancel <span className="ml-1 text-xs text-gray-500">{formatTimer(cancelTimers[booking.id])}</span>
-            </button>
-          </Tooltip>
-        );
-      } else if (cancelTimers[booking.id] === 0) {
-        buttons.push(
-          <Tooltip key="cancel-expired" content="Cancel period expired">
-            <button
-              className="px-3 py-1 text-sm border-2 rounded-full text-gray-400 bg-gray-100 cursor-not-allowed mr-2"
-              disabled
-            >
-              Cancel
-            </button>
-          </Tooltip>
-        );
-      }
 
-      const trackOrderData = {
-        trackingId: booking.trackingId,
-        orderId: booking.orderId || 'ORD-003',
-        clientName: booking.clientName || 'Global Supply Co',
-        phone: booking.phone || '+1-234-567-8903',
-        statusLabel: booking.status || 'On the way',
-        totalPrice: booking.totalPrice || '$2100.00',
+    // Helper style for pill buttons
+    const pillBtn =
+      "bg-transparent border border-gray-300 text-black rounded-full px-3 py-1 transition-colors hover:bg-gray-100 disabled:opacity-50";
 
-        timeline: Array.isArray(booking.statusHistory)
-          ? booking.statusHistory.map((item) => ({
-            title: item.status.charAt(0).toUpperCase() + item.status.slice(1),
-            description: item.notes?.en || '',
-            completed: ['accepted', 'paid', 'on_the_way', 'received', 'complete', 'completed'].includes(item.status.toLowerCase()),
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /></svg>,
-            label: item.status,
-            labelColor: 'bg-gray-100 text-gray-700',
-            date: item.timestamp ? new Date(item.timestamp).toLocaleString() : '',
-          })) : [],
-        progressNote: 'Order is in progress. Next phase will be marked as completed once the current step is finished.'
-      };
+    // Cancel (Pending)
+    if (status === 'pending') {
+      const cancelAllowed = canCancelBooking(booking);
+      buttons.push(
+        <button
+          key="cancel"
+          className={pillBtn}
+          disabled={actionLoading[booking.id] || !cancelAllowed}
+          title={!cancelAllowed ? "Cancellation period expired. You can only cancel within 30 minutes of booking request." : ""}
+          onMouseEnter={() => { }}
+          onClick={() => {
+            setSelectedBooking(booking);
+            setIsCancelOpen(true);
+          }}
+        >
+          {actionLoading[booking.id] ? "Cancelling..." : "Cancel"}
+        </button>
+      );
+    }
 
+    // Mark Received (Accepted/Delivered)
+    if (status === 'accepted' || status === 'delivered' || status === 'on the way' || status === 'on_the_way') {
       buttons.push(
-        <Tooltip key="track" content="Track the status of this booking">
-          <button className="px-3 py-1 text-sm border-2 rounded-full text-black hover:text-gray-800 transition-colors" onClick={() => { setSelectedTrackOrder(trackOrderData); setIsTrackOpen(true); }}>
-            Track
-          </button>
-        </Tooltip>
+        <button
+          key="mark-received"
+          className={pillBtn}
+          disabled={actionLoading[booking.id]}
+          onClick={() => {
+            setActionLoading((prev) => ({ ...prev, [booking.id]: true }));
+            setActionError((prev) => ({ ...prev, [booking.id]: null }));
+            api.post(endPoints.bookings.markReceived(booking.id))
+              .then(() => refetchBookings())
+              .catch(err => setActionError((prev) => ({ ...prev, [booking.id]: err.message || 'Mark received failed' })))
+              .finally(() => setActionLoading((prev) => ({ ...prev, [booking.id]: false })));
+          }}
+        >
+          {actionLoading[booking.id] ? "Marking..." : "Mark Received"}
+        </button>
       );
-      buttons.push(
-        <Tooltip key="complain" content="Raise a complaint for this booking">
-          <button className="px-3 py-1 text-sm border-2 rounded-full text-black hover:text-gray-800 transition-colors" onClick={() => setIsComplaintOpen(true)}>
-            Complain
-          </button>
-        </Tooltip>
-      );
-      return buttons;
     }
-    if (status === 'paid') {
-      const trackOrderData = {
-        trackingId: booking.trackingId,
-        orderId: booking.orderId || 'ORD-003',
-        clientName: booking.clientName || 'Global Supply Co',
-        phone: booking.phone || '+1-234-567-8903',
-        statusLabel: booking.status || 'On the way',
-        totalPrice: booking.totalPrice || '$2100.00',
-        timeline: Array.isArray(booking.statusHistory)
-          ? booking.statusHistory.map((item) => ({
-            title: item.status.charAt(0).toUpperCase() + item.status.slice(1),
-            description: item.notes?.en || '',
-            completed: ['accepted', 'paid', 'on_the_way', 'received', 'complete', 'completed'].includes(item.status.toLowerCase()),
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /></svg>,
-            label: item.status,
-            labelColor: 'bg-gray-100 text-gray-700',
-            date: item.timestamp ? new Date(item.timestamp).toLocaleString() : ''
-          }))
-          : [],
-        progressNote: 'Order is in progress. Next phase will be marked as completed once the current step is finished.'
-      };
-      buttons.push(
-        <Tooltip key="track" content="Track the status of this booking">
-          <button className="px-3 py-1 text-sm border-2 rounded-full text-black hover:text-gray-800 transition-colors" onClick={() => { setSelectedTrackOrder(trackOrderData); setIsTrackOpen(true); }}>
-            Track
-          </button>
-        </Tooltip>
-      );
-      buttons.push(
-        <Tooltip key="complain" content="Raise a complaint for this booking">
-          <button className="px-3 py-1 text-sm border-2 rounded-full text-black hover:text-gray-800 transition-colors" onClick={() => setIsComplaintOpen(true)}>
-            Complain
-          </button>
-        </Tooltip>
-      );
-      return buttons;
-    }
-    if (status === 'on_the_way') {
-      const trackOrderData = {
-        trackingId: booking.trackingId,
-        orderId: booking.orderId || 'ORD-003',
-        clientName: booking.clientName || 'Global Supply Co',
-        phone: booking.phone || '+1-234-567-8903',
-        statusLabel: booking.status || 'On the way',
-        totalPrice: booking.totalPrice || '$2100.00',
-        timeline: Array.isArray(booking.statusHistory)
-          ? booking.statusHistory.map((item) => ({
-            title: item.status.charAt(0).toUpperCase() + item.status.slice(1),
-            description: item.notes?.en || '',
-            completed: ['accepted', 'paid', 'on_the_way', 'received', 'complete', 'completed'].includes(item.status.toLowerCase()),
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /></svg>,
-            label: item.status,
-            labelColor: 'bg-gray-100 text-gray-700',
-            date: item.timestamp ? new Date(item.timestamp).toLocaleString() : ''
-          }))
-          : [],
-        progressNote: 'Order is in progress. Next phase will be marked as completed once the current step is finished.'
-      };
-      buttons.push(
-        <Tooltip key="track" content="Track the status of this booking">
-          <button className="px-3 py-1 text-sm border-2 rounded-full text-black hover:text-gray-800 transition-colors" onClick={() => { setSelectedTrackOrder(trackOrderData); setIsTrackOpen(true); }}>
-            Track
-          </button>
-        </Tooltip>
-      );
-      buttons.push(
-        <Tooltip key="received" content="Mark as received when you have received your order">
-          <button className="px-3 py-1 text-sm border-2 rounded-full text-black hover:text-gray-800 transition-colors" onClick={() => {
-            setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status: 'Received', statusColor: 'bg-yellow-400' } : b));
-          }}>
-            Received
-          </button>
-        </Tooltip>
-      );
-      buttons.push(
-        <Tooltip key="complain" content="Raise a complaint for this booking">
-          <button className="px-3 py-1 text-sm border-2 rounded-full text-black hover:text-gray-800 transition-colors" onClick={() => setIsComplaintOpen(true)}>
-            Complain
-          </button>
-        </Tooltip>
-      );
-      return buttons;
-    }
+
+    // Mark Complete (Received only)
     if (status === 'received') {
-      const trackOrderData = {
-        trackingId: booking.trackingId,
-        orderId: booking.orderId || 'ORD-003',
-        clientName: booking.clientName || 'Global Supply Co',
-        phone: booking.phone || '+1-234-567-8903',
-        statusLabel: booking.status || 'On the way',
-        totalPrice: booking.totalPrice || '$2100.00',
-        timeline: Array.isArray(booking.statusHistory)
-          ? booking.statusHistory.map((item) => ({
-            title: item.status.charAt(0).toUpperCase() + item.status.slice(1),
-            description: item.notes?.en || '',
-            completed: ['accepted', 'paid', 'on_the_way', 'received', 'complete', 'completed'].includes(item.status.toLowerCase()),
-            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /></svg>,
-            label: item.status,
-            labelColor: 'bg-gray-100 text-gray-700',
-            date: item.timestamp ? new Date(item.timestamp).toLocaleString() : ''
-          }))
-          : [],
-        progressNote: 'Order is in progress. Next phase will be marked as completed once the current step is finished.'
-      };
       buttons.push(
-        <Tooltip key="complete" content="Mark this booking as complete after your Event is finished">
-          <button
-            className="px-3 py-1 text-sm border-2 rounded-full text-black hover:text-gray-800 transition-colors"
-            onClick={() => {
-              setReviewBooking(booking);
-              setIsReviewOpen(true);
-            }}
-          >
-            Complete
-          </button>
-        </Tooltip>
+        <button
+          key="mark-complete"
+          className={pillBtn}
+          disabled={loadingCompleteId === booking.id}
+          onClick={() => handleMarkComplete(booking.id)}
+        >
+          {loadingCompleteId === booking.id ? "Marking..." : "Mark Complete"}
+        </button>
       );
-      buttons.push(
-        <Tooltip key="complain" content="Raise a complaint for this booking">
-          <button className="px-3 py-1 text-sm border-2 rounded-full text-black hover:text-gray-800 transition-colors" onClick={() => setIsComplaintOpen(true)}>
-            Complain
-          </button>
-        </Tooltip>
-      );
-      return buttons;
+      if (errorComplete && loadingCompleteId === null) {
+        buttons.push(
+          <span key="error-complete" className="text-xs text-red-500 ml-2">{errorComplete}</span>
+        );
+      }
     }
+
+    // Add Review (Completed)
+    if ((status === 'complete' || status === 'completed') && !booking.review) {
+      buttons.push(
+        <button
+          key="add-review"
+          className={pillBtn}
+          disabled={loadingReview}
+          onClick={() => {
+            setReviewBookingId(booking.id);
+            setReviewStars(0);
+            setReviewMessage('');
+            setReviewModalOpen(true);
+          }}
+        >
+          {loadingReview ? "Submitting..." : "Add Review"}
+        </button>
+      );
+    }
+
+    // Paid status: Track & Raise Claim
+    if (status === 'paid') {
+      buttons.push(
+        <button
+          key="track"
+          className={pillBtn}
+          title="Track your order"
+          onClick={() => {
+            setSelectedTrackOrder(booking);
+            setIsTrackOpen(true);
+          }}
+        >
+          Track
+        </button>
+      );
+      buttons.push(
+        <button
+          key="raise-claim-paid"
+          className={pillBtn}
+          disabled={actionLoading[booking.id]}
+          onClick={() => {
+            setClaimBooking(booking);
+            setClaimModalOpen(true);
+          }}
+        >
+          {actionLoading[booking.id] ? "Submitting..." : "Raise Claim"}
+        </button>
+      );
+    }
+
+    // Raise Claim (Any eligible except paid, which is handled above)
+    if (
+      ['pending', 'accepted', 'delivered', 'on the way', 'on_the_way', 'received', 'complete', 'completed'].includes(status)
+    ) {
+      buttons.push(
+        <button
+          key="raise-claim"
+          className={pillBtn}
+          disabled={actionLoading[booking.id]}
+          onClick={() => {
+            setClaimBooking(booking);
+            setClaimModalOpen(true);
+          }}
+        >
+          {actionLoading[booking.id] ? "Submitting..." : "Raise Claim"}
+        </button>
+      );
+    }
+
     return buttons;
   };
 
-  // Handler for review modal submit
-  const handleReviewSubmit = ({ rating, review }) => {
-    if (reviewBooking) {
-      setBookings(prev => prev.map(b =>
-        b.id === reviewBooking.id
-          ? { ...b, status: 'Complete', statusColor: 'bg-red-400', review, rating, reviewPending: false }
-          : b
-      ));
+  // Cancel modal confirm
+  const handleCancelConfirm = () => {
+    if (selectedBooking) {
+      setActionLoading((prev) => ({ ...prev, [selectedBooking.id]: true }));
+      setActionError((prev) => ({ ...prev, [selectedBooking.id]: null }));
+      api.post(endPoints.bookings.cancel(selectedBooking.id))
+        .then(() => refetchBookings())
+        .catch(err => setActionError((prev) => ({ ...prev, [selectedBooking.id]: err.message || 'Cancel failed' })))
+        .finally(() => {
+          setActionLoading((prev) => ({ ...prev, [selectedBooking.id]: false }));
+          setIsCancelOpen(false);
+          setSelectedBooking(null);
+        });
     }
-    setIsReviewOpen(false);
-    setReviewBooking(null);
   };
 
-  // Handler for review modal cancel
-  const handleReviewCancel = () => {
-    if (reviewBooking) {
-      setBookings(prev => prev.map(b =>
-        b.id === reviewBooking.id
-          ? { ...b, status: 'Complete', statusColor: 'bg-red-400', reviewPending: true }
-          : b
-      ));
-    }
-    setIsReviewOpen(false);
-    setReviewBooking(null);
+  // Claim modal component (simple)
+  const ClaimModal = ({ open, onClose, onSubmit }) => {
+    const [type, setType] = useState('');
+    const [reason, setReason] = useState('');
+    return open ? (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+        <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg">
+          <h2 className="text-lg font-bold mb-4">Raise a Claim</h2>
+          <div className="mb-3">
+            <label className="block text-sm font-medium mb-1">Type</label>
+            <select className="w-full border rounded-lg px-2 py-1" value={type} onChange={e => setType(e.target.value)}>
+              <option value="">Select type</option>
+              <option value="refund">Refund</option>
+              <option value="service">Service Issue</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div className="mb-3">
+            <label className="block text-sm font-medium mb-1">Reason</label>
+            <textarea className="w-full border rounded-lg px-2 py-1" rows={3} value={reason} onChange={e => setReason(e.target.value)} />
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <button className="px-3 py-1 rounded-lg bg-gray-200" onClick={onClose}>Cancel</button>
+            <button
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-1"
+              disabled={!type || !reason}
+              onClick={() => onSubmit({ type, reason })}
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      </div>
+    ) : null;
   };
 
+  // Claim modal submit
+  const handleClaimSubmit = async ({ type, reason }) => {
+    if (!claimBooking) return;
+    const trimmedReason = reason.trim();
+    if (!trimmedReason) {
+      setActionError((prev) => ({ ...prev, [claimBooking.id]: "Claim reason is required" }));
+      return;
+    }
+    setActionLoading((prev) => ({ ...prev, [claimBooking.id]: true }));
+    setActionError((prev) => ({ ...prev, [claimBooking.id]: null }));
+    try {
+      await api.post(endPoints.bookings.createClaim(claimBooking.id), {
+        claimType: type,
+        reason: { en: trimmedReason }
+      });
+      setClaimModalOpen(false);
+      setClaimBooking(null);
+      await refetchBookings();
+    } catch (err) {
+      setActionError((prev) => ({ ...prev, [claimBooking.id]: err.message || 'Claim failed' }));
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [claimBooking.id]: false }));
+    }
+  };
+
+  // --- Render ---
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -580,7 +513,6 @@ function Bookings() {
       <div className="px-responsive py-8">
         <div className="container-7xl">
           {/* Back Button */}
-
           <div className="flex items-center mb-8">
             <button className="mr-4 text-gray-600 hover:text-gray-800">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -689,11 +621,14 @@ function Bookings() {
                       </div>
 
                       <div className="flex flex-wrap gap-2 pt-2 justify-end mr-2">
-                        {getActionButtons(booking.status, booking)}
+                        {getActionButtons(booking)}
                         <button className="p-1 text-gray-400 hover:text-gray-600 transition-colors" onClick={() => { setSelectedBooking(booking); setIsDownloadOpen(true); }}>
                           <img src="/assets/Downlaod.svg" alt="Download" className="w-4 h-5" />
                         </button>
                       </div>
+                      {actionError[booking.id] && (
+                        <div className="text-xs text-red-500 mt-2">{actionError[booking.id]}</div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -776,11 +711,14 @@ function Bookings() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <div className="flex justify-end items-center space-x-2 mr-4">
-                            {getActionButtons(booking.status, booking)}
+                            {getActionButtons(booking)}
                             <button className="p-1 text-gray-400 hover:text-gray-600 transition-colors" onClick={() => { setSelectedBooking(booking); setIsDownloadOpen(true); }}>
                               <img src="/assets/Downlaod.svg" alt="Download" className="w-5 h-5" />
                             </button>
                           </div>
+                          {actionError[booking.id] && (
+                            <div className="text-xs text-red-500 mt-2">{actionError[booking.id]}</div>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -809,8 +747,26 @@ function Bookings() {
         </div>
       </div>
       <Footer />
-      <ComplaintModal open={isComplaintOpen} onClose={() => setIsComplaintOpen(false)} />
-      <CancelModal open={isCancelOpen} onClose={() => setIsCancelOpen(false)} />
+
+      {/* Cancel Modal */}
+      <CancelModal
+        open={isCancelOpen}
+        onClose={() => { setIsCancelOpen(false); setSelectedBooking(null); }}
+        onConfirm={handleCancelConfirm}
+        booking={selectedBooking}
+        loading={actionLoading[selectedBooking?.id]}
+        disabled={!selectedBooking || !canCancelBooking(selectedBooking)}
+        error={actionError[selectedBooking?.id]}
+      />
+
+      {/* Claim Modal */}
+      <ClaimModal
+        open={claimModalOpen}
+        onClose={() => { setClaimModalOpen(false); setClaimBooking(null); }}
+        onSubmit={handleClaimSubmit}
+      />
+
+      {/* Download Invoice */}
       <DownloadInvoiceModal
         open={isDownloadOpen}
         onClose={() => setIsDownloadOpen(false)}
@@ -818,13 +774,66 @@ function Bookings() {
         items={selectedBooking ? selectedBooking.items || [] : []}
         summary={selectedBooking ? selectedBooking.summary || {} : {}}
       />
-      <TrackOrderModal open={isTrackOpen} onClose={() => setIsTrackOpen(false)} order={selectedTrackOrder} />
-      <ReviewModal
-        open={isReviewOpen}
-        onClose={handleReviewCancel}
-        onSubmit={handleReviewSubmit}
-        booking={reviewBooking}
+
+      {/* Track Order */}
+      <TrackOrderModal
+        open={isTrackOpen}
+        onClose={() => setIsTrackOpen(false)}
+        order={
+          selectedTrackOrder
+            ? {
+              // Map booking fields to TrackOrderModal expected props
+              trackingId: selectedTrackOrder.trackingId || '',
+              orderId: selectedTrackOrder.trackingId || '', // fallback if no orderId
+              clientName: selectedTrackOrder.clientName || (selectedTrackOrder?.vendor?.name || ''),
+              phone: selectedTrackOrder.phone || (selectedTrackOrder?.vendor?.phone || ''),
+              statusLabel: selectedTrackOrder.status || '',
+              totalPrice: selectedTrackOrder.totalPrice || '',
+              timeline: Array.isArray(selectedTrackOrder.statusHistory)
+                ? selectedTrackOrder.statusHistory.map((step, idx) => ({
+                  title: step.title || step.status || '',
+                  description: step.description || '',
+                  completed: step.completed || step.status === 'completed',
+                  icon: <span>•</span>, // Replace with your icon logic if needed
+                  label: step.label || '',
+                  labelColor: step.labelColor || '',
+                  date: step.date || step.updatedAt || '',
+                }))
+                : [],
+              progressNote: selectedTrackOrder.progressNote || '',
+            }
+            : {
+              trackingId: '',
+              orderId: '',
+              clientName: '',
+              phone: '',
+              statusLabel: '',
+              totalPrice: '',
+              timeline: [],
+              progressNote: '',
+            }
+        }
+        onDownload={() => {
+          setSelectedBooking(selectedTrackOrder);
+          setIsDownloadOpen(true);
+        }}
       />
+
+      {/* Review Modal */}
+      <ReviewModal
+        open={reviewModalOpen}
+        onClose={handleReviewCancel}
+        onSubmit={handleSubmitReview}
+        stars={reviewStars}
+        setStars={setReviewStars}
+        message={reviewMessage}
+        setMessage={setReviewMessage}
+        loading={loadingReview}
+        error={errorReview}
+      />
+
+      {/* Complaint Modal (unchanged) */}
+      <ComplaintModal open={isComplaintOpen} onClose={() => setIsComplaintOpen(false)} />
     </div>
   )
 }
