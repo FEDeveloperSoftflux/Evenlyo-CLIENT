@@ -5,6 +5,8 @@ import { fetchCurrentUser } from '../store/actions/authActions';
 import { useTranslation } from 'react-i18next';
 import CustomerSupportModal from "./CustomerSupportModal";
 
+
+
 // Import assets
 import brandLogo from '../assets/icons/brand.svg';
 import ratingsIcon from '../assets/icons/ratings.svg';
@@ -24,9 +26,36 @@ function ResponsiveHeader() {
   const [isFeaturesOpen, setIsFeaturesOpen] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState('advance-booking');
   const [isMobileFeaturesOpen, setIsMobileFeaturesOpen] = useState(false);
+  // Categories dropdown state (dummy data)
+  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
+  const [isSubCategoriesOpen, setIsSubCategoriesOpen] = useState(false);
+  const [selectedMainCategory, setSelectedMainCategory] = useState(null);
+  const categoriesRef = useRef(null);
+  const subCategoriesRef = useRef(null);
+  // Dummy categories and subcategories
+  const categories = [
+    { id: 'cat1', name: 'Decoration', subCategories: [
+      { id: 'sub1', name: 'Flowers' },
+      { id: 'sub2', name: 'Lighting' },
+      { id: 'sub3', name: 'Furniture' },
+    ]},
+    { id: 'cat2', name: 'Catering', subCategories: [
+      { id: 'sub4', name: 'Buffet' },
+      { id: 'sub5', name: 'Drinks' },
+      { id: 'sub6', name: 'Desserts' },
+    ]},
+    { id: 'cat3', name: 'Entertainment', subCategories: [
+      { id: 'sub7', name: 'Music' },
+      { id: 'sub8', name: 'Games' },
+      { id: 'sub9', name: 'Shows' },
+    ]},
+  ];
+  const [subCategories, setSubCategories] = useState([]);
   const dispatch = useDispatch();
   const isLoggedIn = useSelector(state => state.auth.isAuthenticated);
   const user = useSelector(state => state.auth.user);
+
+
 
   // Always fetch user info on mount (for cookie-based session restore)
   useEffect(() => {
@@ -64,6 +93,28 @@ function ResponsiveHeader() {
     };
   }, [profileDropdownOpen]);
 
+  // Click-away for categories dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        categoriesRef.current && !categoriesRef.current.contains(event.target) &&
+        subCategoriesRef.current && !subCategoriesRef.current.contains(event.target)
+      ) {
+        setIsCategoriesOpen(false);
+        setIsSubCategoriesOpen(false);
+        setSelectedMainCategory(null);
+      }
+    }
+    if (isCategoriesOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCategoriesOpen]);
+
   // Define languages array before any usage
   const languages = [
     { code: "en", name: "English" },
@@ -87,11 +138,11 @@ function ResponsiveHeader() {
   }, [i18n.language]);
 
   const navigationItems = [
-    { name: t('home'), href: "/" },
-    { name: t('features'), href: "/features" },
-    { name: t('customer_support'), href: "#support" },
-    { name: t('blog'), href: "/blog" },
-    { name: t('pricing'), href: "/pricing" },
+  { name: t('home'), href: "/" },
+  { name: 'Categories', href: "#categories" },
+  { name: t('features'), href: "/features" },
+  { name: t('blog'), href: "/blog" },
+  { name: t('pricing'), href: "/pricing" },
   ];
 
   // Get current path for active nav
@@ -149,22 +200,74 @@ function ResponsiveHeader() {
           {/* Center Navigation - Desktop Only */}
           <nav className="nav-desktop flex items-center space-x-6 relative md:hidden lg:flex">
             {navigationItems.map((item) => {
-              const isActive = item.href === currentPath;
-              if (item.name === t('customer_support')) {
-                return (
-                  <button
-                    key={item.name}
-                    type="button"
-                    onClick={() => setIsSupportOpen(true)}
-                    className={`relative font-medium text-subtitle-6 transition-colors pb-1 group text-gray-600 hover:text-primary-500`}
-                    style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
-                  >
-                    {item.name}
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-secondary via-primary-500 to-primary-600 rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
-                  </button>
-                );
-              }
-              return item.name === t('features') ? (
+                const isActive = item.href === currentPath;
+                if (item.name === 'Categories') {
+                  return (
+                    <div key="categories-nav" className="relative" ref={categoriesRef}>
+                      <button
+                        type="button"
+                        onClick={() => setIsCategoriesOpen((open) => !open)}
+                        onMouseEnter={() => setIsCategoriesOpen(true)}
+                        className={`relative font-medium text-subtitle-6 transition-colors pb-1 group-hover:text-primary-500 ${isActive ? "text-gray-900 hover:text-primary-500" : "text-gray-600 hover:text-primary-500"}`}
+                      >
+                        Categories
+                        <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-secondary via-primary-500 to-primary-600 rounded-full transition-transform duration-300 ${isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`}></div>
+                      </button>
+                      {isCategoriesOpen && categories && categories.length > 0 && (
+                        <div className="absolute left-0 mt-3 w-60 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 animate-fade-in" onMouseLeave={() => setIsCategoriesOpen(false)}>
+                          <ul className="py-2 px-1">
+                            {categories.map((cat) => (
+                              <li key={cat.id}>
+                                <button
+                                  className="block w-full text-left px-4 py-2 text-sm font-medium rounded-xl transition-colors text-gray-500 hover:bg-gray-50"
+                                  onMouseEnter={() => {
+                                    setSelectedMainCategory(cat);
+                                    setIsSubCategoriesOpen(true);
+                                    setSubCategories(cat.subCategories || []);
+                                  }}
+                                  onClick={() => {
+                                    setIsCategoriesOpen(false);
+                                    setIsSubCategoriesOpen(false);
+                                    setSelectedMainCategory(null);
+                                  }}
+                                >
+                                  {cat.name}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {/* Subcategories dropdown */}
+                      {isSubCategoriesOpen && subCategories.length > 0 && selectedMainCategory && (
+                        <div ref={subCategoriesRef} className="absolute left-60 top-0 mt-3 w-60 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 animate-fade-in">
+                          <ul className="py-2 px-1">
+                            {subCategories.map((sub) => (
+                              <li key={sub.id}>
+                                <button
+                                  className="block w-full text-left px-4 py-2 text-sm font-medium rounded-xl transition-colors text-gray-500 hover:bg-gray-50"
+                                  onClick={() => {
+                                    setIsCategoriesOpen(false);
+                                    setIsSubCategoriesOpen(false);
+                                    setSelectedMainCategory(null);
+                                    // Scroll to Explore Items section
+                                    const section = document.getElementById('explore-items-section');
+                                    if (section) {
+                                      section.scrollIntoView({ behavior: 'smooth' });
+                                    }
+                                  }}
+                                >
+                                  {sub.name}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                return item.name === t('features') ? (
                 <div
                   key={item.name}
                   className="relative"
@@ -402,6 +505,14 @@ function ResponsiveHeader() {
                         <span className="truncate">{t('setting')}</span>
                       </a>
                       <button
+                        onClick={() => setIsSupportOpen(true)}
+                        className="flex items-center gap-2 sm:gap-3 px-2.5 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-gray-500 hover:bg-gray-50 transition-all text-sm sm:text-lg w-full text-left"
+                      >
+                        {/* Support Icon */}
+                        <img src={settingIcon} alt="Settings Icon" className="w-4 h-4 sm:w-6 sm:h-6 text-red-400 flex-shrink-0" />
+                        <span className="truncate">{t('customer_support')}</span>
+                      </button>
+                      <button
                         onClick={async () => {
                           try {
                             await import('../store/api').then(({ default: api }) => api.post('/auth/logout'));
@@ -506,19 +617,15 @@ function ResponsiveHeader() {
               {/* Mobile Navigation */}
               <nav className="flex-1 py-6">
                 {navigationItems.map((item, index) => {
-                  if (item.name === t('customer_support')) {
-                    return (
+                  // Removed customer support from mobile nav
                       <button
-                        key={item.name}
-                        type="button"
-                        onClick={() => { setIsSupportOpen(true); toggleMobileMenu(); }}
-                        className={`mobile-menu-item block px-6 py-4 text-lg font-medium transition-all duration-300 w-full text-left flex items-center space-x-3 text-gray-700 hover:text-primary-500 hover:bg-gradient-to-r hover:from-gray-50 hover:to-transparent hover:border-r-4 hover:border-primary-200`}
+                        onClick={() => setIsSupportOpen(true)}
+                        className="flex items-center gap-2 sm:gap-3 px-2.5 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-gray-500 hover:bg-gray-50 transition-all text-sm sm:text-lg w-full text-left"
                       >
-                        <span className="text-primary-500 opacity-60">•</span>
-                        <span>{item.name}</span>
+                        {/* Support Icon (optional) */}
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 sm:w-6 sm:h-6 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636A9 9 0 105.636 18.364 9 9 0 0018.364 5.636z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 14.828a4 4 0 005.656-5.656" /></svg>
+                        <span className="truncate">{t('customer_support')}</span>
                       </button>
-                    );
-                  }
                   return (
                     <a
                       key={item.name}

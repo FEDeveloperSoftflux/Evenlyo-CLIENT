@@ -5,6 +5,7 @@ import AdvancedBookingSystem from "../components/AdvancedBookingSystem";
 import RentalTabs from "../components/RentalTabs";
 import Categories from '../components/Categories';
 import VendorList from "../components/VendorList";
+import ExploreItemsSection from "../components/ExploreItemsSection";
 import MultiVendor from "../components/MultiVendor";
 import FrontendUserDashboard from "../components/FrontendUserDashboard";
 import HaveQuestions from "../components/HaveQuestions";
@@ -30,11 +31,15 @@ function LandingPage() {
         setVendors={setVendors}
         setVendorsLoading={setVendorsLoading}
       />
+      
+      {/* Explore Items Section */}
+      <ExploreItemsSection />
       <VendorList 
         selectedCategory={selectedCategory}
         vendors={vendors}
         loading={vendorsLoading}
       />
+
       <AdvancedBookingSystem />
       <RentalTabs />
       <MultiVendor />
