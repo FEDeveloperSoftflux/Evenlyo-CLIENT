@@ -391,7 +391,7 @@ const VendorList = ({ selectedCategory, vendors = [], loading = false }) => {
   }
 
   return (
-    <section id="vendor-feature" className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-16 bg-white">
+    <section id="vendor-feature" className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-16 bg-gray-50">
       <div className="max-w-7xl mx-auto">
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 sm:mb-12 text-center">
           {t('related_vendors')}

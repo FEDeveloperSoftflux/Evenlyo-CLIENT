@@ -37,7 +37,7 @@ const AddToCart = () => {
   } = useCartReducer();
 
   const tabs = [
-    { id: 'requests', label: 'Request Add To Cart' },
+    { id: 'requests', label: 'Request Add To Wishlist' },
     { id: 'accepted', label: 'Accepted' }
   ];
 

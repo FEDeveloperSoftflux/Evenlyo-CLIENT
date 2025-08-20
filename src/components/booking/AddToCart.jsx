@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SalePayModal from './SalePayModal';
 import { useNavigate } from 'react-router-dom';
 import BookNowModal from './BookNowModal';
 import api from '../../store/api';
@@ -8,9 +9,53 @@ import { useCartReducer } from './useCartReducer';
 const AddToCart = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('requests');
+  // New: Sale/Booking tab
+  const [mainTab, setMainTab] = useState('booking'); // 'booking' or 'sale'
   const [isBookNowModalOpen, setIsBookNowModalOpen] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
+  // Sale Items selection state (for Sale tab)
+  const [selectedSaleItems, setSelectedSaleItems] = useState(['sale1', 'sale2']);
+  // Sale Items Pay Now modal state
+  const [isSalePayModalOpen, setIsSalePayModalOpen] = useState(false);
+  const [saleUserDetails, setSaleUserDetails] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    country: '',
+    notes: '',
+    quantity: 1
+  });
+
+  // Handler for selecting/deselecting sale items
+  const handleSaleItemSelect = (id) => {
+    setSelectedSaleItems((prev) =>
+      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
+    );
+  };
+
+  // Handler for Pay Now click
+  const handleSalePayNow = () => {
+    setIsSalePayModalOpen(true);
+  };
+
+  // Handler for modal input change
+  const handleSaleUserDetailChange = (e) => {
+    const { name, value } = e.target;
+    setSaleUserDetails((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handler for modal submit (for now just close modal)
+  const handleSalePaySubmit = (e) => {
+    e.preventDefault();
+    // Here you would handle payment logic
+    setIsSalePayModalOpen(false);
+    setSaleUserDetails({ name: '', email: '', phone: '' });
+    alert('Order placed! (Demo)');
+  };
   
   // Use cart reducer for state management
   const {
@@ -483,10 +528,29 @@ const AddToCart = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">My Cart</h1>
+      <div className="mb-4 text-center">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">My Wishlist</h1>
         <p className="text-gray-600">Manage your event bookings and requests</p>
       </div>
+
+      {/* Main Tabs: Booking Items / Sale Items */}
+      <div className="flex justify-center mb-8">
+        <div className="flex w-full max-w-5xl mx-auto space-x-2 bg-white rounded-xl p-1 shadow-lg">
+          <button
+            className={`w-1/2 px-10 py-2 rounded-xl text-base font-medium transition-all duration-200 ${mainTab === 'booking' ? 'btn-primary-mobile text-white shadow-lg' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'}`}
+            onClick={() => setMainTab('booking')}
+          >
+            Booking Items
+          </button>
+          <button
+            className={`w-1/2 px-10 py-2 rounded-xl text-base font-medium transition-all duration-200 ${mainTab === 'sale' ? 'btn-primary-mobile text-white shadow-lg' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'}`}
+            onClick={() => setMainTab('sale')}
+          >
+            Sale Items
+          </button>
+        </div>
+      </div>
+
 
       {/* Error Display */}
       {error && (
@@ -501,211 +565,361 @@ const AddToCart = () => {
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex justify-center mb-8">
-        <div className="flex space-x-2 bg-white rounded-xl p-1 shadow-lg inline-flex">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-8 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                activeTab === tab.id
-                  ? 'btn-primary-mobile text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Loading State */}
-      {loading && (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
-        </div>
-      )}
-
-      {/* Tab Content */}
-      {!loading && (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          <div className="col-span-2">
-            {/* Select All functionality */}
-            {((activeTab === 'requests' && getItemsWithCompleteInfo().length > 0) || (activeTab === 'accepted' && currentItems.length > 0)) && (
-              <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={activeTab === 'requests' 
-                      ? getItemsWithCompleteInfo().every(item => selectedItems.includes(item.id))
-                      : currentItems.every(item => selectedItems.includes(item.id))
-                    }
-                    onChange={() => {
-                      if (activeTab === 'requests') {
-                        if (getItemsWithCompleteInfo().every(item => selectedItems.includes(item.id))) {
-                          clearSelection();
-                        } else {
-                          selectAllItems();
-                        }
-                      } else {
-                        // For accepted items
-                        if (currentItems.every(item => selectedItems.includes(item.id))) {
-                          clearSelection();
-                        } else {
-                          currentItems.forEach(item => {
-                            if (!selectedItems.includes(item.id)) {
-                              toggleItemSelection(item.id);
-                            }
-                          });
-                        }
-                      }
-                    }}
-                    className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Select All</span>
-                </label>
-                <span className="text-xs text-gray-500">
-                  {selectedItems.length} of {activeTab === 'requests' ? getItemsWithCompleteInfo().length : currentItems.length} selected
-                </span>
-              </div>
-            )}
-
-            {currentItems.length > 0 ? (
-              currentItems.map(renderCartItem)
-            ) : (
-              <div className="text-center py-12">
-                <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5 6m0 0h9m-9 0h9" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Your {activeTab === 'requests' ? 'cart' : 'accepted bookings'} is empty
-                </h3>
-                <p className="text-gray-600">
-                  {activeTab === 'requests' 
-                    ? 'Add some items to your cart to get started!' 
-                    : 'No accepted bookings found.'
-                  }
-                </p>
-              </div>
-            )}
+      {/* Booking Items Implementation */}
+      {mainTab === 'booking' && (
+        <>
+          {/* Tabs */}
+          <div className="flex justify-center mb-8">
+            <div className="flex space-x-2 bg-white rounded-xl p-1 shadow-lg inline-flex">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-8 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    activeTab === tab.id
+                      ? 'btn-primary-mobile text-white shadow-lg'
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Order Summary */}
-          {currentItems.length > 0 && (
+          {/* Loading State */}
+          {loading && (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+            </div>
+          )}
+
+          {/* Tab Content */}
+          {!loading && (
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+              <div className="col-span-2">
+                {/* Select All functionality */}
+                {((activeTab === 'requests' && getItemsWithCompleteInfo().length > 0) || (activeTab === 'accepted' && currentItems.length > 0)) && (
+                  <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={activeTab === 'requests' 
+                          ? getItemsWithCompleteInfo().every(item => selectedItems.includes(item.id))
+                          : currentItems.every(item => selectedItems.includes(item.id))
+                        }
+                        onChange={() => {
+                          if (activeTab === 'requests') {
+                            if (getItemsWithCompleteInfo().every(item => selectedItems.includes(item.id))) {
+                              clearSelection();
+                            } else {
+                              selectAllItems();
+                            }
+                          } else {
+                            // For accepted items
+                            if (currentItems.every(item => selectedItems.includes(item.id))) {
+                              clearSelection();
+                            } else {
+                              currentItems.forEach(item => {
+                                if (!selectedItems.includes(item.id)) {
+                                  toggleItemSelection(item.id);
+                                }
+                              });
+                            }
+                          }
+                        }}
+                        className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Select All</span>
+                    </label>
+                    <span className="text-xs text-gray-500">
+                      {selectedItems.length} of {activeTab === 'requests' ? getItemsWithCompleteInfo().length : currentItems.length} selected
+                    </span>
+                  </div>
+                )}
+
+                {currentItems.length > 0 ? (
+                  currentItems.map(renderCartItem)
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                      <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5 6m0 0h9m-9 0h9" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Your {activeTab === 'requests' ? 'cart' : 'accepted bookings'} is empty
+                    </h3>
+                    <p className="text-gray-600">
+                      {activeTab === 'requests' 
+                        ? 'Add some items to your cart to get started!' 
+                        : 'No accepted bookings found.'
+                      }
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Order Summary */}
+              {currentItems.length > 0 && (
+                <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
+                  <div className="space-y-2 text-sm">
+                    {orderSummary.items.map((item, index) => (
+                      <div key={item.id || index} className="flex justify-between">
+                        <span className="text-gray-600">{item.listing?.title || item.title || 'Service'}</span>
+                        <span className="text-gray-900">
+                          ${item.pricing?.perEvent || item.pricing?.perHour || item.basePrice || 300}
+                        </span>
+                      </div>
+                    ))}
+                    
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span className="text-gray-900">${orderSummary.subtotal}</span>
+                    </div>
+                    
+                    {activeTab === 'accepted' && (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Security Fee</span>
+                          <span className="text-gray-900">${orderSummary.securityFee}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Kilometer Fee</span>
+                          <span className="text-gray-900">${orderSummary.kilometerFee}</span>
+                        </div>
+                      </>
+                    )}
+                    
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Service Charges (10%)</span>
+                      <span className="text-gray-900">${orderSummary.serviceCharges}</span>
+                    </div>
+                    
+                    <div className="border-t pt-2">
+                      <div className="flex justify-between font-bold">
+                        <span className="text-gray-900">Total</span>
+                        <span className="text-gray-900">${orderSummary.total}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {activeTab === 'accepted' && (
+                    <div className="mt-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
+                      <h4 className="text-sm font-medium text-orange-800 mb-2">Progress Notes</h4>
+                      <p className="text-xs text-orange-700 flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                        Important: Request always extra charges will apply for the additional time.
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="mt-6 text-center">
+                    {activeTab !== 'accepted' && (
+                      <p className="text-xs text-orange-600 mb-2 font-medium">
+                        Only Bookings with complete details will be sent.
+                      </p>
+                    )}
+                    
+                    {activeTab === 'accepted' && (
+                      <>
+                        <p className="text-sm text-gray-600 mb-2">Accepted payment methods:</p>
+                        <div className="flex justify-center space-x-2 mb-4">
+                          <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">Stripe</div>
+                          <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">Amex</div>
+                          <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">PayPal</div>
+                          <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">Visa</div>
+                        </div>
+                      </>
+                    )}
+                    
+                    {activeTab === 'accepted' ? (
+                      <button className="w-full py-3 btn-primary-mobile text-white rounded-2xl font-medium hover:shadow-lg transition-all">
+                        Process to Checkout
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={handleSubmitBookingRequest}
+                        disabled={!canSubmitBookingRequest() || submitLoading}
+                        className={`w-full py-3 rounded-2xl font-medium transition-all ${
+                          canSubmitBookingRequest() && !submitLoading
+                            ? 'btn-primary-mobile text-white hover:shadow-lg'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        {submitLoading ? 'Sending...' : 'Send Booking Request'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Modals */}
+          <BookNowModal
+            isOpen={isBookNowModalOpen}
+            onClose={() => { setIsBookNowModalOpen(false); setEditItem(null); }}
+            onSuccess={handleSaveEdit}
+            selectedDates={[]}
+            editMode={!!editItem}
+            item={editItem}
+            onSaveEdit={handleSaveEdit}
+            listingData={editItem?.listing}
+            vendorData={editItem?.vendor}
+            listingId={editItem?.listing?.id}
+            vendorId={editItem?.vendor?.id}
+          />
+        </>
+      )}
+
+      {/* Sale Items Implementation */}
+      {mainTab === 'sale' && (() => {
+        // Mock sale items data
+        const saleItems = [
+          {
+            id: 'sale1',
+            title: 'Meat',
+            image: 'https://via.placeholder.com/80x80?text=Decor',
+            vendor: { businessName: 'Elegant Events' },
+            price: 1200,
+            quantity: 1
+          },
+          {
+            id: 'sale2',
+            title: 'Chairs',
+            image: 'https://via.placeholder.com/80x80?text=Sound',
+            vendor: { businessName: 'AudioPro' },
+            price: 800,
+            quantity: 2
+          }
+        ];
+
+        // Only show selected items in summary
+        const selectedItems = saleItems.filter((item) => selectedSaleItems.includes(item.id));
+        const subtotal = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        const securityFee = selectedItems.length > 0 ? 25 : 0;
+        const kilometerFee = selectedItems.length > 0 ? 5 : 0;
+        const serviceCharges = Math.round(subtotal * 0.1);
+        const total = subtotal + securityFee + kilometerFee + serviceCharges;
+
+        return (
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            {/* Sale Items List */}
+            <div className="col-span-2">
+              {saleItems.length > 0 ? (
+                saleItems.map((item, idx) => (
+                  <div key={item.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 mb-4">
+                    <div className="flex items-center space-x-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedSaleItems.includes(item.id)}
+                        onChange={() => handleSaleItemSelect(item.id)}
+                        className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500 mr-2"
+                      />
+                      <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-200">
+                        <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
+                            {item.vendor.businessName.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-base text-gray-900 font-medium">{item.vendor.businessName}</span>
+                        </div>
+                        <div className="mt-2 text-xs text-gray-600">Quantity: {item.quantity}</div>
+
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-gray-900">${item.price}</div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-12">
+                  <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                    <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5 6m0 0h9m-9 0h9" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No sale items found</h3>
+                  <p className="text-gray-600">Add some sale items to your cart to get started!</p>
+                </div>
+              )}
+            </div>
+            {/* Order Summary & Payment */}
             <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
               <div className="space-y-2 text-sm">
-                {orderSummary.items.map((item, index) => (
-                  <div key={item.id || index} className="flex justify-between">
-                    <span className="text-gray-600">{item.listing?.title || item.title || 'Service'}</span>
-                    <span className="text-gray-900">
-                      ${item.pricing?.perEvent || item.pricing?.perHour || item.basePrice || 300}
-                    </span>
+                {selectedItems.map((item, idx) => (
+                  <div key={item.id} className="flex justify-between">
+                    <span className="text-gray-600">{item.title}</span>
+                    <span className="text-gray-900">${item.price * item.quantity}</span>
                   </div>
                 ))}
-                
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="text-gray-900">${orderSummary.subtotal}</span>
+                  <span className="text-gray-900">${subtotal}</span>
                 </div>
-                
-                {activeTab === 'accepted' && (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Security Fee</span>
-                      <span className="text-gray-900">${orderSummary.securityFee}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Kilometer Fee</span>
-                      <span className="text-gray-900">${orderSummary.kilometerFee}</span>
-                    </div>
-                  </>
-                )}
-                
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Security Fee</span>
+                  <span className="text-gray-900">${securityFee}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Kilometer Fee</span>
+                  <span className="text-gray-900">${kilometerFee}</span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Service Charges (10%)</span>
-                  <span className="text-gray-900">${orderSummary.serviceCharges}</span>
+                  <span className="text-gray-900">${serviceCharges}</span>
                 </div>
-                
                 <div className="border-t pt-2">
                   <div className="flex justify-between font-bold">
                     <span className="text-gray-900">Total</span>
-                    <span className="text-gray-900">${orderSummary.total}</span>
+                    <span className="text-gray-900">${total}</span>
                   </div>
                 </div>
               </div>
-              
-              {activeTab === 'accepted' && (
-                <div className="mt-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
-                  <h4 className="text-sm font-medium text-orange-800 mb-2">Progress Notes</h4>
-                  <p className="text-xs text-orange-700 flex items-center">
-                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    Important: Request always extra charges will apply for the additional time.
-                  </p>
+              <div className="mt-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
+                <h4 className="text-sm font-medium text-orange-800 mb-2">Payment</h4>
+                <p className="text-xs text-orange-700 flex items-center mb-2">
+                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  Please proceed to payment to complete your purchase.
+                </p>
+                <p className="text-sm text-gray-600 mb-2">Accepted payment methods:</p>
+                <div className="flex justify-center space-x-2 mb-4">
+                  <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">Stripe</div>
+                  <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">Amex</div>
+                  <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">PayPal</div>
+                  <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">Visa</div>
                 </div>
-              )}
-              
-              <div className="mt-6 text-center">
-                {activeTab !== 'accepted' && (
-                  <p className="text-xs text-orange-600 mb-2 font-medium">
-                    Only Bookings with complete details will be sent.
-                  </p>
-                )}
-                
-                {activeTab === 'accepted' && (
-                  <>
-                    <p className="text-sm text-gray-600 mb-2">Accepted payment methods:</p>
-                    <div className="flex justify-center space-x-2 mb-4">
-                      <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">Stripe</div>
-                      <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">Amex</div>
-                      <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">PayPal</div>
-                      <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">Visa</div>
-                    </div>
-                  </>
-                )}
-                
-                {activeTab === 'accepted' ? (
-                  <button className="w-full py-3 btn-primary-mobile text-white rounded-2xl font-medium hover:shadow-lg transition-all">
-                    Process to Checkout
-                  </button>
-                ) : (
-                  <button 
-                    onClick={handleSubmitBookingRequest}
-                    disabled={!canSubmitBookingRequest() || submitLoading}
-                    className={`w-full py-3 rounded-2xl font-medium transition-all ${
-                      canSubmitBookingRequest() && !submitLoading
-                        ? 'btn-primary-mobile text-white hover:shadow-lg'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
-                  >
-                    {submitLoading ? 'Sending...' : 'Send Booking Request'}
-                  </button>
-                )}
+                <button
+                  className={`w-full py-3 rounded-2xl font-medium transition-all ${selectedItems.length > 0 ? 'btn-primary-mobile text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                  disabled={selectedItems.length === 0}
+                  onClick={selectedItems.length > 0 ? handleSalePayNow : undefined}
+                >
+                  Pay Now
+                </button>
+      {/* Sale Items Pay Modal */}
+      <SalePayModal
+        isOpen={isSalePayModalOpen}
+        onClose={() => setIsSalePayModalOpen(false)}
+        userDetails={saleUserDetails}
+        onChange={handleSaleUserDetailChange}
+        onSubmit={handleSalePaySubmit}
+      />
               </div>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Modals */}
-      <BookNowModal
-        isOpen={isBookNowModalOpen}
-        onClose={() => { setIsBookNowModalOpen(false); setEditItem(null); }}
-        onSuccess={handleSaveEdit}
-        selectedDates={[]}
-        editMode={!!editItem}
-        item={editItem}
-        onSaveEdit={handleSaveEdit}
-        listingData={editItem?.listing}
-        vendorData={editItem?.vendor}
-        listingId={editItem?.listing?.id}
-        vendorId={editItem?.vendor?.id}
-      />
+          </div>
+        );
+      })()}
     </div>
   );
 };
