@@ -36,7 +36,6 @@ const AddToCart = () => {
     selectAllItems,
     getSelectedItems,
     getItemsWithCompleteInfo,
-    getItemsNeedingEdit,
     canSubmitBookingRequest,
     hasCompleteBookingInfo,
   } = useCartReducer();
@@ -337,9 +336,10 @@ const AddToCart = () => {
       };
 
       const response = await api.put(
-        endPoints.cart.update(editItem.id),
-        tempDetailsUpdate
+        endPoints.cart.update(editItem.listing.id || editItem.id),
+        tempDetailsUpdate.tempDetails
       );
+
 
       if (response.data.success) {
         updateCartItem(editItem.id, tempDetailsUpdate);

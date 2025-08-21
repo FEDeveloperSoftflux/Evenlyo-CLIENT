@@ -2,15 +2,20 @@ import React from "react";
 import ResponsiveHeader from "../components/Header";
 import Footer from "../components/Footer";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
-const notifications = [
-  { id: 1, text: 'Your booking BR001236 has been confirmed .' },
-  { id: 2, text: 'New message from DJ Mike.' },
-  { id: 3, text: 'Your invoice is ready to download.' },
-  { id: 4, text: 'Event reminder: Wedding on 25th June.' },
-];
+
+
+
+// const notifications = [
+//   { id: 1, text: 'Your booking BR001236 has been confirmed .' },
+//   { id: 2, text: 'New message from DJ Mike.' },
+//   { id: 3, text: 'Your invoice is ready to download.' },
+//   { id: 4, text: 'Event reminder: Wedding on 25th June.' },
+// ];
 
 function Notification() {
+  const notifications = useSelector((state) => state.notifications.list);
   const navigate = useNavigate();
 
   const handleNotificationClick = (notif) => {
@@ -30,10 +35,10 @@ function Notification() {
     <>
       <ResponsiveHeader />
       <main className="min-h-[60vh] flex flex-col items-center justify-start py-10 px-4 bg-gray-50">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Notifications</h1>
-        <p className="text-gray-600">Track your bookings, messages, and reminders here.</p>
-      </div>
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Notifications</h1>
+          <p className="text-gray-600">Track your bookings, messages, and reminders here.</p>
+        </div>
 
         <div className="w-full max-w-xl bg-white rounded-2xl shadow p-6">
           {notifications.length === 0 ? (

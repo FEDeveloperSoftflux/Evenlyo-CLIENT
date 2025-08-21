@@ -1,6 +1,6 @@
 import { useReducer } from 'react';
 
-// Initial state for cart
+
 const initialState = {
   items: [],
   acceptedItems: [],
@@ -9,7 +9,7 @@ const initialState = {
   selectedItems: [],
 };
 
-// Action types
+
 export const CART_ACTIONS = {
   SET_LOADING: 'SET_LOADING',
   SET_ERROR: 'SET_ERROR',
@@ -24,7 +24,7 @@ export const CART_ACTIONS = {
   SELECT_ALL_ITEMS: 'SELECT_ALL_ITEMS',
 };
 
-// Cart reducer function
+
 function cartReducer(state, action) {
   switch (action.type) {
     case CART_ACTIONS.SET_LOADING:
@@ -104,7 +104,7 @@ function cartReducer(state, action) {
       };
 
     case CART_ACTIONS.SELECT_ALL_ITEMS:
-      // Select all items that have complete booking info
+
       const selectableItems = state.items
         .filter(item => hasCompleteBookingInfo(item))
         .map(item => item.id);
@@ -118,26 +118,25 @@ function cartReducer(state, action) {
   }
 }
 
-// Helper function to check if item has complete booking info
+
 function hasCompleteBookingInfo(item) {
-  // For accepted bookings, they always have complete info
+
   if (item.bookingDetails) return true;
-  
+
   if (!item.tempDetails) return false;
-  
+
   const required = ['eventDate', 'eventTime', 'eventLocation'];
-  return required.every(field => 
-    item.tempDetails[field] && 
+  return required.every(field =>
+    item.tempDetails[field] &&
     item.tempDetails[field].toString().trim() !== '' &&
     item.tempDetails[field] !== 'To be specified'
   );
 }
 
-// Custom hook
+
 export function useCartReducer() {
   const [state, dispatch] = useReducer(cartReducer, initialState);
 
-  // Action creators
   const setLoading = (loading) => {
     dispatch({ type: CART_ACTIONS.SET_LOADING, payload: loading });
   };
@@ -167,16 +166,16 @@ export function useCartReducer() {
   };
 
   const updateCartItem = (itemId, updates) => {
-    dispatch({ 
-      type: CART_ACTIONS.UPDATE_CART_ITEM, 
-      payload: { id: itemId, updates } 
+    dispatch({
+      type: CART_ACTIONS.UPDATE_CART_ITEM,
+      payload: { id: itemId, updates }
     });
   };
 
   const toggleItemSelection = (itemId) => {
-    dispatch({ 
-      type: CART_ACTIONS.TOGGLE_ITEM_SELECTION, 
-      payload: { itemId } 
+    dispatch({
+      type: CART_ACTIONS.TOGGLE_ITEM_SELECTION,
+      payload: { itemId }
     });
   };
 
@@ -206,15 +205,14 @@ export function useCartReducer() {
 
   const canSubmitBookingRequest = () => {
     const selectedItems = getSelectedItems();
-    return selectedItems.length > 0 && 
-           selectedItems.every(hasCompleteBookingInfo);
+    return selectedItems.length > 0 &&
+      selectedItems.every(hasCompleteBookingInfo);
   };
 
   return {
-    // State
+
     ...state,
-    
-    // Action creators
+
     setLoading,
     setError,
     clearError,
@@ -226,8 +224,7 @@ export function useCartReducer() {
     toggleItemSelection,
     clearSelection,
     selectAllItems,
-    
-    // Helper functions
+
     getSelectedItems,
     getItemsWithCompleteInfo,
     getItemsNeedingEdit,

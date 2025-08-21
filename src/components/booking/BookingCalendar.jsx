@@ -4,6 +4,8 @@ import BookNowModal from './BookNowModal';
 import OrderSummaryModal from './OrderSummaryModal';
 import RequestSuccessModal from './RequestSuccessModal';
 import TrackOrderModal from '../TrackOrderModal';
+import api from '../../store/api';
+import { endPoints } from '../../constants/api';
 
 const BookingCalendar = ({ vendorData, listingData, vendorId, listingId }) => {
   const navigate = useNavigate();
@@ -195,13 +197,33 @@ const BookingCalendar = ({ vendorData, listingData, vendorId, listingId }) => {
   }, [isDragging, dragStartDate, dragCurrentDate]);
 
   // Add to Cart button logic
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
+    if (!listingId) {
+      alert('Missing listing ID');
+      return;
+    }
     setIsAddingToCart(true);
-    setTimeout(() => {
-      setIsAddingToCart(false);
+    try {
+      // Prepare selected dates (as ISO strings)
+      const sortedDates = [...selectedDates].sort((a, b) => a - b);
+      const startDate = sortedDates[0] ? sortedDates[0].toISOString().split('T')[0] : null;
+      const endDate = sortedDates.length > 1 ? sortedDates[sortedDates.length - 1].toISOString().split('T')[0] : null;
+      const tempDetails = {
+        startDate,
+        endDate,
+        // You can add more fields here if needed
+      };
+      await api.post(endPoints.cart.add, {
+        listingId,
+        tempDetails
+      });
       setCartSuccess(true);
       setTimeout(() => setCartSuccess(false), 1500);
-    }, 1200);
+    } catch (error) {
+      alert('Failed to add to cart.');
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   return (

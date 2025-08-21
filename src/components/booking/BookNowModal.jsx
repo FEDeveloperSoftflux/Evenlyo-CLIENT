@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../../store/api";
 import { endPoints } from "../../constants/api";
 
-const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, listingData, vendorId, listingId, editMode = false, item = null, onSaveEdit }) => {
+const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, listingData, vendorId, listingId, editMode = false, item = null, onSaveEdit }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [bookingResult, setBookingResult] = useState(null);
@@ -12,17 +12,14 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
     if (!dateObj) return '';
     return dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   };
-
+  console.log(item, 'item in BookNowModal');
   const [selectedDatesState, setSelectedDatesState] = useState([]);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
   const [location, setLocation] = useState("");
   const [instructions, setInstructions] = useState("");
-  const [hasSecurityProtection, setHasSecurityProtection] = useState(true);
   const [acceptedTerms, setAcceptedTerms] = useState(true);
-  const [guestCount, setGuestCount] = useState(50);
-  const [eventType, setEventType] = useState("Event");
-  const [contactPreference, setContactPreference] = useState("email");
+
 
   // Initialize form data when modal opens or item changes
   useEffect(() => {
@@ -54,20 +51,17 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
 
       // Set other details
       setInstructions(tempDetails.specialRequests || '');
-      setGuestCount(tempDetails.guestCount || 50);
-      setEventType(tempDetails.eventType || 'Event');
-      setContactPreference(tempDetails.contactPreference || 'email');
 
       // Handle dates
       const dates = [];
-      if (tempDetails.eventDate && tempDetails.eventDate !== 'To be specified') {
+      if (tempDetails.startDate && tempDetails.startDate !== 'To be specified') {
         try {
-          dates.push(new Date(tempDetails.eventDate));
+          dates.push(new Date(tempDetails.startDate));
         } catch (e) {
-          console.warn('Invalid event date:', tempDetails.eventDate);
+          console.warn('Invalid start date:', tempDetails.startDate);
         }
       }
-      if (tempDetails.endDate && tempDetails.endDate !== tempDetails.eventDate) {
+      if (tempDetails.endDate && tempDetails.endDate !== tempDetails.startDate) {
         try {
           dates.push(new Date(tempDetails.endDate));
         } catch (e) {
@@ -82,9 +76,7 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
       setStartTime('09:00');
       setEndTime('17:00');
       setInstructions('');
-      setGuestCount(50);
-      setEventType('Event');
-      setContactPreference('email');
+
     }
   }, [editMode, item, selectedDates, isOpen]);
 
@@ -208,6 +200,8 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
       const startDate = sortedDates[0].toISOString().split('T')[0];
       const endDate = sortedDates[sortedDates.length - 1].toISOString().split('T')[0];
 
+      console.log('sortedDates:', sortedDates, 'startDate:', startDate, 'endDate:', endDate);
+
       // Convert time format
       const convertTimeFormat = (timeStr) => {
         if (timeStr.includes('AM') || timeStr.includes('PM')) {
@@ -227,7 +221,7 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
       };
 
       const tempDetails = {
-        startDate,
+        startDate: sortedDates.length > 1 ? startDate : null,
         endDate: sortedDates.length > 1 ? endDate : null,
         eventTime: convertTimeFormat(startTime),
         endTime: convertTimeFormat(endTime),
@@ -410,47 +404,27 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
               </div> */}
             </div>
           ) : (
-            // ... existing code for selected date(s) display ...
+
             <div className="flex items-center justify-between bg-gray-50 rounded-xl px-5 py-4 mb-2">
               <div>
                 <div className="text-xs text-gray-500 font-medium mb-1">Selected Date{selectedDatesState.length > 1 ? 's' : ''} & Time</div>
                 <div className="text-base text-gray-700 font-semibold">
-                  {selectedDatesState.length === 0 ? (
-                    'No date selected'
-                  ) : selectedDatesState.length === 1 ? (
-                    formatDate(selectedDatesState[0])
-                  ) : (() => {
-                    const sorted = [...selectedDatesState].sort((a, b) => a - b);
-                    let isContinuous = true;
-                    for (let i = 1; i < sorted.length; i++) {
-                      const prev = sorted[i - 1];
-                      const curr = sorted[i];
-                      const diff = (curr - prev) / (1000 * 60 * 60 * 24);
-                      if (diff !== 1) {
-                        isContinuous = false;
-                        break;
-                      }
-                    }
-                    if (isContinuous) {
+                  {(() => {
+                    if (selectedDatesState.length === 0) {
+                      return item?.tempDetails?.startDate
+                        ? formatDate(new Date(item.tempDetails.startDate))
+                        : 'No date selected';
+                    } else if (selectedDatesState.length === 1) {
+                      return formatDate(selectedDatesState[0]);
+                    } else if (selectedDatesState.length > 1) {
+                      const sorted = [...selectedDatesState].sort((a, b) => a - b);
                       return (
                         <span>
-                          {formatDate(sorted[0])} – {formatDate(sorted[sorted.length - 1])}
+                          {formatDate(sorted[0])} && {formatDate(sorted[sorted.length - 1])}
                         </span>
                       );
-                    } else {
-                      return (
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {sorted.map((dateObj, idx) => (
-                            <span
-                              key={dateObj.toISOString() + idx}
-                              className="inline-block bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-xs font-medium shadow-sm border border-pink-200"
-                            >
-                              {formatDate(dateObj)}
-                            </span>
-                          ))}
-                        </div>
-                      );
                     }
+                    return null;
                   })()}
                 </div>
               </div>
@@ -636,38 +610,40 @@ const BookNowModal = ({ isOpen, onClose, onSuccess, selectedDates, vendorData, l
                   const sortedDates = [...selectedDatesState].sort((a, b) => a.getTime() - b.getTime());
 
                   // Always set startDate and endDate in tempDetails for edit mode
-                  const startDate =
-                    sortedDates.length > 0
-                      ? sortedDates[0].toISOString().split('T')[0]
-                      : undefined;
-                  const endDate =
-                    sortedDates.length > 1
-                      ? sortedDates[sortedDates.length - 1].toISOString().split('T')[0]
-                      : sortedDates.length === 1
-                        ? sortedDates[0].toISOString().split('T')[0]
-                        : undefined;
-                  // Only include endDate if multi-day
+                  let startDate, endDate;
+                  if (sortedDates.length === 1) {
+                    // Single date: both start and end are the same
+                    startDate = sortedDates[0].toISOString().split('T')[0];
+                    endDate = sortedDates[0].toISOString().split('T')[0];
+                  } else if (sortedDates.length > 1) {
+                    // Multiple dates: use first and last
+                    startDate = sortedDates[0].toISOString().split('T')[0];
+                    endDate = sortedDates[sortedDates.length - 1].toISOString().split('T')[0];
+                  } else {
+                    startDate = undefined;
+                    endDate = undefined;
+                  }
+
+                  // Location mapping: only save if not empty or whitespace
+                  const eventLocation = location && location.trim() ? location.trim() : undefined;
+
+                  // Build saveData object
                   const saveData = {
                     startDate,
                     endDate,
                     eventTime: startTime,
                     endTime: endTime,
-                    eventLocation: location && location.trim() ? location.trim() : undefined,
+                    eventLocation,
                     specialRequests: instructions && instructions.trim() ? instructions.trim() : undefined,
-                    guestCount: guestCount,
-                    eventType: eventType,
-                    contactPreference: contactPreference
+
                   };
 
-                  if (sortedDates.length > 1) {
-                    saveData.endDate = sortedDates[sortedDates.length - 1].toISOString().split('T')[0];
-                  }
-
                   // Validation: startDate, endDate, and location required
-                  if (!startDate || !endDate || !saveData.eventLocation) {
+                  if (!startDate || !endDate || !eventLocation) {
                     alert("Start date, end date, and location are required.");
                     return;
                   }
+
                   console.log('Saving edit data:', saveData);
                   onSaveEdit(saveData);
                 }}

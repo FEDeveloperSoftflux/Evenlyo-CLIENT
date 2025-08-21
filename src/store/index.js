@@ -4,7 +4,8 @@ import uiReducer from './slices/uiSlice';
 import clientReducer from './slices/clientSlice';
 import vendorReducer from './slices/vendorSlice';
 import categoriesReducer from './slices/categoriesSlice';
-import listingsReducer from './slices/listingsSlice'; // Import listings slice
+import listingsReducer from './slices/listingsSlice';
+import notificationReducer from './slices/notificationSlice';
 
 
 const store = configureStore({
@@ -14,8 +15,12 @@ const store = configureStore({
     client: clientReducer,
     vendor: vendorReducer,
     categories: categoriesReducer,
-    listings: listingsReducer, // Add listings slice to the store
+    listings: listingsReducer,
+    notifications: notificationReducer,
+
   },
+
+
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {

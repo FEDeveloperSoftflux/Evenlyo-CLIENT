@@ -37,13 +37,9 @@ function ResponsiveHeader() {
   // Notification dropdown state
   const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
   const notificationRef = useRef(null);
-  // Hardcoded notifications
-  const notifications = [
-    { id: 1, text: 'Your booking BR001236 has been confirmed .' },
-    { id: 2, text: 'New message from DJ Mike.' },
-    { id: 3, text: 'Your invoice is ready to download.' },
-    { id: 4, text: 'Event reminder: Wedding on 25th June.' },
-  ];
+
+  const notifications = useSelector((state) => state.notifications.list);
+
   const [isSupportOpen, setIsSupportOpen] = useState(false);
 
 

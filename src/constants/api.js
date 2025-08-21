@@ -25,7 +25,7 @@ export const requestType = {
 export const endPoints = {
   // Authentication endpoints
   auth: {
-    login: "client/login",
+    login: "auth/client/login",
     register: "client/register",
     logout: "auth/logout",
     refreshToken: "client/refresh-token",

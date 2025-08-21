@@ -1,6 +1,12 @@
-// src/firebase.js
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
+import { getMessaging, isSupported, getToken, onMessage } from "firebase/messaging";
+import store from "./store/index";
+import { addNotification } from "./store/slices/notificationSlice";
+
+
+
+
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -11,7 +17,7 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
@@ -24,3 +30,37 @@ googleProvider.setCustomParameters({
 });
 
 export { auth, googleProvider, signInWithPopup, signInWithRedirect, getRedirectResult };
+
+export const initFirebaseMessaging = async (uid) => {
+  if (!(await isSupported())) return;
+
+  try {
+    const messaging = getMessaging(app);
+
+    // register service worker
+    const swReg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+
+    const token = await getToken(messaging, {
+      vapidKey: import.meta.env.VITE_VAPID_KEY,
+      serviceWorkerRegistration: swReg,
+    });
+
+    if (token) {
+      // send token to backend
+      await fetch("http://localhost:5000/api/notify/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: User.uid, title: "Test", body: "Hello world!", token }),
+      });
+    }
+
+    // Foreground messages
+    onMessage(messaging, (payload) => {
+      const text = payload?.notification?.body || "New notification";
+      store.dispatch(addNotification({ text }));
+    });
+  } catch (err) {
+    console.error("FCM init error", err);
+  }
+
+};
