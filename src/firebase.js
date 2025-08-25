@@ -39,18 +39,26 @@ export const initFirebaseMessaging = async (uid) => {
 
     // register service worker
     const swReg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+    console.log("Service worker registration:", swReg);
 
-    const token = await getToken(messaging, {
-      vapidKey: import.meta.env.VITE_VAPID_KEY,
-      serviceWorkerRegistration: swReg,
-    });
+    let token = null;
+    try {
+      token = await getToken(messaging, {
+        vapidKey: import.meta.env.VITE_VAPID_KEY,
+        serviceWorkerRegistration: swReg,
+      });
+      console.log("FCM token received:", token);
+    } catch (err) {
+      console.error("Error getting FCM token", err);
+      return null;
+    }
 
-    if (token) {
+    if (token && uid) {
       // send token to backend
       await fetch("http://localhost:5000/api/notify/test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid: User.uid, title: "Test", body: "Hello world!", token }),
+        body: JSON.stringify({ uid, title: "Test", body: "Hello world!", token }),
       });
     }
 
@@ -59,8 +67,10 @@ export const initFirebaseMessaging = async (uid) => {
       const text = payload?.notification?.body || "New notification";
       store.dispatch(addNotification({ text }));
     });
+
+    return token;
   } catch (err) {
     console.error("FCM init error", err);
+    return null;
   }
-
 };

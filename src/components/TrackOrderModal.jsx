@@ -1,6 +1,8 @@
 import React, { useRef } from "react";
 
 const TrackOrderModal = ({ open, onClose, order, onDownload }) => {
+  console.log("TrackOrderModal order:", order);
+
   const modalRef = useRef(null);
   if (!open || !order) return null;
   return (
@@ -43,12 +45,12 @@ const TrackOrderModal = ({ open, onClose, order, onDownload }) => {
               <div key={idx} className="flex items-start gap-4">
                 <div className="flex flex-col items-center">
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center mb-1
-                    ${step.completed ? 'bg-green-400 text-white' : 'bg-gray-200 text-gray-400'}
+                    ${step.completed ? 'bg-green-400 text-gray' : 'bg-green-500 text-white '}
                   `}>
                     {step.icon}
                   </div>
                   {idx < order.timeline.length - 1 && (
-                    <div className={`w-1 h-8 ${step.completed ? 'bg-green-300' : 'bg-gray-200'}`}></div>
+                    <div className={`w-1 h-10 ${step.completed ? 'bg-green-300' : 'bg-green-600'}`}></div>
                   )}
                 </div>
                 <div className="flex-1">

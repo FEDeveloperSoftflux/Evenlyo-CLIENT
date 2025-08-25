@@ -169,13 +169,8 @@ export const endPoints = {
 
   // Support endpoints
   support: {
-    tickets: "client/support/tickets",
-    createTicket: "client/support/tickets",
-    ticketById: (id) => `client/support/tickets/${id}`,
-    addMessage: (id) => `client/support/tickets/${id}/messages`,
-    closeTicket: (id) => `client/support/tickets/${id}/close`,
-    faq: "client/support/faq",
-    contactInfo: "client/support/contact",
+    tickets: "support/ticket",
+    createTicket: "support/ticket",
   },
 
   // Blog endpoints

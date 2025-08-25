@@ -4,12 +4,12 @@ importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-comp
 
 
 firebase.initializeApp({
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: "AIzaSyBifR19eES7DbW3y42x-WMgzZlGK7uHFro",
+  authDomain: "evenlyo-marketplace.firebaseapp.com",
+  projectId: "evenlyo-marketplace",
+  storageBucket: "evenlyo-marketplace.appspot.com",
+  messagingSenderId: "40357333457",
+  appId: "1:40357333457:web:cf08098fb62eb77b3bb8f0"
 })
 
 const messaging = firebase.messaging();

@@ -1,7 +1,8 @@
 // src/services/googleAuth.js
-import { auth, googleProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from '../firebase';
+import { auth, googleProvider, signInWithPopup, signInWithRedirect, getRedirectResult, initFirebaseMessaging } from '../firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
-import api from './api';
+import Api from './index';
+import { requestType } from '../constants/api';
 
 class GoogleAuthService {
   constructor() {
@@ -18,8 +19,16 @@ class GoogleAuthService {
       // Get the Firebase ID token
       const idToken = await user.getIdToken();
 
-      // Send the token to your backend for verification and user creation/login
-      const response = await this.sendTokenToBackend(idToken, user);
+      let fcmToken = null;
+      try {
+        await this.requestNotificationPermission();
+        fcmToken = await initFirebaseMessaging(user.uid);
+      } catch (err) {
+        console.warn("FCM permission/token error:", err);
+      }
+
+
+      const response = await this.sendTokenToBackend(idToken, user, fcmToken);
 
       return {
         success: true,
@@ -53,7 +62,20 @@ class GoogleAuthService {
       if (result) {
         const user = result.user;
         const idToken = await user.getIdToken();
-        const response = await this.sendTokenToBackend(idToken, user);
+
+        let fcmToken = null;
+        try {
+          await this.requestNotificationPermission();
+          fcmToken = await initFirebaseMessaging(user.uid);
+          console.log("FCM Token:", fcmToken);
+        } catch (err) {
+          console.warn("FCM permission/token error:", err);
+        }
+
+        const response = await this.sendTokenToBackend(idToken, user, fcmToken);
+        console.log("Sending to backend:", { idToken, fcmToken, user: { ...response.user } });
+
+
 
         return {
           success: true,
@@ -72,24 +94,35 @@ class GoogleAuthService {
   }
 
   // Send Firebase ID token to your backend
-  async sendTokenToBackend(idToken, firebaseUser) {
+  async sendTokenToBackend(idToken, firebaseUser, fcmToken) {
     try {
-      const response = await api.post('/auth/google', {
+      const response = await Api('/auth/google', requestType.POST, {
         idToken,
+        fcmToken,
         user: {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
           name: firebaseUser.displayName,
-          // photoURL: firebaseUser.photoURL,
-          // emailVerified: firebaseUser.emailVerified
-        }
+          photoURL: firebaseUser.photoURL,
+          emailVerified: firebaseUser.emailVerified
+        },
       }, { withCredentials: true });
 
+
       return response.data;
+
     } catch (error) {
       console.error('Backend authentication error:', error);
       throw new Error(error.response?.data?.message || 'Backend authentication failed');
     }
+  }
+
+
+  // Request notification permission
+  async requestNotificationPermission() {
+    if (Notification.permission === "allowed") return;
+    const permission = await Notification.requestPermission();
+    if (permission !== "allowed") throw new Error("Notification permission denied");
   }
 
   // Sign out
@@ -97,7 +130,7 @@ class GoogleAuthService {
     try {
       await signOut(this.auth);
       // Also sign out from your backend
-      await api.post('/auth/logout', {}, { withCredentials: true });
+      await Api('/auth/logout', {}, requestType.POST, { withCredentials: true });
       return { success: true };
     } catch (error) {
       console.error('Sign out error:', error);

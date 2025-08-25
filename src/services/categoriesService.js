@@ -107,6 +107,6 @@ export const getCategories = () => {
   return Api(endPoints.categories.all, null, requestType.GET);
 }
 
-export const getSubcategories = () => {
-  return Api(endPoints.categories.all, null, requestType.GET);
+export const getSubCategoriesByCategory = (categoryId) => {
+  return Api(endPoints.categories.subcategories(categoryId), null, requestType.GET);
 }

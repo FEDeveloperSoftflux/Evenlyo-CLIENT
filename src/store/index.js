@@ -6,7 +6,7 @@ import vendorReducer from './slices/vendorSlice';
 import categoriesReducer from './slices/categoriesSlice';
 import listingsReducer from './slices/listingsSlice';
 import notificationReducer from './slices/notificationSlice';
-
+import supportReducer from './slices/supportSlice';
 
 const store = configureStore({
   reducer: {
@@ -17,6 +17,7 @@ const store = configureStore({
     categories: categoriesReducer,
     listings: listingsReducer,
     notifications: notificationReducer,
+    support: supportReducer,
 
   },
 

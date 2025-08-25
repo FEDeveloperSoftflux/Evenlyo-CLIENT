@@ -3,7 +3,9 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from 'react-router-dom';
 import api from "../store/api";
 import { endPoints } from "../constants/api";
-import { getAllCategories } from "../store/slices/categoriesSlice";
+import { getAllCategories, getAllSubcategoriesByCategory } from "../store/slices/categoriesSlice";
+import { fetchAllVendorsByCategory } from "../store/slices/vendorSlice";
+import { fetchListingsByFilter } from "../store/slices/listingsSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { getName } from "../utils";
 
@@ -22,7 +24,7 @@ const Categories = ({ selectedCategory, setSelectedCategory, setVendors, setVend
   const dispatch = useDispatch()
   const categories = useSelector(state => state.categories.categories)
   useEffect(() => {
-    dispatch(getAllCategories())
+    dispatch(getAllCategories(), getAllSubcategoriesByCategory(selectedCategoryId), fetchAllVendorsByCategory(selectedCategoryId), fetchListingsByFilter({ categoryId: selectedCategoryId }));
   }, []);
 
   useEffect(() => {

@@ -31,20 +31,21 @@ const api = async (path, params = null, method = requestType?.GET || 'GET', isFo
     }
 
     // Prepare axios options
-    const options = {
-      url: `${baseUrl}${path}`,
-      method: method,
-      headers: headers,
-      timeout: 10000,
-      withCredentials: true, // For cookie-based auth
-    };
+    const
+      options = {
+        url: `${baseUrl}${path}`,
+        method: method,
+        headers: headers,
+        timeout: 10000,
+        withCredentials: true, // For cookie-based auth
+      };
 
     // Add data based on method and format
     if (params && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
       if (isFormData) {
         options.data = params; // FormData should be sent as-is
       } else {
-        options.data = JSON.stringify(params);
+        options.data = params;
       }
     } else if (params && method === 'GET') {
       options.params = params; // GET parameters go in URL

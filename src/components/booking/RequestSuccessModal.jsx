@@ -4,8 +4,8 @@ const RequestSuccessModal = ({ isOpen, onClose, onTrackBooking, bookingData }) =
   if (!isOpen) return null;
 
   const handleTrackBooking = () => {
-    onClose();
     onTrackBooking();
+    onClose();
   };
 
   const handleBackToListing = () => {

@@ -1,4 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { getListingByFilter } from "../../services/listingsService";
+import { getListingById } from "../../services/listingsService";
+
 
 const initialState = {
   listings: [],
@@ -37,3 +40,33 @@ export const {
 } = listingsSlice.actions;
 
 export default listingsSlice.reducer;
+
+
+
+export const fetchListingsByFilter = (filterParams) => async (dispatch) => {
+  dispatch(setListingsLoading(true));
+  try {
+    const result = await getListingByFilter(filterParams);
+    if (result.success) {
+      dispatch(setListings(result.listings));
+    } else {
+      dispatch(setListingsError(result.error));
+    }
+  } catch (error) {
+    dispatch(setListingsError("An unexpected error occurred"));
+  }
+}
+
+export const fetchListingById = (id) => async (dispatch) => {
+  dispatch(setListingsLoading(true));
+  try {
+    const result = await getListingById(id);
+    if (result.success) {
+      dispatch(setListings([result.listing])); // Store single listing in an array
+    } else {
+      dispatch(setListingsError(result.error));
+    }
+  } catch (error) {
+    dispatch(setListingsError("An unexpected error occurred"));
+  }
+}

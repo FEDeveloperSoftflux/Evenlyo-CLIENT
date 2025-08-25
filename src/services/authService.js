@@ -1,18 +1,14 @@
-import api from './api';
-import { endPoints } from '../constants/api';
+import Api from "./index";
+import { endPoints, requestType } from "../constants/api";
 
 class AuthService {
-  constructor() {
-    // Set up axios to include credentials (cookies) with requests
-    this.setupAxiosDefaults();
-  }
 
   setupAxiosDefaults() {
     // Ensure cookies are sent with every request
-    api.defaults.withCredentials = true;
+    Api.defaults.withCredentials = true;
 
     // Set up response interceptor - NO REDIRECTS
-    api.interceptors.response.use(
+    Api.interceptors.response.use(
       (response) => response,
       async (error) => {
         if (error.response?.status === 401) {
@@ -26,17 +22,17 @@ class AuthService {
 
   // Save user data to localStorage for persistence across page reloads
   saveUserData(user) {
-    localStorage.setItem('user', JSON.stringify(user));
-    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("isAuthenticated", "true");
   }
 
   // Get stored user data
   getStoredUser() {
     try {
-      const user = localStorage.getItem('user');
+      const user = localStorage.getItem("user");
       return user ? JSON.parse(user) : null;
     } catch (error) {
-      console.error('Error parsing stored user data:', error);
+      console.error("Error parsing stored user data:", error);
       this.clearUserData();
       return null;
     }
@@ -44,29 +40,35 @@ class AuthService {
 
   // Check if user is authenticated (has valid session)
   isAuthenticated() {
-    return localStorage.getItem('isAuthenticated') === 'true';
+    return localStorage.getItem("isAuthenticated") === "true";
   }
 
   // Clear user data from localStorage
   clearUserData() {
-    localStorage.removeItem('user');
-    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem("user");
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("clientUser");
+    localStorage.removeItem("clientToken");
   }
   // Login with email and password
   async login(credentials) {
     try {
-      const response = await api.post(endPoints.auth.login, credentials);
+      const response = await Api(
+        endPoints.auth.login,
+        credentials,
+        requestType.POST
+      );
       return {
         success: true,
         data: response.data,
         user: response.data.user,
-        message: response.data.message
+        message: response.data.message,
       };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || 'Login failed',
-        status: error.response?.status
+        error: error.response?.data?.message || "Login failed",
+        status: error.response?.status,
       };
     }
   }
@@ -74,18 +76,22 @@ class AuthService {
   // Register new user
   async register(userData) {
     try {
-      const response = await api.post(endPoints.auth.register, userData);
+      const response = await Api(
+        endPoints.auth.register,
+        userData,
+        requestType.POST
+      );
       return {
         success: true,
         data: response.data,
         user: response.data.user,
-        message: response.data.message
+        message: response.data.message,
       };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || 'Registration failed',
-        status: error.response?.status
+        error: error.response?.data?.message || "Registration failed",
+        status: error.response?.status,
       };
     }
   }
@@ -93,17 +99,21 @@ class AuthService {
   // Send OTP for registration/login/reset
   async sendOtp(data) {
     try {
-      const response = await api.post(endPoints.auth.sendOtp, data);
+      const response = await Api(
+        endPoints.auth.sendOtp,
+        data,
+        requestType.POST
+      );
       return {
         success: true,
         data: response.data,
-        message: response.data.message
+        message: response.data.message,
       };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || 'Failed to send OTP',
-        status: error.response?.status
+        error: error.response?.data?.message || "Failed to send OTP",
+        status: error.response?.status,
       };
     }
   }
@@ -111,19 +121,23 @@ class AuthService {
   // Verify OTP
   async verifyOtp(otpData) {
     try {
-      const response = await api.post(endPoints.auth.verifyOtp, otpData);
+      const response = await Api(
+        endPoints.auth.verifyOtp,
+        otpData,
+        requestType.POST
+      );
       return {
         success: true,
         data: response.data,
         user: response.data.user,
         message: response.data.message,
-        token: response.data.token
+        token: response.data.token,
       };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || 'OTP verification failed',
-        status: error.response?.status
+        error: error.response?.data?.message || "OTP verification failed",
+        status: error.response?.status,
       };
     }
   }
@@ -131,17 +145,21 @@ class AuthService {
   // Forgot password
   async forgotPassword(email) {
     try {
-      const response = await api.post(endPoints.auth.forgotPassword, { email });
+      const response = await Api(
+        endPoints.auth.forgotPassword,
+        { email },
+        requestType.POST
+      );
       return {
         success: true,
         data: response.data,
-        message: response.data.message
+        message: response.data.message,
       };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || 'Failed to send reset email',
-        status: error.response?.status
+        error: error.response?.data?.message || "Failed to send reset email",
+        status: error.response?.status,
       };
     }
   }
@@ -149,17 +167,21 @@ class AuthService {
   // Reset password
   async resetPassword(resetData) {
     try {
-      const response = await api.post(endPoints.auth.resetPassword, resetData);
+      const response = await Api(
+        endPoints.auth.resetPassword,
+        resetData,
+        requestType.POST
+      );
       return {
         success: true,
         data: response.data,
-        message: response.data.message
+        message: response.data.message,
       };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || 'Failed to reset password',
-        status: error.response?.status
+        error: error.response?.data?.message || "Failed to reset password",
+        status: error.response?.status,
       };
     }
   }
@@ -167,17 +189,21 @@ class AuthService {
   // Change password (for logged-in users)
   async changePassword(passwordData) {
     try {
-      const response = await api.post(endPoints.auth.changePassword, passwordData);
+      const response = await Api(
+        endPoints.auth.changePassword,
+        passwordData,
+        requestType.POST
+      );
       return {
         success: true,
         data: response.data,
-        message: response.data.message
+        message: response.data.message,
       };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || 'Failed to change password',
-        status: error.response?.status
+        error: error.response?.data?.message || "Failed to change password",
+        status: error.response?.status,
       };
     }
   }
@@ -185,17 +211,17 @@ class AuthService {
   // Logout
   async logout() {
     try {
-      const response = await api.post(endPoints.auth.logout);
+      const response = await Api(endPoints.auth.logout, {}, requestType.POST);
       return {
         success: true,
         data: response.data,
-        message: response.data.message
+        message: response.data.message,
       };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || 'Logout failed',
-        status: error.response?.status
+        error: error.response?.data?.message || "Logout failed",
+        status: error.response?.status,
       };
     }
   }
@@ -203,18 +229,18 @@ class AuthService {
   // Validate session
   async validateSession() {
     try {
-      const response = await api.get(endPoints.auth.me);
+      const response = await Api(endPoints.auth.me, null, requestType.GET);
       return {
         success: true,
         data: response.data,
         user: response.data.user,
-        isValid: true
+        isValid: true,
       };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || 'Session validation failed',
-        status: error.response?.status
+        error: error.response?.data?.message || "Session validation failed",
+        status: error.response?.status,
       };
     }
   }
@@ -240,17 +266,17 @@ class AuthService {
   // Get user profile
   async getProfile() {
     try {
-      const response = await api.get(endPoints.profile.get);
+      const response = await Api(endPoints.profile.get, requestType.GET);
       return {
         success: true,
         data: response.data,
-        user: response.data.user
+        user: response.data.user,
       };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || 'Failed to get profile',
-        status: error.response?.status
+        error: error.response?.data?.message || "Failed to get profile",
+        status: error.response?.status,
       };
     }
   }
@@ -258,18 +284,22 @@ class AuthService {
   // Update user profile
   async updateProfile(profileData) {
     try {
-      const response = await api.put(endPoints.profile.update, profileData);
+      const response = await Api(
+        endPoints.profile.update,
+        profileData,
+        requestType.PUT
+      );
       return {
         success: true,
         data: response.data,
         user: response.data.user,
-        message: response.data.message
+        message: response.data.message,
       };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || 'Failed to update profile',
-        status: error.response?.status
+        error: error.response?.data?.message || "Failed to update profile",
+        status: error.response?.status,
       };
     }
   }

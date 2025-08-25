@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { getCategories } from "../../services/categoriesService";
-import { getSubcategories } from "../../services/categoriesService";
+import { getSubCategoriesByCategory } from "../../services/categoriesService";
 
 
 const initialState = {
@@ -144,10 +144,10 @@ export function getAllCategories() {
 }
 
 
-export function getSubcategoriesByCategory(categoryId) {
+export function getAllSubcategoriesByCategory(categoryId) {
   return dispatch => {
     dispatch(setSubcategoriesLoading(true));
-    getSubcategories(categoryId)
+    getSubCategoriesByCategory(categoryId)
       .then(response => {
         if (response?.status === 200 || response?.status === 201) {
           let data = response?.data?.data;

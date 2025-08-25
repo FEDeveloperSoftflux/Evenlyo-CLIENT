@@ -14,8 +14,6 @@ const BookingCalendar = ({ vendorData, listingData, vendorId, listingId }) => {
   const [isBookNowModalOpen, setIsBookNowModalOpen] = useState(false);
   const [isOrderSummaryModalOpen, setIsOrderSummaryModalOpen] = useState(false);
   const [isRequestSuccessModalOpen, setIsRequestSuccessModalOpen] = useState(false);
-  const [isTrackOrderModalOpen, setIsTrackOrderModalOpen] = useState(false);
-  const [trackOrderData, setTrackOrderData] = useState(null);
   const [selectedDates, setSelectedDates] = useState([]);
   const [hoveredDate, setHoveredDate] = useState(null);
   const [dragStartDate, setDragStartDate] = useState(null);
@@ -485,29 +483,28 @@ const BookingCalendar = ({ vendorData, listingData, vendorId, listingId }) => {
       <BookNowModal
         isOpen={isBookNowModalOpen}
         onClose={() => setIsBookNowModalOpen(false)}
-        onSuccess={() => { }}
+        onSuccess={() => { setIsBookNowModalOpen(false); setIsRequestSuccessModalOpen(true); }}
         selectedDates={selectedDates}
         vendorData={vendorData}
         listingData={listingData}
         vendorId={vendorId}
         listingId={listingId}
       />
-      <OrderSummaryModal
-        isOpen={isOrderSummaryModalOpen}
-        onClose={() => setIsOrderSummaryModalOpen(false)}
-        onDownloadPDF={() => { }}
-      />
+
       <RequestSuccessModal
         isOpen={isRequestSuccessModalOpen}
         onClose={() => setIsRequestSuccessModalOpen(false)}
-        onTrackBooking={() => { }}
-        bookingData={trackOrderData}
+        onTrackBooking={() => { setIsOrderSummaryModalOpen(true); }}
+
       />
-      <TrackOrderModal
-        open={isTrackOrderModalOpen}
-        onClose={() => setIsTrackOrderModalOpen(false)}
-        order={trackOrderData}
-        onDownload={() => { }}
+      <OrderSummaryModal
+        isOpen={isOrderSummaryModalOpen}
+        onClose={() => setIsOrderSummaryModalOpen(false)}
+        onProceedToPayment={() => { setIsOrderSummaryModalOpen(false); }}
+        onDownloadPDF={() => { }}
+        vendorData={vendorData}
+        listingData={listingData}
+        selectedDates={selectedDates}
       />
     </div>
   );

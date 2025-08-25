@@ -1,20 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { getVendorsByCategory } from '../../services/vendorService';
+import { getVendorsByDetails } from '../../services/vendorService';
+
 
 const initialState = {
-  profile: null,
-  services: [],
-  bookings: [],
-  earnings: {
-    total: 0,
-    monthly: 0,
-    pending: 0,
-  },
-  analytics: {
-    views: 0,
-    bookings: 0,
-    rating: 0,
-  },
-  notifications: [],
+
   loading: false,
   error: null,
 };
@@ -23,56 +13,11 @@ const vendorSlice = createSlice({
   name: 'vendor',
   initialState,
   reducers: {
-    setProfile(state, action) {
-      state.profile = action.payload;
-    },
-    updateProfile(state, action) {
-      state.profile = { ...state.profile, ...action.payload };
-    },
-    setServices(state, action) {
-      state.services = action.payload;
-    },
-    addService(state, action) {
-      state.services.push(action.payload);
-    },
-    updateService(state, action) {
-      const index = state.services.findIndex(service => service.id === action.payload.id);
-      if (index !== -1) {
-        state.services[index] = { ...state.services[index], ...action.payload };
-      }
-    },
-    removeService(state, action) {
-      state.services = state.services.filter(service => service.id !== action.payload);
-    },
-    setBookings(state, action) {
-      state.bookings = action.payload;
-    },
-    addBooking(state, action) {
-      state.bookings.push(action.payload);
-    },
-    updateBooking(state, action) {
-      const index = state.bookings.findIndex(booking => booking.id === action.payload.id);
-      if (index !== -1) {
-        state.bookings[index] = { ...state.bookings[index], ...action.payload };
-      }
-    },
-    setEarnings(state, action) {
-      state.earnings = { ...state.earnings, ...action.payload };
-    },
-    setAnalytics(state, action) {
-      state.analytics = { ...state.analytics, ...action.payload };
-    },
-    setNotifications(state, action) {
-      state.notifications = action.payload;
-    },
-    addNotification(state, action) {
-      state.notifications.push(action.payload);
-    },
-    markNotificationAsRead(state, action) {
-      const notification = state.notifications.find(n => n.id === action.payload);
-      if (notification) {
-        notification.read = true;
-      }
+    setVendors: (state, action) => {
+      // Defensive check to ensure only arrays are stored
+      state.vendors = Array.isArray(action.payload) ? action.payload : [];
+      state.loading = false;
+      state.error = null;
     },
     setLoading(state, action) {
       state.loading = action.payload;
@@ -80,30 +25,53 @@ const vendorSlice = createSlice({
     setError(state, action) {
       state.error = action.payload;
     },
-    clearVendor(state) {
-      return initialState;
+    clearError(state) {
+      state.error = null;
     },
   },
 });
 
 export const {
-  setProfile,
-  updateProfile,
-  setServices,
-  addService,
-  updateService,
-  removeService,
-  setBookings,
-  addBooking,
-  updateBooking,
-  setEarnings,
-  setAnalytics,
-  setNotifications,
-  addNotification,
-  markNotificationAsRead,
+  setVendors,
   setLoading,
   setError,
-  clearVendor,
+  clearError,
+
 } = vendorSlice.actions;
 
 export default vendorSlice.reducer;
+
+
+
+export const fetchAllVendorsByCategory = (categoryId) => async (dispatch) => {
+  dispatch(setLoading(true));
+  try {
+    const result = await getVendorsByCategory(categoryId);
+    if (result.success) {
+      dispatch(setVendors(result.vendors));
+
+      dispatch(setLoading(false));
+    } else {
+      dispatch(setError(result.error));
+    }
+  } catch (error) {
+    dispatch(setError('An unexpected error occurred'));
+  }
+}
+
+
+
+export const fetchVendorsByDetails = (vendorId) => async (dispatch) => {
+  dispatch(setLoading(true));
+  try {
+    const result = await getVendorsByDetails(vendorId);
+    if (result.success) {
+      dispatch(setVendors(result.vendor));
+      dispatch(setLoading(false));
+    } else {
+      dispatch(setError(result.error));
+    }
+  } catch (error) {
+    dispatch(setError('An unexpected error occurred'));
+  }
+}

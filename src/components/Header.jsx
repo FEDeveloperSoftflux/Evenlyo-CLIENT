@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from 'react-redux';
 import { logout as logoutAction } from '../store/slices/authSlice';
-import { fetchCurrentUser } from '../store/actions/authActions';
+import { fetchCurrentUser, logoutUser } from '../store/actions/authActions';
 import { useTranslation } from 'react-i18next';
 import CustomerSupportModal from "./CustomerSupportModal";
+
 
 // Import assets
 import brandLogo from '../assets/icons/brand.svg';
@@ -32,6 +33,8 @@ function ResponsiveHeader() {
   useEffect(() => {
     dispatch(fetchCurrentUser());
   }, [dispatch]);
+
+
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const profileRef = useRef(null);
   // Notification dropdown state
@@ -41,6 +44,7 @@ function ResponsiveHeader() {
   const notifications = useSelector((state) => state.notifications.list);
 
   const [isSupportOpen, setIsSupportOpen] = useState(false);
+
 
 
   // Click-away listener for profile dropdown
@@ -117,6 +121,16 @@ function ResponsiveHeader() {
   }, [isFeaturesOpen]);
 
   const featuresRef = React.useRef(null);
+
+
+  // LOGOUT krwane ka function
+  const handleLogout = async () => {
+
+    dispatch(logoutUser());
+    window.location.href = '/login';
+  };
+
+
 
   return (
     <>
@@ -398,13 +412,8 @@ function ResponsiveHeader() {
                         <span className="truncate">{t('setting')}</span>
                       </a>
                       <button
-                        onClick={async () => {
-                          try {
-                            await import('../store/api').then(({ default: api }) => api.post('/auth/logout'));
-                          } catch (e) { }
-                          dispatch(logoutAction());
-                          window.location.href = '/';
-                        }}
+                        onClick={handleLogout}
+
                         className="flex items-center gap-2 sm:gap-3 px-2.5 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-gray-500 hover:bg-gray-50 transition-all text-sm sm:text-lg w-full text-left"
                       >
                         {/* Logout Icon */}
