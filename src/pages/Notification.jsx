@@ -1,8 +1,15 @@
-import React from "react";
+import React, { useEffect } from "react";
 import ResponsiveHeader from "../components/Header";
 import Footer from "../components/Footer";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  loadNotifications,
+  markNotificationAsRead,
+  selectNotifications,
+  selectLoading,
+  selectError,
+} from "../store/slices/notificationSlice";
 
 
 
@@ -15,19 +22,22 @@ import { useSelector } from "react-redux";
 // ];
 
 function Notification() {
-  const notifications = useSelector((state) => state.notifications.list);
+  const notifications = useSelector(selectNotifications);
+  const loading = useSelector(selectLoading);
+  const error = useSelector(selectError);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    dispatch(loadNotifications());
+  }, [dispatch]);
+
   const handleNotificationClick = (notif) => {
-    const text = notif.text.toLowerCase();
-    if (text.includes('message')) {
-      navigate('/chat/1'); // Demo: redirect to chat page with vendorId 1
-    } else if (text.includes('booking')) {
-      navigate('/bookings');
-    } else if (text.includes('invoice')) {
-      navigate(''); // Assuming invoice is managed in settings
-    } else if (text.includes('event reminder')) {
-      navigate('/bookings'); // Or a dedicated event page if available
+    if (!notif.isRead) dispatch(markNotificationAsRead(notif._id));
+    if (notif.booking) {
+      navigate(`/bookings/${notif.bookingId}`);
+    } else {
+      navigate("/notifications");
     }
   };
 
@@ -41,13 +51,18 @@ function Notification() {
         </div>
 
         <div className="w-full max-w-xl bg-white rounded-2xl shadow p-6">
-          {notifications.length === 0 ? (
+          {loading ? (
+            <p className="text-gray-500 text-center">Loading notifications...</p>
+          ) : error ? (
+            <p className="text-red-500 text-center">Error loading notifications: {error
+            }</p>
+          ) : notifications.length === 0 ? (
             <p className="text-gray-500 text-center">You have no new notifications.</p>
           ) : (
             <ul className="divide-y divide-gray-100">
               {notifications.map((notif) => (
                 <li
-                  key={notif.id}
+                  key={notif._id}
                   className="py-4 flex items-start cursor-pointer hover:bg-gray-50 rounded-xl transition"
                   onClick={() => handleNotificationClick(notif)}
                   tabIndex={0}
@@ -57,7 +72,10 @@ function Notification() {
                   <div className="flex-shrink-0 mr-4">
                     <img src="/assets/Success.svg" alt="Notification" className="w-6 h-6" />
                   </div>
-                  <div className="flex-1 text-gray-800 text-base">{notif.text}</div>
+                  <div className="flex-1 text-gray-800 text-base">{notif.message}</div>
+                  {!notif.isRead && (
+                    <span className="ml-2 w-2 h-2 rounded-full bg-primary-600 inline-block" />
+                  )}
                 </li>
               ))}
             </ul>

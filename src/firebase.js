@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { getMessaging, isSupported, getToken, onMessage } from "firebase/messaging";
 import store from "./store/index";
-import { addNotification } from "./store/slices/notificationSlice";
+
 
 
 

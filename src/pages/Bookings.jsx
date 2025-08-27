@@ -102,6 +102,13 @@ function Bookings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10; // bookings per page
+
+
+
+
   // Dropdown close on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -287,6 +294,59 @@ function Bookings() {
     const matchesStatus = statusFilter === 'All status' || booking.status.toLowerCase() === statusFilter.toLowerCase();
     return matchesSearch && matchesStatus;
   });
+
+  //Pagination Helper
+  const paginatedBookings = filteredBookings.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const totalPages = Math.ceil(filteredBookings.length / pageSize);
+
+  //A pagination Component
+
+  function Pagination({ currentPage, totalPages, onPageChange }) {
+    if (totalPages <= 1) return null;
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i);
+    }
+    return (
+      <div className="flex justify-center items-center gap-2 py-4">
+        <button
+          className="touch-button px-3 py-1 rounded-lg bg-pink-100 text-pink-600 font-semibold hover:bg-pink-200 transition-all"
+          disabled={currentPage === 1}
+          onClick={() => onPageChange(currentPage - 1)}
+        >
+          Prev
+        </button>
+        {pages.map((page) => (
+          <button
+            key={page}
+            className={`touch-button px-3 py-1 rounded-lg font-semibold transition-all
+            ${page === currentPage
+                ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg'
+                : 'bg-white text-gray-700 border border-gray-200 hover:bg-pink-50'
+              }`}
+            onClick={() => onPageChange(page)}
+          >
+            {page}
+          </button>
+        ))}
+        <button
+          className="touch-button px-3 py-1 rounded-lg bg-pink-100 text-pink-600 font-semibold hover:bg-pink-200 transition-all"
+          disabled={currentPage === totalPages}
+          onClick={() => onPageChange(currentPage + 1)}
+        >
+          Next
+        </button>
+      </div>
+    );
+  }
+
+  //Pagination Componenet ends
+
+
 
   // --- Action buttons per booking ---
   const getActionButtons = (booking) => {
@@ -591,9 +651,9 @@ function Bookings() {
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             {/* Mobile Cards View */}
             <div className="block md:hidden">
-              {filteredBookings.length > 0 ? (
+              {paginatedBookings.length > 0 ? (
                 <div className="space-y-4 p-4">
-                  {filteredBookings.map((booking) => (
+                  {paginatedBookings.map((booking) => (
                     <div key={booking.id} className="bg-gray-50 rounded-xl p-4 space-y-3">
                       <div className="flex justify-between items-start">
                         <div>
@@ -623,7 +683,7 @@ function Bookings() {
                       <div className="flex flex-wrap gap-2 pt-2 justify-end mr-2">
                         {getActionButtons(booking)}
                         <button className="p-1 text-gray-400 hover:text-gray-600 transition-colors" onClick={() => { setSelectedBooking(booking); setIsDownloadOpen(true); }}>
-                          <img src="/assets/Downlaod.svg" alt="Download" className="w-4 h-5" />
+                          <img src="../assets/icons/Download.svg" alt="Download" className="w-4 h-5" />
                         </button>
                       </div>
                       {actionError[booking.id] && (
@@ -631,6 +691,7 @@ function Bookings() {
                       )}
                     </div>
                   ))}
+
                 </div>
               ) : (
                 <div className="px-6 py-12 text-center text-gray-500">
@@ -648,6 +709,11 @@ function Bookings() {
                   </div>
                 </div>
               )}
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
             </div>
 
             {/* Desktop Table View */}
@@ -676,8 +742,8 @@ function Bookings() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredBookings.length > 0 ? (
-                    filteredBookings.map((booking) => (
+                  {paginatedBookings.length > 0 ? (
+                    paginatedBookings.map((booking) => (
                       <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {booking.slNo}
@@ -713,7 +779,7 @@ function Bookings() {
                           <div className="flex justify-end items-center space-x-2 mr-4">
                             {getActionButtons(booking)}
                             <button className="p-1 text-gray-400 hover:text-gray-600 transition-colors" onClick={() => { setSelectedBooking(booking); setIsDownloadOpen(true); }}>
-                              <img src="/assets/Downlaod.svg" alt="Download" className="w-5 h-5" />
+                              <img src="../assets/icons/Download.svg" alt="Download" className="w-5 h-5" />
                             </button>
                           </div>
                           {actionError[booking.id] && (
@@ -741,6 +807,11 @@ function Bookings() {
                     </tr>
                   )}
                 </tbody>
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
               </table>
             </div>
           </div>

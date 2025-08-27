@@ -28,11 +28,11 @@ export const loginUser = (credentials) => async (dispatch) => {
 export const registerUser = (userData) => async (dispatch) => {
   dispatch(loginStart());
   try {
-    const response = await api.post(endPoints.auth.register, userData);
-    dispatch(loginSuccess({ user: response.data.user }));
-    return { success: true, user: response.data.user };
+    const result = await authService.register(userData);
+    dispatch(loginSuccess({ user: result.data.user }));
+    return { success: true, user: result.data.user };
   } catch (error) {
-    const message = error.response?.data?.message || 'Registration failed';
+    const message = error.result?.data?.message || 'Registration failed';
     dispatch(loginFailure(message));
     return { success: false, error: message };
   }
@@ -48,32 +48,34 @@ export const fetchCurrentUser = () => async (dispatch) => {
       authService.saveUserData(result.user);
       dispatch(loginSuccess({ user: result.user }));
       return { success: true, user: result.user };
-    } else {
-      // Session validation failed, check localStorage for previous session
-      const storedUser = authService.getStoredUser();
-      if (storedUser && authService.isAuthenticated()) {
-        // We have stored user data, but need to verify it's still valid
-        // For now, we'll trust the stored data, but you might want to
-        // implement additional validation
-        dispatch(loginSuccess({ user: storedUser }));
-        return { success: true, user: storedUser };
-      } else {
-        // No valid session or stored data
-        authService.clearUserData();
-        return { success: false };
-      }
     }
+    //else {
+    //   // Session validation failed, check localStorage for previous session
+    //   const storedUser = authService.getStoredUser();
+    //   if (storedUser && authService.isAuthenticated()) {
+    //     // We have stored user data, but need to verify it's still valid
+    //     // For now, we'll trust the stored data, but you might want to
+    //     // implement additional validation
+    //     dispatch(loginSuccess({ user: storedUser }));
+    //     return { success: true, user: storedUser };
+    //   } 
+    else {
+      // No valid session or stored data
+      authService.clearUserData();
+      return { success: false };
+    }
+
   } catch (error) {
     // Network error or server error
     console.log('Session validation failed:', error.message);
-    
+
     // Check if we have stored user data to fall back on
     const storedUser = authService.getStoredUser();
     if (storedUser && authService.isAuthenticated()) {
       dispatch(loginSuccess({ user: storedUser }));
       return { success: true, user: storedUser };
     }
-    
+
     // Clear any invalid data
     authService.clearUserData();
     return { success: false, error: error.message };
@@ -88,16 +90,21 @@ export const logoutUser = () => async (dispatch) => {
     // Even if logout API fails, clear local state
     console.error('Logout API error:', error);
   } finally {
-    authService.clearUserData();
     dispatch(logout());
+    authService.clearUserData();
   }
 };
 
 // Forgot password
 export const forgotPassword = (email) => async (dispatch) => {
   try {
-    const response = await api.post(endPoints.auth.forgotPassword, { email });
-    return { success: true, message: response.data.message };
+    const response = await authService.forgotPassword(email);
+    if (response.success) {
+      return { success: true, message: response.data.message };
+    } else {
+      const message = response.error || 'Failed to send reset email';
+      return { success: false, error: message };
+    }
   } catch (error) {
     const message = error.response?.data?.message || 'Failed to send reset email';
     return { success: false, error: message };

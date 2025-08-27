@@ -1,5 +1,5 @@
 // src/services/googleAuth.js
-import { auth, googleProvider, signInWithPopup, signInWithRedirect, getRedirectResult, initFirebaseMessaging } from '../firebase';
+import { auth, googleProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from '../firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
 import Api from './index';
 import { requestType } from '../constants/api';
@@ -19,16 +19,7 @@ class GoogleAuthService {
       // Get the Firebase ID token
       const idToken = await user.getIdToken();
 
-      let fcmToken = null;
-      try {
-        await this.requestNotificationPermission();
-        fcmToken = await initFirebaseMessaging(user.uid);
-      } catch (err) {
-        console.warn("FCM permission/token error:", err);
-      }
-
-
-      const response = await this.sendTokenToBackend(idToken, user, fcmToken);
+      const response = await this.sendTokenToBackend(idToken, user);
 
       return {
         success: true,
@@ -63,18 +54,7 @@ class GoogleAuthService {
         const user = result.user;
         const idToken = await user.getIdToken();
 
-        let fcmToken = null;
-        try {
-          await this.requestNotificationPermission();
-          fcmToken = await initFirebaseMessaging(user.uid);
-          console.log("FCM Token:", fcmToken);
-        } catch (err) {
-          console.warn("FCM permission/token error:", err);
-        }
-
-        const response = await this.sendTokenToBackend(idToken, user, fcmToken);
-        console.log("Sending to backend:", { idToken, fcmToken, user: { ...response.user } });
-
+        const response = await this.sendTokenToBackend(idToken, user);
 
 
         return {
@@ -94,11 +74,10 @@ class GoogleAuthService {
   }
 
   // Send Firebase ID token to your backend
-  async sendTokenToBackend(idToken, firebaseUser, fcmToken) {
+  async sendTokenToBackend(idToken, firebaseUser) {
     try {
-      const response = await Api('/auth/google', requestType.POST, {
+      const response = await Api('auth/google', requestType.POST, {
         idToken,
-        fcmToken,
         user: {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
@@ -117,13 +96,6 @@ class GoogleAuthService {
     }
   }
 
-
-  // Request notification permission
-  async requestNotificationPermission() {
-    if (Notification.permission === "allowed") return;
-    const permission = await Notification.requestPermission();
-    if (permission !== "allowed") throw new Error("Notification permission denied");
-  }
 
   // Sign out
   async signOut() {

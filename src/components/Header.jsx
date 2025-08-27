@@ -1,9 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from 'react-redux';
-import { logout as logoutAction } from '../store/slices/authSlice';
 import { fetchCurrentUser, logoutUser } from '../store/actions/authActions';
+import {
+  loadNotifications,
+  markAllNotificationsAsRead,
+  selectNotifications,
+  selectLoading,
+} from '../store/slices/notificationSlice';
 import { useTranslation } from 'react-i18next';
 import CustomerSupportModal from "./CustomerSupportModal";
+import { Link } from "react-router-dom";
 
 
 // Import assets
@@ -38,14 +44,26 @@ function ResponsiveHeader() {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const profileRef = useRef(null);
   // Notification dropdown state
+  const notifications = useSelector(selectNotifications) || [];
   const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
   const notificationRef = useRef(null);
+  const loading = useSelector(selectLoading);
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-  const notifications = useSelector((state) => state.notifications.list);
+  useEffect(() => {
+    dispatch(loadNotifications());
+  }, [dispatch]);
 
+  const handleMarkAllRead = () => {
+    dispatch(markAllNotificationsAsRead());
+    setIsDropdownOpen(false);
+  };
+
+
+
+
+  //Support Modal
   const [isSupportOpen, setIsSupportOpen] = useState(false);
-
-
 
   // Click-away listener for profile dropdown
   useEffect(() => {
@@ -127,7 +145,7 @@ function ResponsiveHeader() {
   const handleLogout = async () => {
 
     dispatch(logoutUser());
-    window.location.href = '/login';
+    window.location.href = '/';
   };
 
 
@@ -319,9 +337,9 @@ function ResponsiveHeader() {
                 >
                   {/* Bell Icon SVG */}
                   <img src={bellIcon} alt="Notifications" className="w-5 h-5 text-gray-600" />
-                  {notifications.length > 0 && (
+                  {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white">
-                      {notifications.length}
+                      {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
                 </button>
@@ -333,40 +351,28 @@ function ResponsiveHeader() {
                       lg:right-0 lg:left-auto lg:translate-x-0 lg:w-80"
                     style={{ minWidth: '240px' }}
                   >
+                    <button onClick={handleMarkAllRead} className="text-sm text-primary">Mark All Read</button>
+
                     <div className="font-semibold text-lg mb-2 text-gray-900">{t('notifications')}</div>
                     <ul className="divide-y divide-gray-100 mb-3">
-                      {notifications.map((notif) => {
-                        const text = notif.text.toLowerCase();
-                        let onClick = () => { };
-                        if (text.includes('message')) {
-                          onClick = () => { window.location.href = '/chat/1'; };
-                        } else if (text.includes('booking')) {
-                          onClick = () => { window.location.href = '/bookings'; };
-                        } else if (text.includes('invoice')) {
-                          onClick = () => { window.location.href = '/settings'; };
-                        } else if (text.includes('event reminder')) {
-                          onClick = () => { window.location.href = '/bookings'; };
-                        }
-                        return (
-                          <li
-                            key={notif.id}
-                            className="py-2 text-gray-700 text-sm cursor-pointer hover:bg-gray-50 rounded transition"
-                            onClick={onClick}
-                            tabIndex={0}
-                            role="button"
-                            onKeyDown={e => { if (e.key === 'Enter') onClick(); }}
-                          >
-                            {notif.text}
-                          </li>
-                        );
-                      })}
+                      {loading ? (
+                        <li className="py-2 px-4 text-center text-gray-500">Loading...</li>
+                      ) : notifications.slice(0, 4).map((notif) => (
+                        <li key={notif._id} className="py-2 px-4 hover:bg-gray-100 cursor-pointer">
+                          <Link to={notif.bookingId ? `/bookings/${notif.bookingId}` : "/notifications"} className="text-gray-800">
+                            {notif.message}
+                          </Link>
+                          {!notif.isRead && (
+                            <span className="ml-2 w-2 h-2 rounded-full bg-pink-600 inline-block" />
+                          )}
+                        </li>
+                      ))}
+                      {notifications.length > 4 || notifications.length > 0 && (
+                        <li className="py-2 px-4 text-center rounded-xl bg-gradient-brand text-white font-semibold hover:bg-primary-600 transition-colors text-sm">
+                          <Link to="/notifications">{t('see_all')}</Link>
+                        </li>
+                      )}
                     </ul>
-                    <a
-                      href="/notifications"
-                      className="block w-full text-center py-2 rounded-xl bg-gradient-brand text-white font-semibold hover:bg-primary-600 transition-colors text-sm"
-                    >
-                      {t('see_all')}
-                    </a>
                   </div>
                 )}
               </div>

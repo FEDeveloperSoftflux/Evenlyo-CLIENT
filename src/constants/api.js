@@ -160,11 +160,9 @@ export const endPoints = {
 
   // Notification endpoints
   notifications: {
-    all: "client/notifications",
-    markRead: (id) => `client/notifications/${id}/read`,
-    markAllRead: "client/notifications/mark-all-read",
-    delete: (id) => `client/notifications/${id}`,
-    settings: "client/notifications/settings",
+    all: "notifications",
+    markRead: (id) => `notifications/${id}/read`,
+    markAllRead: "notifications/read-all",
   },
 
   // Support endpoints

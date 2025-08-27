@@ -45,8 +45,8 @@ class AuthService {
 
   // Clear user data from localStorage
   clearUserData() {
-    localStorage.removeItem("user");
     localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("user");
     localStorage.removeItem("clientUser");
     localStorage.removeItem("clientToken");
   }
