@@ -1,35 +1,32 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BookNowModal from "./BookNowModal";
+import SalePayModal from './SalePayModal'; // Add this import
 import api from "../../store/api";
 import { endPoints } from "../../constants/api";
 import { useCartReducer } from "./useCartReducer";
-import React, { useState, useEffect } from 'react';
-import SalePayModal from './SalePayModal';
-import { useNavigate } from 'react-router-dom';
-import BookNowModal from './BookNowModal';
-import api from '../../store/api';
-import { endPoints } from '../../constants/api';
-import { useCartReducer } from './useCartReducer';
 
 const AddToCart = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("requests");
+  
+  // Add missing activeTab state
   const [activeTab, setActiveTab] = useState('requests');
-  // New: Sale/Booking tab
-  const [mainTab, setMainTab] = useState('booking'); // 'booking' or 'sale'
+  
+  // Main tab state (booking or sale)
+  const [mainTab, setMainTab] = useState('booking');
+  
+  // Modal states
   const [isBookNowModalOpen, setIsBookNowModalOpen] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
 
-  // Local states for checkout API
+  // Checkout API states
   const [loadingCheckout, setLoadingCheckout] = useState(false);
   const [errorCheckout, setErrorCheckout] = useState("");
   const [successCheckout, setSuccessCheckout] = useState("");
 
-  // Sale Items selection state (for Sale tab)
+  // Sale Items states
   const [selectedSaleItems, setSelectedSaleItems] = useState(['sale1', 'sale2']);
-  // Sale Items Pay Now modal state
   const [isSalePayModalOpen, setIsSalePayModalOpen] = useState(false);
   const [saleUserDetails, setSaleUserDetails] = useState({
     name: '',
@@ -43,33 +40,6 @@ const AddToCart = () => {
     quantity: 1
   });
 
-  // Handler for selecting/deselecting sale items
-  const handleSaleItemSelect = (id) => {
-    setSelectedSaleItems((prev) =>
-      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
-    );
-  };
-
-  // Handler for Pay Now click
-  const handleSalePayNow = () => {
-    setIsSalePayModalOpen(true);
-  };
-
-  // Handler for modal input change
-  const handleSaleUserDetailChange = (e) => {
-    const { name, value } = e.target;
-    setSaleUserDetails((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Handler for modal submit (for now just close modal)
-  const handleSalePaySubmit = (e) => {
-    e.preventDefault();
-    // Here you would handle payment logic
-    setIsSalePayModalOpen(false);
-    setSaleUserDetails({ name: '', email: '', phone: '' });
-    alert('Order placed! (Demo)');
-  };
-  
   // Use cart reducer for state management
   const {
     items,
@@ -109,6 +79,39 @@ const AddToCart = () => {
     }
   }, [activeTab]);
 
+  // Sale item handlers
+  const handleSaleItemSelect = (id) => {
+    setSelectedSaleItems((prev) =>
+      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
+    );
+  };
+
+  const handleSalePayNow = () => {
+    setIsSalePayModalOpen(true);
+  };
+
+  const handleSaleUserDetailChange = (e) => {
+    const { name, value } = e.target;
+    setSaleUserDetails((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSalePaySubmit = (e) => {
+    e.preventDefault();
+    setIsSalePayModalOpen(false);
+    setSaleUserDetails({ 
+      name: '', 
+      email: '', 
+      phone: '', 
+      address: '', 
+      city: '', 
+      postalCode: '', 
+      country: '', 
+      notes: '', 
+      quantity: 1 
+    });
+    alert('Order placed! (Demo)');
+  };
+
   const fetchCartItems = async () => {
     try {
       setLoading(true);
@@ -130,18 +133,10 @@ const AddToCart = () => {
             profileImage: null,
           },
           pricing: {
-            perHour:
-              item.listingSnapshot?.pricing?.perHour ||
-              item.listingId?.pricing?.perHour,
-            perDay:
-              item.listingSnapshot?.pricing?.perDay ||
-              item.listingId?.pricing?.perDay,
-            perEvent:
-              item.listingSnapshot?.pricing?.perEvent ||
-              item.listingId?.pricing?.perEvent,
-            currency:
-              item.listingSnapshot?.pricing?.currency ||
-              item.listingId?.pricing?.currency,
+            perHour: item.listingSnapshot?.pricing?.perHour || item.listingId?.pricing?.perHour,
+            perDay: item.listingSnapshot?.pricing?.perDay || item.listingId?.pricing?.perDay,
+            perEvent: item.listingSnapshot?.pricing?.perEvent || item.listingId?.pricing?.perEvent,
+            currency: item.listingSnapshot?.pricing?.currency || item.listingId?.pricing?.currency,
             type: item.listingId?.pricing?.type,
           },
           tempDetails: item.tempDetails,
@@ -185,9 +180,7 @@ const AddToCart = () => {
           pricing: {
             perHour: booking.listingId?.pricing?.perHour,
             perDay: booking.listingId?.pricing?.perDay,
-            perEvent:
-              booking.listingId?.pricing?.perEvent ||
-              booking.pricing?.bookingPrice,
+            perEvent: booking.listingId?.pricing?.perEvent || booking.pricing?.bookingPrice,
             currency: booking.listingId?.pricing?.currency,
             type: booking.listingId?.pricing?.type,
           },
@@ -218,9 +211,7 @@ const AddToCart = () => {
         setError("Failed to fetch accepted bookings");
       }
     } catch (error) {
-      setError(
-        error.response?.data?.message || "Failed to fetch accepted bookings"
-      );
+      setError(error.response?.data?.message || "Failed to fetch accepted bookings");
     } finally {
       setLoading(false);
     }
@@ -237,14 +228,10 @@ const AddToCart = () => {
         showToast("Failed to remove item", "error");
       }
     } catch (error) {
-      showToast(
-        error.response?.data?.message || "Failed to remove item",
-        "error"
-      );
+      showToast(error.response?.data?.message || "Failed to remove item", "error");
     }
   };
 
-  // Handle submit booking request (API integration)
   const handleSubmitBookingRequest = async () => {
     const selectedItemsData = getSelectedItems();
 
@@ -255,44 +242,29 @@ const AddToCart = () => {
     if (incompleteItems.length > 0) {
       const missingDetails = [];
       incompleteItems.forEach((item) => {
-        if (
-          !item.tempDetails?.eventDate ||
-          item.tempDetails.eventDate === "To be specified"
-        ) {
+        if (!item.tempDetails?.eventDate || item.tempDetails.eventDate === "To be specified") {
           missingDetails.push("date");
         }
         if (!item.tempDetails?.eventTime) {
           missingDetails.push("time");
         }
-        if (
-          !item.tempDetails?.eventLocation ||
-          item.tempDetails.eventLocation === "To be specified"
-        ) {
+        if (!item.tempDetails?.eventLocation || item.tempDetails.eventLocation === "To be specified") {
           missingDetails.push("location");
         }
       });
 
       const uniqueMissing = [...new Set(missingDetails)];
-      showToast(
-        `Please fill missing details: ${uniqueMissing.join(
-          ", "
-        )} for selected items`,
-        "error"
-      );
+      showToast(`Please fill missing details: ${uniqueMissing.join(", ")} for selected items`, "error");
       return;
     }
 
     if (selectedItemsData.length === 0) {
-      showToast(
-        "Please select items with complete booking details to submit.",
-        "error"
-      );
+      showToast("Please select items with complete booking details to submit.", "error");
       return;
     }
 
     try {
       setSubmitLoading(true);
-      // API call to cart.submit
       const selectedItemIds = selectedItemsData.map((item) => item.id);
 
       const response = await api.post(endPoints.cart.submit, {
@@ -307,38 +279,37 @@ const AddToCart = () => {
         showToast("Failed to send booking request", "error");
       }
     } catch (error) {
-      showToast(
-        error.response?.data?.message || "Failed to send booking request",
-        "error"
-      );
+      showToast(error.response?.data?.message || "Failed to send booking request", "error");
     } finally {
       setSubmitLoading(false);
     }
   };
 
-  // Proceed to Checkout API integration
   const handleCheckout = async () => {
     setLoadingCheckout(true);
     setErrorCheckout("");
     setSuccessCheckout("");
+    
     try {
-      // For demo, pick first selected accepted item
       const selectedAcceptedItems = acceptedItems.filter((item) =>
         selectedItems.includes(item.id)
       );
+      
       if (selectedAcceptedItems.length === 0) {
         setErrorCheckout("Please select an accepted booking to checkout.");
         setLoadingCheckout(false);
         return;
       }
+      
       const bookingId = selectedAcceptedItems[0].id;
-      // You may want to get transactionId from backend or payment gateway
       const transactionId = "demo-txn-id";
       const method = "stripe";
+      
       const response = await api.post(endPoints.bookings.pay(bookingId), {
         transactionId,
         method,
       });
+      
       if (response.data.success) {
         setSuccessCheckout("Payment processed successfully!");
         showToast("Payment processed successfully!", "success");
@@ -347,13 +318,8 @@ const AddToCart = () => {
         showToast("Failed to process payment.", "error");
       }
     } catch (error) {
-      setErrorCheckout(
-        error.response?.data?.message || "Failed to process payment."
-      );
-      showToast(
-        error.response?.data?.message || "Failed to process payment.",
-        "error"
-      );
+      setErrorCheckout(error.response?.data?.message || "Failed to process payment.");
+      showToast(error.response?.data?.message || "Failed to process payment.", "error");
     } finally {
       setLoadingCheckout(false);
     }
@@ -370,29 +336,17 @@ const AddToCart = () => {
         tempDetails: {
           startDate: editData.startDate || editData.tempDetails?.startDate,
           startTime: editData.startTime || editData.tempDetails?.startTime,
-          eventLocation:
-            editData.eventLocation || editData.tempDetails?.eventLocation,
+          eventLocation: editData.eventLocation || editData.tempDetails?.eventLocation,
           endDate: editData.endDate || editData.tempDetails?.endDate,
           endTime: editData.endTime || editData.tempDetails?.endTime,
-          eventType:
-            editData.eventType || editData.tempDetails?.eventType || "Event",
-          guestCount:
-            editData.guestCount || editData.tempDetails?.guestCount || 50,
-          specialRequests:
-            editData.specialRequests ||
-            editData.tempDetails?.specialRequests ||
-            "",
-          contactPreference:
-            editData.contactPreference ||
-            editData.tempDetails?.contactPreference ||
-            "email",
+          eventType: editData.eventType || editData.tempDetails?.eventType || "Event",
+          guestCount: editData.guestCount || editData.tempDetails?.guestCount || 50,
+          specialRequests: editData.specialRequests || editData.tempDetails?.specialRequests || "",
+          contactPreference: editData.contactPreference || editData.tempDetails?.contactPreference || "email",
         },
       };
 
-      const response = await api.put(
-        endPoints.cart.update(editItem.id),
-        tempDetailsUpdate
-      );
+      const response = await api.put(endPoints.cart.update(editItem.id), tempDetailsUpdate);
 
       if (response.data.success) {
         updateCartItem(editItem.id, tempDetailsUpdate);
@@ -404,10 +358,7 @@ const AddToCart = () => {
         showToast("Failed to update item", "error");
       }
     } catch (error) {
-      showToast(
-        error.response?.data?.message || "Failed to update item",
-        "error"
-      );
+      showToast(error.response?.data?.message || "Failed to update item", "error");
     }
   };
 
@@ -420,12 +371,11 @@ const AddToCart = () => {
   };
 
   const calculateOrderSummary = () => {
-    const currentItems =
-      activeTab === "requests"
-        ? getSelectedItems()
-        : Array.isArray(acceptedItems)
-          ? acceptedItems.filter((item) => selectedItems.includes(item.id))
-          : [];
+    const currentItems = activeTab === "requests"
+      ? getSelectedItems()
+      : Array.isArray(acceptedItems)
+        ? acceptedItems.filter((item) => selectedItems.includes(item.id))
+        : [];
 
     let subtotal = 0;
     currentItems.forEach((item) => {
@@ -456,8 +406,6 @@ const AddToCart = () => {
       total,
     };
   };
-
-  const orderSummary = calculateOrderSummary();
 
   const renderCartItem = (item, index) => {
     const hasCompleteInfo = hasCompleteBookingInfo(item);
@@ -509,11 +457,7 @@ const AddToCart = () => {
                   <span className="text-gray-400 text-sm font-normal mr-1 mb-1">
                     {isAcceptedTab ? "Accepted" : item.status || "In cart"}
                   </span>
-                  <svg
-                    className="w-3 h-3 text-pink-500"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
+                  <svg className="w-3 h-3 text-pink-500" fill="currentColor" viewBox="0 0 20 20">
                     <circle cx="10" cy="10" r="10" fill="#ec4899" />
                     <path
                       d="M7.5 10.5l2 2 3-3"
@@ -532,9 +476,7 @@ const AddToCart = () => {
                       : "V"}
                   </div>
                   <span className="text-base text-gray-900 font-medium">
-                    {item.vendor?.businessName ||
-                      item.vendor?.firstName ||
-                      "Service Provider"}
+                    {item.vendor?.businessName || item.vendor?.firstName || "Service Provider"}
                   </span>
                 </div>
               </div>
@@ -542,22 +484,15 @@ const AddToCart = () => {
 
             {item.tempDetails && (
               <div className="mt-2 text-xs text-gray-600">
-                {item.tempDetails.eventDate &&
-                  item.tempDetails.eventDate !== "To be specified" && (
-                    <div>
-                      Date:{" "}
-                      {new Date(
-                        item.tempDetails.eventDate
-                      ).toLocaleDateString()}
-                    </div>
-                  )}
+                {item.tempDetails.eventDate && item.tempDetails.eventDate !== "To be specified" && (
+                  <div>Date: {new Date(item.tempDetails.eventDate).toLocaleDateString()}</div>
+                )}
                 {item.tempDetails.eventTime && (
                   <div>Time: {item.tempDetails.eventTime}</div>
                 )}
-                {item.tempDetails.eventLocation &&
-                  item.tempDetails.eventLocation !== "To be specified" && (
-                    <div>Location: {item.tempDetails.eventLocation}</div>
-                  )}
+                {item.tempDetails.eventLocation && item.tempDetails.eventLocation !== "To be specified" && (
+                  <div>Location: {item.tempDetails.eventLocation}</div>
+                )}
               </div>
             )}
 
@@ -575,27 +510,17 @@ const AddToCart = () => {
           {(hasCompleteInfo || isAcceptedTab) && (
             <div className="text-right">
               {item.pricing?.perEvent && (
-                <div className="text-lg font-bold text-gray-900">
-                  ${item.pricing.perEvent}
-                </div>
+                <div className="text-lg font-bold text-gray-900">${item.pricing.perEvent}</div>
               )}
               {!item.pricing?.perEvent && item.pricing?.perHour && (
-                <div className="text-lg font-bold text-gray-900">
-                  ${item.pricing.perHour}/hr
-                </div>
+                <div className="text-lg font-bold text-gray-900">${item.pricing.perHour}/hr</div>
               )}
-              {!item.pricing?.perEvent &&
-                !item.pricing?.perHour &&
-                item.pricing?.perDay && (
-                  <div className="text-lg font-bold text-gray-900">
-                    ${item.pricing.perDay}/day
-                  </div>
-                )}
-              {!item.pricing?.perEvent &&
-                !item.pricing?.perHour &&
-                !item.pricing?.perDay && (
-                  <div className="text-lg font-bold text-gray-900">$300</div>
-                )}
+              {!item.pricing?.perEvent && !item.pricing?.perHour && item.pricing?.perDay && (
+                <div className="text-lg font-bold text-gray-900">${item.pricing.perDay}/day</div>
+              )}
+              {!item.pricing?.perEvent && !item.pricing?.perHour && !item.pricing?.perDay && (
+                <div className="text-lg font-bold text-gray-900">$300</div>
+              )}
             </div>
           )}
 
@@ -615,12 +540,7 @@ const AddToCart = () => {
                 className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                 title="Remove from cart"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -636,22 +556,16 @@ const AddToCart = () => {
     );
   };
 
-  const currentItems =
-    activeTab === "requests"
-      ? Array.isArray(items)
-        ? items
-        : []
-      : Array.isArray(acceptedItems)
-        ? acceptedItems
-        : [];
+  const orderSummary = calculateOrderSummary();
+  const currentItems = activeTab === "requests"
+    ? Array.isArray(items) ? items : []
+    : Array.isArray(acceptedItems) ? acceptedItems : [];
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">My Cart</h1>
       {/* Header */}
       <div className="mb-4 text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">My Wishlist</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">My Cart</h1>
         <p className="text-gray-600">Manage your event bookings and requests</p>
       </div>
 
@@ -659,13 +573,21 @@ const AddToCart = () => {
       <div className="flex justify-center mb-8">
         <div className="flex w-full max-w-5xl mx-auto space-x-2 bg-white rounded-xl p-1 shadow-lg">
           <button
-            className={`w-1/2 px-10 py-2 rounded-xl text-base font-medium transition-all duration-200 ${mainTab === 'booking' ? 'btn-primary-mobile text-white shadow-lg' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'}`}
+            className={`w-1/2 px-10 py-2 rounded-xl text-base font-medium transition-all duration-200 ${
+              mainTab === 'booking' 
+                ? 'btn-primary-mobile text-white shadow-lg' 
+                : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+            }`}
             onClick={() => setMainTab('booking')}
           >
             Booking Items
           </button>
           <button
-            className={`w-1/2 px-10 py-2 rounded-xl text-base font-medium transition-all duration-200 ${mainTab === 'sale' ? 'btn-primary-mobile text-white shadow-lg' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'}`}
+            className={`w-1/2 px-10 py-2 rounded-xl text-base font-medium transition-all duration-200 ${
+              mainTab === 'sale' 
+                ? 'btn-primary-mobile text-white shadow-lg' 
+                : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+            }`}
             onClick={() => setMainTab('sale')}
           >
             Sale Items
@@ -673,7 +595,7 @@ const AddToCart = () => {
         </div>
       </div>
 
-
+      {/* Error Messages */}
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600">{error}</p>
@@ -686,38 +608,22 @@ const AddToCart = () => {
         </div>
       )}
 
-      {/* Checkout error/success display */}
       {errorCheckout && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600">{errorCheckout}</p>
         </div>
       )}
+
       {successCheckout && (
         <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
           <p className="text-green-600">{successCheckout}</p>
         </div>
       )}
 
-      <div className="flex justify-center mb-8">
-        <div className="flex space-x-2 bg-white rounded-xl p-1 shadow-lg inline-flex">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-8 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === tab.id
-                ? "btn-primary-mobile text-white shadow-lg"
-                : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-                }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
       {/* Booking Items Implementation */}
       {mainTab === 'booking' && (
         <>
-          {/* Tabs */}
+          {/* Sub Tabs */}
           <div className="flex justify-center mb-8">
             <div className="flex space-x-2 bg-white rounded-xl p-1 shadow-lg inline-flex">
               {tabs.map((tab) => (
@@ -736,11 +642,6 @@ const AddToCart = () => {
             </div>
           </div>
 
-      {loading && (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
-        </div>
-      )}
           {/* Loading State */}
           {loading && (
             <div className="flex justify-center items-center py-12">
@@ -748,73 +649,13 @@ const AddToCart = () => {
             </div>
           )}
 
-      {!loading && (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          <div className="col-span-2">
-            {((activeTab === "requests" &&
-              getItemsWithCompleteInfo().length > 0) ||
-              (activeTab === "accepted" && currentItems.length > 0)) && (
-                <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={
-                        activeTab === "requests"
-                          ? getItemsWithCompleteInfo().every((item) =>
-                            selectedItems.includes(item.id)
-                          )
-                          : currentItems.every((item) =>
-                            selectedItems.includes(item.id)
-                          )
-                      }
-                      onChange={() => {
-                        if (activeTab === "requests") {
-                          if (
-                            getItemsWithCompleteInfo().every((item) =>
-                              selectedItems.includes(item.id)
-                            )
-                          ) {
-                            clearSelection();
-                          } else {
-                            selectAllItems();
-                          }
-                        } else {
-                          if (
-                            currentItems.every((item) =>
-                              selectedItems.includes(item.id)
-                            )
-                          ) {
-                            clearSelection();
-                          } else {
-                            currentItems.forEach((item) => {
-                              if (!selectedItems.includes(item.id)) {
-                                toggleItemSelection(item.id);
-                              }
-                            });
-                          }
-                        }
-                      }}
-                      className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
-                    />
-                    <span className="text-sm font-medium text-gray-700">
-                      Select All
-                    </span>
-                  </label>
-                  <span className="text-xs text-gray-500">
-                    {selectedItems.length} of{" "}
-                    {activeTab === "requests"
-                      ? getItemsWithCompleteInfo().length
-                      : currentItems.length}{" "}
-                    selected
-                  </span>
-                </div>
-              )}
           {/* Tab Content */}
           {!loading && (
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
               <div className="col-span-2">
                 {/* Select All functionality */}
-                {((activeTab === 'requests' && getItemsWithCompleteInfo().length > 0) || (activeTab === 'accepted' && currentItems.length > 0)) && (
+                {((activeTab === 'requests' && getItemsWithCompleteInfo().length > 0) || 
+                  (activeTab === 'accepted' && currentItems.length > 0)) && (
                   <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
                     <label className="flex items-center space-x-2">
                       <input
@@ -831,7 +672,6 @@ const AddToCart = () => {
                               selectAllItems();
                             }
                           } else {
-                            // For accepted items
                             if (currentItems.every(item => selectedItems.includes(item.id))) {
                               clearSelection();
                             } else {
@@ -853,37 +693,6 @@ const AddToCart = () => {
                   </div>
                 )}
 
-            {currentItems.length > 0 ? (
-              currentItems.map(renderCartItem)
-            ) : (
-              <div className="text-center py-12">
-                <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-12 h-12 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5 6m0 0h9m-9 0h9"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Your {activeTab === "requests" ? "cart" : "accepted bookings"}{" "}
-                  is empty
-                </h3>
-                <p className="text-gray-600">
-                  {activeTab === "requests"
-                    ? "Add some items to your cart to get started!"
-                    : "No accepted bookings found."}
-                </p>
-              </div>
-            )}
-          </div>
                 {currentItems.length > 0 ? (
                   currentItems.map(renderCartItem)
                 ) : (
@@ -906,156 +715,6 @@ const AddToCart = () => {
                 )}
               </div>
 
-          {currentItems.length > 0 && (
-            <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Order Summary
-              </h3>
-              <div className="space-y-2 text-sm">
-                {orderSummary.items.map((item, index) => (
-                  <div key={item.id || index} className="flex justify-between">
-                    <span className="text-gray-600">
-                      {item.listing?.title || item.title || "Service"}
-                    </span>
-                    <span className="text-gray-900">
-                      $
-                      {item.pricing?.perEvent ||
-                        item.pricing?.perHour ||
-                        item.basePrice ||
-                        300}
-                    </span>
-                  </div>
-                ))}
-
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span className="text-gray-900">
-                    ${orderSummary.subtotal}
-                  </span>
-                </div>
-
-                {activeTab === "accepted" && (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Security Fee</span>
-                      <span className="text-gray-900">
-                        ${orderSummary.securityFee}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Kilometer Fee</span>
-                      <span className="text-gray-900">
-                        ${orderSummary.kilometerFee}
-                      </span>
-                    </div>
-                  </>
-                )}
-
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Service Charges (10%)</span>
-                  <span className="text-gray-900">
-                    ${orderSummary.serviceCharges}
-                  </span>
-                </div>
-
-                <div className="border-t pt-2">
-                  <div className="flex justify-between font-bold">
-                    <span className="text-gray-900">Total</span>
-                    <span className="text-gray-900">${orderSummary.total}</span>
-                  </div>
-                </div>
-              </div>
-
-              {activeTab === "accepted" && (
-                <div className="mt-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
-                  <h4 className="text-sm font-medium text-orange-800 mb-2">
-                    Progress Notes
-                  </h4>
-                  <p className="text-xs text-orange-700 flex items-center">
-                    <svg
-                      className="w-4 h-4 mr-1"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    Important: Request always extra charges will apply for the
-                    additional time.
-                  </p>
-                </div>
-              )}
-
-              <div className="mt-6 text-center">
-                {activeTab !== "accepted" && (
-                  <p className="text-xs text-orange-600 mb-2 font-medium">
-                    Only Bookings with complete details will be sent.
-                  </p>
-                )}
-
-                {activeTab === "accepted" && (
-                  <>
-                    <p className="text-sm text-gray-600 mb-2">
-                      Accepted payment methods:
-                    </p>
-                    <div className="flex justify-center space-x-2 mb-4">
-                      <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">
-                        Stripe
-                      </div>
-                      <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">
-                        Amex
-                      </div>
-                      <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">
-                        PayPal
-                      </div>
-                      <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">
-                        Visa
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {activeTab === "accepted" ? (
-                  <button
-                    onClick={handleCheckout}
-                    disabled={loadingCheckout}
-                    className={`btn-primary-mobile hover:bg-primary-700 text-white rounded-lg px-4 py-2 w-full font-medium transition-all ${loadingCheckout ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
-                  >
-                    {loadingCheckout ? (
-                      <span>
-                        <span className="animate-spin mr-2 inline-block w-4 h-4 border-2 border-white border-t-primary-500 rounded-full"></span>
-                        Loading...
-                      </span>
-                    ) : (
-                      "Proceed to Checkout"
-                    )}
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleSubmitBookingRequest}
-                    disabled={!canSubmitBookingRequest() || submitLoading}
-                    className={`btn-primary-mobile hover:bg-primary-700 text-white rounded-lg px-4 py-2 w-full font-medium transition-all ${(!canSubmitBookingRequest() || submitLoading) ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
-                  >
-                    {submitLoading ? (
-                      <span>
-                        <span className="animate-spin mr-2 inline-block w-4 h-4 border-2 border-white border-t-primary-500 rounded-full"></span>
-                        Loading...
-                      </span>
-                    ) : (
-                      "Send Booking Request"
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
               {/* Order Summary */}
               {currentItems.length > 0 && (
                 <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
@@ -1133,20 +792,38 @@ const AddToCart = () => {
                     )}
                     
                     {activeTab === 'accepted' ? (
-                      <button className="w-full py-3 btn-primary-mobile text-white rounded-2xl font-medium hover:shadow-lg transition-all">
-                        Process to Checkout
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={handleSubmitBookingRequest}
-                        disabled={!canSubmitBookingRequest() || submitLoading}
-                        className={`w-full py-3 rounded-2xl font-medium transition-all ${
-                          canSubmitBookingRequest() && !submitLoading
-                            ? 'btn-primary-mobile text-white hover:shadow-lg'
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      <button
+                        onClick={handleCheckout}
+                        disabled={loadingCheckout}
+                        className={`btn-primary-mobile hover:bg-primary-700 text-white rounded-lg px-4 py-2 w-full font-medium transition-all ${
+                          loadingCheckout ? "opacity-50 cursor-not-allowed" : ""
                         }`}
                       >
-                        {submitLoading ? 'Sending...' : 'Send Booking Request'}
+                        {loadingCheckout ? (
+                          <span>
+                            <span className="animate-spin mr-2 inline-block w-4 h-4 border-2 border-white border-t-primary-500 rounded-full"></span>
+                            Loading...
+                          </span>
+                        ) : (
+                          "Proceed to Checkout"
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleSubmitBookingRequest}
+                        disabled={!canSubmitBookingRequest() || submitLoading}
+                        className={`btn-primary-mobile hover:bg-primary-700 text-white rounded-lg px-4 py-2 w-full font-medium transition-all ${
+                          (!canSubmitBookingRequest() || submitLoading) ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                      >
+                        {submitLoading ? (
+                          <span>
+                            <span className="animate-spin mr-2 inline-block w-4 h-4 border-2 border-white border-t-primary-500 rounded-full"></span>
+                            Loading...
+                          </span>
+                        ) : (
+                          "Send Booking Request"
+                        )}
                       </button>
                     )}
                   </div>
@@ -1154,37 +831,6 @@ const AddToCart = () => {
               )}
             </div>
           )}
-
-      <BookNowModal
-        isOpen={isBookNowModalOpen}
-        onClose={() => {
-          setIsBookNowModalOpen(false);
-          setEditItem(null);
-        }}
-        onSuccess={handleSaveEdit}
-        selectedDates={[]}
-        editMode={!!editItem}
-        item={editItem}
-        onSaveEdit={handleSaveEdit}
-        listingData={editItem?.listing}
-        vendorData={editItem?.vendor}
-        listingId={editItem?.listing?.id}
-        vendorId={editItem?.vendor?.id}
-      />
-          {/* Modals */}
-          <BookNowModal
-            isOpen={isBookNowModalOpen}
-            onClose={() => { setIsBookNowModalOpen(false); setEditItem(null); }}
-            onSuccess={handleSaveEdit}
-            selectedDates={[]}
-            editMode={!!editItem}
-            item={editItem}
-            onSaveEdit={handleSaveEdit}
-            listingData={editItem?.listing}
-            vendorData={editItem?.vendor}
-            listingId={editItem?.listing?.id}
-            vendorId={editItem?.vendor?.id}
-          />
         </>
       )}
 
@@ -1195,16 +841,16 @@ const AddToCart = () => {
           {
             id: 'sale1',
             title: 'Meat',
-            image: 'https://via.placeholder.com/80x80?text=Decor',
-            vendor: { businessName: 'Elegant Events' },
+            image: 'https://via.placeholder.com/80x80?text=Meat',
+            vendor: { businessName: 'Butcher Shop' },
             price: 1200,
             quantity: 1
           },
           {
             id: 'sale2',
             title: 'Chairs',
-            image: 'https://via.placeholder.com/80x80?text=Sound',
-            vendor: { businessName: 'AudioPro' },
+            image: 'https://via.placeholder.com/80x80?text=Chairs',
+            vendor: { businessName: 'Furniture Co' },
             price: 800,
             quantity: 2
           }
@@ -1223,7 +869,7 @@ const AddToCart = () => {
             {/* Sale Items List */}
             <div className="col-span-2">
               {saleItems.length > 0 ? (
-                saleItems.map((item, idx) => (
+                saleItems.map((item) => (
                   <div key={item.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 mb-4">
                     <div className="flex items-center space-x-4">
                       <input
@@ -1244,7 +890,6 @@ const AddToCart = () => {
                           <span className="text-base text-gray-900 font-medium">{item.vendor.businessName}</span>
                         </div>
                         <div className="mt-2 text-xs text-gray-600">Quantity: {item.quantity}</div>
-
                       </div>
                     </div>
                     <div className="text-right">
@@ -1264,11 +909,12 @@ const AddToCart = () => {
                 </div>
               )}
             </div>
+            
             {/* Order Summary & Payment */}
             <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
               <div className="space-y-2 text-sm">
-                {selectedItems.map((item, idx) => (
+                {selectedItems.map((item) => (
                   <div key={item.id} className="flex justify-between">
                     <span className="text-gray-600">{item.title}</span>
                     <span className="text-gray-900">${item.price * item.quantity}</span>
@@ -1313,13 +959,37 @@ const AddToCart = () => {
                   <div className="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-xs">Visa</div>
                 </div>
                 <button
-                  className={`w-full py-3 rounded-2xl font-medium transition-all ${selectedItems.length > 0 ? 'btn-primary-mobile text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                  className={`w-full py-3 rounded-2xl font-medium transition-all ${
+                    selectedItems.length > 0 
+                      ? 'btn-primary-mobile text-white hover:shadow-lg' 
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
                   disabled={selectedItems.length === 0}
                   onClick={selectedItems.length > 0 ? handleSalePayNow : undefined}
                 >
                   Pay Now
                 </button>
-      {/* Sale Items Pay Modal */}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Modals */}
+      <BookNowModal
+        isOpen={isBookNowModalOpen}
+        onClose={() => { setIsBookNowModalOpen(false); setEditItem(null); }}
+        onSuccess={handleSaveEdit}
+        selectedDates={[]}
+        editMode={!!editItem}
+        item={editItem}
+        onSaveEdit={handleSaveEdit}
+        listingData={editItem?.listing}
+        vendorData={editItem?.vendor}
+        listingId={editItem?.listing?.id}
+        vendorId={editItem?.vendor?.id}
+      />
+
       <SalePayModal
         isOpen={isSalePayModalOpen}
         onClose={() => setIsSalePayModalOpen(false)}
@@ -1327,13 +997,8 @@ const AddToCart = () => {
         onChange={handleSaleUserDetailChange}
         onSubmit={handleSalePaySubmit}
       />
-              </div>
-            </div>
-          </div>
-        );
-      })()}
     </div>
   );
 };
 
-export default AddToCart;
+export default AddToCart

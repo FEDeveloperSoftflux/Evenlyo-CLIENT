@@ -37,7 +37,7 @@ const LoginPage = () => {
     e.preventDefault();
     setError(null);
     try {
-      const res = await api.post('/auth/login', {
+      const res = await api.post('/auth/client/login', {
         email: formData.email,
         password: formData.password
       }, { withCredentials: true });

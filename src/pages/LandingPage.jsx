@@ -31,16 +31,13 @@ function LandingPage() {
         setVendors={setVendors}
         setVendorsLoading={setVendorsLoading}
       />
-      <VendorList
-      
-      {/* Explore Items Section */}
-      <ExploreItemsSection />
       <VendorList 
         selectedCategory={selectedCategory}
         vendors={vendors}
         loading={vendorsLoading}
       />
-
+      {/* Explore Items Section */}
+      <ExploreItemsSection />
       <AdvancedBookingSystem />
       <RentalTabs />
       <MultiVendor />
